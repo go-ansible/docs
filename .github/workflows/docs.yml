@@ -1,0 +1,92 @@
+name: docs
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+# The build needs nothing beyond the source. Write access to the repository
+# is granted to the deploy job alone, below, so a pull request build cannot
+# push to gh-pages.
+permissions:
+  contents: read
+
+jobs:
+  # Build on every pull request as well as on main, so a change to the docs or to
+  # the toolchain in requirements.txt has to prove it still builds before it
+  # lands. Without this the workflow ran only on main, which meant a dependency
+  # bump had no signal at all and nothing could say whether it was safe to merge.
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.14"
+          cache: pip
+          cache-dependency-path: requirements.txt
+
+      - name: Install MkDocs Material + mike
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements.txt
+
+      # --strict turns a broken link or an unknown config key into a failure
+      # rather than a warning nobody reads.
+      - name: Build the site (strict)
+        run: mkdocs build --strict
+
+  deploy:
+    # Only main publishes. A pull request stops after build above: it has no
+    # business pushing to gh-pages, and `permissions: contents: write` is not
+    # granted to a fork's PR anyway.
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+    needs: build
+    # Two deploys must never run at once: `mike deploy --push` pushes gh-pages,
+    # and a second job doing the same is rejected outright --
+    #
+    #   ! [rejected]  gh-pages -> gh-pages (fetch first)
+    #
+    # cancel-in-progress stays FALSE deliberately: killing a publish half way
+    # through is worse than making it wait, and the queued run then fetches the
+    # gh-pages the previous one just wrote.
+    concurrency:
+      group: gh-pages-deploy
+      cancel-in-progress: false
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.14"
+
+      - name: Install MkDocs Material + mike
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Configure git for mike
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      # mike publishes versioned docs to the gh-pages branch; GitHub Pages serves
+      # that branch at https://go-ansible.github.io/docs/. The version label
+      # tracks main as "0.1" aliased "latest"; tag-driven versions can be added
+      # later. /docs/ redirects to the default ("latest").
+      - name: Deploy versioned docs
+        run: |
+          git fetch origin gh-pages --depth=1 || true
+          mike deploy --push --update-aliases 0.1 latest
+          mike set-default --push latest

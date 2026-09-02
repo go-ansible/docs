@@ -1,0 +1,64 @@
+site_name: go-ansible docs
+site_description: "A pure-Go (CGO=0), functional-parity port of Ansible: Vault-compatible encryption, inventory parsing, variable precedence, and Jinja2-compatible templating."
+site_url: https://go-ansible.github.io/docs/
+repo_url: https://github.com/go-ansible
+repo_name: go-ansible
+edit_uri: ""
+
+theme:
+  name: material
+  logo: assets/logo.svg
+  favicon: assets/logo.svg
+  features:
+    - navigation.sections
+    - navigation.top
+    - navigation.instant
+    - content.code.copy
+    - search.suggest
+  palette:
+    # System default (follows the OS preference), then explicit light and dark.
+    - media: "(prefers-color-scheme)"
+      toggle:
+        icon: material/brightness-auto
+        name: Switch to light mode
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: blue
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: blue
+      toggle:
+        icon: material/brightness-4
+        name: Switch to system preference
+
+extra:
+  version:
+    provider: mike
+    default: latest
+
+nav:
+  - Home: index.md
+  - Components:
+      - Overview: components/index.md
+      - vault — Vault-compatible encryption: components/vault.md
+      - inventory — INI/YAML inventory: components/inventory.md
+      - vars — variable precedence: components/vars.md
+      - template — Jinja2-compatible templating: components/template.md
+  - Roadmap: roadmap.md
+  - Contributing: contributing.md
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - def_list
+  - footnotes
+  - tables
+  - toc:
+      permalink: true
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.superfences
+  - pymdownx.inlinehilite
