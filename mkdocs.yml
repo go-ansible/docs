@@ -1,5 +1,5 @@
 site_name: go-ansible docs
-site_description: "A pure-Go (CGO=0), functional-parity port of Ansible: Vault-compatible encryption, inventory parsing, variable precedence, and Jinja2-compatible templating."
+site_description: "A pure-Go (CGO=0), functional-parity port of Ansible: Vault-compatible encryption, inventory parsing, variable precedence, Jinja2-compatible templating, fact gathering, 561 modules, the playbook engine, and all 8 ansible-* CLI binaries."
 site_url: https://go-ansible.github.io/docs/
 repo_url: https://github.com/go-ansible
 repo_name: go-ansible
@@ -47,6 +47,10 @@ nav:
       - inventory — INI/YAML inventory: components/inventory.md
       - vars — variable precedence: components/vars.md
       - template — Jinja2-compatible templating: components/template.md
+      - facts — fact gathering: components/facts.md
+      - modules — 561-module execution library: components/modules.md
+      - playbook — the playbook engine: components/playbook.md
+      - cli — the 8 ansible-* binaries: components/cli.md
   - Roadmap: roadmap.md
   - Contributing: contributing.md
 

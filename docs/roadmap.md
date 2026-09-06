@@ -2,8 +2,8 @@
 
 ## Shipped
 
-Four components are real, tested Go libraries with CI running on every push
-and pull request:
+All eight planned components are real, tested Go libraries with CI running
+on every push and pull request:
 
 - [`vault`](components/vault.md) — Ansible Vault 1.1 compatible AES-256
   encryption
@@ -12,37 +12,68 @@ and pull request:
 - [`vars`](components/vars.md) — the variable precedence ladder
 - [`template`](components/template.md) — Jinja2-compatible templating with
   Ansible's filter and test library
+- [`facts`](components/facts.md) — fact gathering, the `setup` module
+  equivalent
+- [`modules`](components/modules.md) — the module execution protocol plus
+  **561 registered modules** (all of `ansible.builtin` and `ansible.posix`,
+  and a curated 485 of `community.general`)
+- [`playbook`](components/playbook.md) — the playbook/role/task/handler
+  engine driving all of the above against a real play: loops, conditionals,
+  blocks with genuine per-host recovery, `become`, roles (nested variable
+  scoping composes to any depth), both the `linear` and `free` execution
+  strategies
+- [`cli`](components/cli.md) — all 8 real `ansible-*` binaries, plus a
+  multi-arch `FROM scratch` OCI image on every version tag
 
-## In progress
+A standalone `galaxy` repository was planned early on for a role/collection
+installer with its own Galaxy API client; the actual need turned out simple
+enough (clone a role from a git URL via `go-git`) to fold directly into
+`cli`'s `ansible-galaxy` binary instead, so that repository was never
+developed further and is not part of the current architecture.
 
-The following repositories exist in the [go-ansible](https://github.com/go-ansible)
-organization but do not yet have working code — this documentation makes no
-capability claims about them, and they are intentionally not linked from the
-components pages above until they do:
+## What's still ahead
 
-- **`modules`** — the Ansible module execution protocol (the JSON-over-stdin/stdout
-  contract a module implements) plus the core module library
-- **`playbook`** — the playbook/role/task/handler engine: loops, conditionals,
-  blocks, strategies. This is the piece that will actually drive `vars` and
-  `template` together against a real play, rather than each being exercised
-  standalone as they are today.
-- **`facts`** — fact gathering, the Go equivalent of the `setup` module
-- **`galaxy`** — role and collection installer, `requirements.yml`, a Galaxy
-  API client
-- **`cli`** — the `ansible`, `ansible-playbook`, `ansible-vault`, and
-  `ansible-galaxy` binaries, once there is an engine underneath them worth
-  shipping a CLI for
+- **~92 more `community.general` modules.** The remainder is dominated by
+  named flagship platforms confirmed to have no comparable official CLI
+  (UTM, OneView, ManageIQ, PagerDuty, Datadog, Slack, the generic/WDC Redfish
+  family), confirmed-dead or no-CLI platforms, defunct/EOL products, and pure
+  notification-protocol modules with no CLI concept at all (IRC/Jabber/
+  Matrix/Telegram/Discord/...). A platform excluded today is not excluded
+  forever — several exclusions were later reversed after that platform
+  shipped a genuine official CLI (Huawei Cloud's KooCLI, HPE's `ilorest`,
+  Lenovo's `OneCli`, among others).
+- **Cloud-provider collections** — `amazon.aws`, `azure.azcollection`,
+  `google.cloud`, and similar. These need real Go SDK bindings per provider's
+  REST API, not shell composition over a CLI the way the rest of this port
+  works — a fundamentally different kind of work, not yet started, and not
+  scoped without a fresh decision to take it on.
+- **Real Ansible's structured module documentation** (`DOCUMENTATION`/
+  `EXAMPLES`/`RETURN` YAML) — `ansible-doc` here prints this port's own Go
+  doc comments instead, real content in a different shape.
+- **`ansible.cfg` file support** — `ansible-config` reads real `ANSIBLE_*`
+  environment variables, but there is no config-file parser at all.
+
+See the **[engine feature matrix](https://go-ansible.github.io/)** on the
+landing page for the current, code-checked status of every playbook
+directive, and the [org profile](https://github.com/go-ansible) for the full,
+itemized list of `community.general` inclusions and exclusions with their
+reasons.
 
 ## Design principles carried through every component
 
 - **Byte/wire compatible, not merely similar.** `vault` reproduces
   `ansible.parsing.vault.VaultAES256`'s exact format; a file it writes
-  decrypts with the real `ansible-vault` and vice versa. Every future
-  component holds itself to the same bar against the real `ansible-core`
-  behavior, not against this project's own prior guesses.
-- **Pure Go, `CGO_ENABLED=0`.** No component here, or planned, depends on a
-  C library or an external interpreter.
+  decrypts with the real `ansible-vault` and vice versa. Every component
+  holds itself to the same bar against the real `ansible-core` behavior, not
+  against this project's own prior guesses — cross-validated against a real
+  installed `ansible-core` wherever that's possible.
+- **Pure Go, `CGO_ENABLED=0`.** No component here depends on a C library or
+  an external interpreter.
 - **Each concern its own module.** `vault` has no dependency on the other
-  three; a program that only needs Vault-compatible decryption does not pull
-  in a Jinja2 engine it will never call. The same separation is intended for
-  `modules`, `playbook`, `facts`, and `galaxy` as they land.
+  seven; a program that only needs Vault-compatible decryption does not pull
+  in a Jinja2 engine or a playbook engine it will never call.
+- **Fail loud, don't silently approximate.** Where this port's architecture
+  cannot reach real Ansible's behavior — `ansible.posix.synchronize`'s
+  controller-side rsync, a SaaS platform with no official CLI — the module or
+  feature fails with an explicit, honest error rather than a plausible-
+  looking partial implementation.
