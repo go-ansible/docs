@@ -21,7 +21,10 @@ on every push and pull request:
   engine driving all of the above against a real play: loops, conditionals,
   blocks with genuine per-host recovery, `become`, roles (nested variable
   scoping composes to any depth), both the `linear` and `free` execution
-  strategies
+  strategies, `until`/`retries`/`delay`, `run_once`, a real `Forks`
+  concurrency cap, `vars_prompt`, `async`/`poll` (for `command`/`shell`),
+  fully-qualified collection names, dynamic inventory scripts, and
+  `ansible.cfg` file support
 - [`cli`](components/cli.md) — all 8 real `ansible-*` binaries, plus a
   multi-arch `FROM scratch` OCI image on every version tag
 
@@ -50,8 +53,14 @@ developed further and is not part of the current architecture.
 - **Real Ansible's structured module documentation** (`DOCUMENTATION`/
   `EXAMPLES`/`RETURN` YAML) — `ansible-doc` here prints this port's own Go
   doc comments instead, real content in a different shape.
-- **`ansible.cfg` file support** — `ansible-config` reads real `ANSIBLE_*`
-  environment variables, but there is no config-file parser at all.
+- **The namespace/collection metadata system**, real
+  `ansible-galaxy collection install` (this port's `ansible-galaxy` only
+  clones a role from a git URL — no galaxy.ansible.com API), and
+  lookup/callback plugins.
+- **Active kill-on-timeout for `async`/`poll`.** An overrunning backgrounded
+  job is detected but not killed — real Ansible's `async_wrapper.py` sends
+  `killpg` to the whole process group, and there is no portable POSIX
+  equivalent without `setsid`, which macOS doesn't have.
 
 See the **[engine feature matrix](https://go-ansible.github.io/)** on the
 landing page for the current, code-checked status of every playbook

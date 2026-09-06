@@ -47,6 +47,18 @@ merged in name order, and then `group_vars/<name>.yml` (or a
 `group_vars/<name>/*.yml` directory) and the equivalent `host_vars/` siblings
 are merged in, **group vars before host vars**, matching Ansible's precedence.
 
+## Dynamic inventory scripts
+
+`Load` detects an executable `path` (`IsScript`, checking the file mode's
+executable bit) and runs it as a dynamic inventory script instead of parsing
+it as YAML/INI, against the real script protocol: `path --list` for the full
+group/host graph, `path --host <name>` for one host's vars when a group
+entry doesn't already provide them via the `_meta.hostvars` optimization.
+Each group in `--list`'s output may be either the shorthand array of
+hostnames or the full `{hosts, vars, children}` object form — both parse.
+`group_vars`/`host_vars` directories are not consulted for a script-backed
+inventory, matching real Ansible.
+
 ## Group ancestry and merge order
 
 ```go

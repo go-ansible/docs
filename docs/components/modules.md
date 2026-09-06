@@ -43,7 +43,14 @@ func (r *Registry) Register(name string, fn Func)
 func (r *Registry) Get(name string) (Func, bool)
 func (r *Registry) Names() []string
 func (r *Registry) Run(ctx context.Context, name string, conn remoteexec.Connection, args map[string]any) (Result, error)
+
+func NormalizeName(name string) string // strips a known collection prefix
 ```
+
+`Get` falls back to `NormalizeName(name)`, so a fully-qualified collection
+name (`ansible.builtin.copy`, `community.general.ufw`, and the other three
+known prefixes) resolves to exactly the same `Func` as its bare form — no
+separate registration needed per FQCN.
 
 A module's arguments arrive already Jinja2-rendered by the caller (this
 package never templates anything itself). A non-nil `error` from `Run` means

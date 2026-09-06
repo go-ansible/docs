@@ -9,8 +9,10 @@
 built." It now implements real per-host execution: `when`/`loop`/`register`,
 `block`/`rescue`/`always` with genuine per-host recovery, `notify`/handlers,
 `become`, roles, `include_tasks`/`import_tasks`/`include_role`/`import_role`/
-`import_playbook`, `delegate_to`, `serial` batching, tag filtering, and both
-the `linear` (default) and `free` execution strategies.
+`import_playbook`, `delegate_to`, `serial` batching, tag filtering, both
+the `linear` (default) and `free` execution strategies, `until`/`retries`/
+`delay`, `run_once`, a real `Forks` concurrency cap, `vars_prompt`, and
+`async`/`poll` for `command`/`shell`.
 
 See the **[engine feature matrix](https://go-ansible.github.io/)** on the
 landing page for the current, code-checked status of every playbook
@@ -109,8 +111,16 @@ all:
 `include_tasks`/`import_tasks`/`include_role`/`import_role` resolve
 **statically at parse time**, not real Ansible's dynamic, per-host,
 possibly-templated resolution — documented as narrower, not silently
-different. The namespace/collection metadata system, dynamic inventory
-plugins, and lookup/callback plugins are out of scope entirely. Any playbook
-`strategy` other than `linear`/`free` (`debug`, `host_pinned`, a strategy
-plugin) is rejected with an explicit parse error rather than silently treated
-as `linear`.
+different. The namespace/collection metadata system, Python-style inventory
+*plugins*, and lookup/callback plugins are out of scope entirely (executable
+inventory *scripts* — the `--list`/`--host` protocol — are supported; see
+[inventory](inventory.md)). Any playbook `strategy` other than `linear`/
+`free` (`debug`, `host_pinned`, a strategy plugin) is rejected with an
+explicit parse error rather than silently treated as `linear`.
+`async`/`poll` only genuinely backgrounds `command`/`shell` on the target
+— the only two modules whose entire work reduces to one remote invocation —
+and an overrunning job is detected on timeout but not actively killed, since
+real Ansible's `killpg` has no portable POSIX equivalent without `setsid`
+(absent on macOS). `run_once` broadcasts its `register:` value across a
+batch but is not coordinated across `strategy: free`'s independent per-host
+lanes.
