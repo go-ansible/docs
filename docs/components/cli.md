@@ -11,12 +11,12 @@ underneath, no subprocess boundary at all.
 | Binary | What it does |
 |---|---|
 | `ansible` | Ad-hoc module execution against a pattern (`ansible all -m ping`) |
-| `ansible-playbook` | Runs a playbook via [`playbook.Engine`](playbook.md) |
+| `ansible-playbook` | Runs a playbook via [`playbook.Engine`](playbook.md); `-f`/`--forks` sets the concurrency cap, and `vars_prompt:` prompts at a real terminal (masked input for `private` vars, falling back to defaults when not a TTY) |
 | `ansible-vault` | Encrypt/decrypt/view/edit/rekey — wraps [`vault`](vault.md) |
 | `ansible-galaxy` | Installs a role from a git URL via [`go-git`](https://github.com/go-git/go-git) — **no galaxy.ansible.com HTTP API**, out of scope |
 | `ansible-pull` | Clones/pulls a git repo and runs a playbook from it against the local machine (pull-mode counterpart to `ansible-playbook`) |
 | `ansible-doc` | Prints each module's own Go doc comment via a build-time codegen tool — real content, not real Ansible's structured `DOCUMENTATION` YAML |
-| `ansible-config` | `list`/`dump`/`view` — real `ANSIBLE_*` environment variable support, no `ansible.cfg` file parsing |
+| `ansible-config` | `list`/`dump`/`view` — reads real `ANSIBLE_*` environment variables and, for the settings this port supports, an actual `ansible.cfg` `[defaults]` section (host var > env var > `ansible.cfg` > compiled default; `$ANSIBLE_CONFIG` > `./ansible.cfg` > `~/.ansible.cfg` > `/etc/ansible/ansible.cfg`, first found wins outright) |
 | `ansible-console` | Interactive REPL: `cd PATTERN`, `list`, `become`/`nobecome`, runs any registered module by name or a bare shell command |
 
 ## Building
@@ -64,5 +64,8 @@ repository was planned early on for this; the actual implementation turned
 out simple enough to fold directly into `cli` instead, and the standalone
 repository was never developed further). `ansible-doc` prints this port's own
 Go doc comments, not real Ansible's structured `DOCUMENTATION`/`EXAMPLES`/
-`RETURN` YAML blocks. `ansible-config view` always fails honestly — there is
-no `ansible.cfg` file support at all.
+`RETURN` YAML blocks. `ansible-config`'s `ansible.cfg` support covers only the
+settings this port itself reads (see [`ConfigDefaults`](playbook.md)) — an
+unrecognized-but-valid Ansible setting in the file is silently ignored rather
+than surfaced, matching how unset environment variables were already
+treated.

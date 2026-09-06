@@ -21,7 +21,7 @@ push and pull request:
 | [`template`](components/template.md) | Jinja2-compatible templating with Ansible's filter and test library layered on top, including Ansible's native-type rendering rule for a bare `{{ expr }}` |
 | [`facts`](components/facts.md) | Fact gathering — the `setup` module equivalent — in one shell round trip, no Python required |
 | [`modules`](components/modules.md) | The Ansible module execution protocol plus **561 modules**: all of `ansible.builtin` and `ansible.posix`, and a curated 485 of `community.general` |
-| [`playbook`](components/playbook.md) | The playbook/role/task/handler engine tying all of the above together against a real play — loops, conditionals, blocks, `become`, roles, both execution strategies |
+| [`playbook`](components/playbook.md) | The playbook/role/task/handler engine tying all of the above together against a real play — loops, conditionals, blocks, `become`, roles, both execution strategies, retries, `run_once`, forks, `vars_prompt`, `async`/`poll`, dynamic inventory, `ansible.cfg` |
 | [`cli`](components/cli.md) | All 8 real `ansible-*` binaries, each a thin wrapper over `playbook`/`vault`/`inventory` |
 
 See the [component overview](components/index.md) for how these fit together,
