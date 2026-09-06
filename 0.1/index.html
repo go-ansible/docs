@@ -6,7 +6,7 @@
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
       
-        <meta name="description" content="A pure-Go (CGO=0), functional-parity port of Ansible: Vault-compatible encryption, inventory parsing, variable precedence, and Jinja2-compatible templating.">
+        <meta name="description" content="A pure-Go (CGO=0), functional-parity port of Ansible: Vault-compatible encryption, inventory parsing, variable precedence, Jinja2-compatible templating, fact gathering, 561 modules, the playbook engine, and all 8 ansible-* CLI binaries.">
       
       
       
@@ -564,6 +564,118 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="components/facts/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    facts — fact gathering
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="components/modules/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    modules — 561-module execution library
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="components/playbook/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    playbook — the playbook engine
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="components/cli/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    cli — the 8 ansible-* binaries
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -709,7 +821,8 @@ extensions, no <code>pip install</code> — each component is an importable Go p
 compiles into your own static binary, and the wire formats it reads and writes
 are byte-compatible with the real <code>ansible-core</code> tooling.</p>
 <h2 id="what-exists-today">What exists today<a class="headerlink" href="#what-exists-today" title="Permanent link">&para;</a></h2>
-<p>Four components are real, tested Go libraries with CI:</p>
+<p>All eight components are real, tested Go libraries with CI running on every
+push and pull request:</p>
 <table>
 <thead>
 <tr>
@@ -734,13 +847,29 @@ are byte-compatible with the real <code>ansible-core</code> tooling.</p>
 <td><a href="components/template/"><code>template</code></a></td>
 <td>Jinja2-compatible templating with Ansible's filter and test library layered on top, including Ansible's native-type rendering rule for a bare <code>{{ expr }}</code></td>
 </tr>
+<tr>
+<td><a href="components/facts/"><code>facts</code></a></td>
+<td>Fact gathering — the <code>setup</code> module equivalent — in one shell round trip, no Python required</td>
+</tr>
+<tr>
+<td><a href="components/modules/"><code>modules</code></a></td>
+<td>The Ansible module execution protocol plus <strong>561 modules</strong>: all of <code>ansible.builtin</code> and <code>ansible.posix</code>, and a curated 485 of <code>community.general</code></td>
+</tr>
+<tr>
+<td><a href="components/playbook/"><code>playbook</code></a></td>
+<td>The playbook/role/task/handler engine tying all of the above together against a real play — loops, conditionals, blocks, <code>become</code>, roles, both execution strategies</td>
+</tr>
+<tr>
+<td><a href="components/cli/"><code>cli</code></a></td>
+<td>All 8 real <code>ansible-*</code> binaries, each a thin wrapper over <code>playbook</code>/<code>vault</code>/<code>inventory</code></td>
+</tr>
 </tbody>
 </table>
 <p>See the <a href="components/">component overview</a> for how these fit together,
-or <a href="roadmap/">Roadmap</a> for what's still ahead — module execution, the
-playbook/role engine, fact gathering, a Galaxy client, and the <code>ansible-*</code> CLI
-binaries are in progress in their own repositories and are not yet part of
-this documentation.</p>
+<a href="roadmap/">Roadmap</a> for what's still ahead beyond today's module/collection
+surface, and the <strong><a href="https://go-ansible.github.io/">engine feature matrix</a></strong>
+on the landing page for exactly which playbook directives are implemented,
+re-checked against the code rather than assumed.</p>
 <h2 id="why-pure-go">Why pure Go<a class="headerlink" href="#why-pure-go" title="Permanent link">&para;</a></h2>
 <p>Being pure Go buys three things Ansible's own Python implementation cannot:</p>
 <ul>
@@ -749,12 +878,16 @@ this documentation.</p>
   ship one file.</li>
 <li><strong>CGO-free by construction.</strong> Every dependency here is pure Go — vault's
   crypto comes from <code>golang.org/x/crypto</code>, not a C OpenSSL binding — so the
-  usual cross-compilation and static-linking headaches don't apply.</li>
+  usual cross-compilation and static-linking headaches don't apply. <code>cli</code>
+  publishes a multi-arch <code>FROM scratch</code> OCI image on every version tag,
+  something real Ansible's own Python interpreter and pip dependencies can
+  never reach.</li>
 <li><strong>Byte-for-byte compatibility, not a reinterpretation.</strong> <code>vault</code> reproduces
   the exact wire format of <code>ansible.parsing.vault.VaultAES256</code>; files written
   by one decrypt with the other. That's the bar for every component here: not
   "does something similar," but "reads what Ansible wrote, writes what Ansible
-  reads."</li>
+  reads" — verified against a real installed <code>ansible-core</code>, not just internal
+  review.</li>
 </ul>
 <h2 id="repositories">Repositories<a class="headerlink" href="#repositories" title="Permanent link">&para;</a></h2>
 <table>
@@ -782,6 +915,22 @@ this documentation.</p>
 <td>Jinja2-compatible templating with Ansible's filter and test library</td>
 </tr>
 <tr>
+<td><a href="https://github.com/go-ansible/facts"><code>facts</code></a></td>
+<td>Fact gathering, pure Go CGO=0</td>
+</tr>
+<tr>
+<td><a href="https://github.com/go-ansible/modules"><code>modules</code></a></td>
+<td>Module execution protocol plus the 561-module core library</td>
+</tr>
+<tr>
+<td><a href="https://github.com/go-ansible/playbook"><code>playbook</code></a></td>
+<td>Playbook/task/handler execution engine</td>
+</tr>
+<tr>
+<td><a href="https://github.com/go-ansible/cli"><code>cli</code></a></td>
+<td>All 8 CLI binaries</td>
+</tr>
+<tr>
 <td><a href="https://github.com/go-ansible/brand"><code>brand</code></a></td>
 <td>Logo, favicon and social banner</td>
 </tr>
@@ -791,6 +940,11 @@ this documentation.</p>
 </tr>
 </tbody>
 </table>
+<p>The low-level SSH/local/<code>become</code> connection layer lives outside this org, in
+the project-neutral
+<a href="https://github.com/go-remoteexec/transport"><code>go-remoteexec/transport</code></a>
+(shared with <code>go-puppet-bolt/bolt</code>); <code>modules</code>, <code>playbook</code>, and <code>cli</code> depend
+on it directly.</p>
 <p>📖 <strong><a href="https://go-ansible.github.io/">go-ansible.github.io</a></strong></p>
 
 

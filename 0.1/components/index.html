@@ -6,7 +6,7 @@
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
       
-        <meta name="description" content="A pure-Go (CGO=0), functional-parity port of Ansible: Vault-compatible encryption, inventory parsing, variable precedence, and Jinja2-compatible templating.">
+        <meta name="description" content="A pure-Go (CGO=0), functional-parity port of Ansible: Vault-compatible encryption, inventory parsing, variable precedence, Jinja2-compatible templating, fact gathering, 561 modules, the playbook engine, and all 8 ansible-* CLI binaries.">
       
       
       
@@ -498,6 +498,118 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="facts/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    facts — fact gathering
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="modules/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    modules — 561-module execution library
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="playbook/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    playbook — the playbook engine
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="cli/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    cli — the 8 ansible-* binaries
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -598,24 +710,41 @@
 <p>Ansible's own engine wires several distinct concerns together at run time: it
 reads an inventory, gathers facts, resolves variables through a fixed
 precedence order, renders Jinja2 templates against the result, and — via
-modules — carries out the actual work. go-ansible keeps that same separation,
-one Go module per concern, so each piece is independently importable and
-independently tested against Ansible's real behavior rather than against a
-reimplementation of a reimplementation.</p>
+modules — carries out the actual work, all orchestrated by the playbook/role/
+task engine. go-ansible keeps that same separation, one Go module per
+concern, so each piece is independently importable and independently tested
+against Ansible's real behavior rather than against a reimplementation of a
+reimplementation.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>inventory  →  hosts, groups, group_vars/host_vars
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>                        │
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>                        ▼
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>   vars    →  merges inventory vars with facts, play/role/task vars,
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>              and extra-vars through Ansible's fixed precedence ladder
-<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>                        │
-<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>                        ▼
-<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a> template  →  renders {{ }} / {% %} against the merged variable context,
-<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>              using Ansible's filter and test library
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>     │                            │
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>     │                            ▼
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>     │                 facts  →  gathers a target's system facts
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>     │                            (the `setup` module equivalent)
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>     │                            │
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>     ▼                            ▼
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>   vars    →  merges inventory vars with facts, play/role/task vars,
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>              and extra-vars through Ansible's fixed precedence ladder
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>                        │
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>                        ▼
+<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a> template  →  renders {{ }} / {% %} against the merged variable context,
+<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>              using Ansible's filter and test library
+<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>                        │
+<a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a>                        ▼
+<a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a> modules   →  executes a task's module (561 registered) against a
+<a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a>              real target connection, using the rendered arguments
+<a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a>                        │
+<a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a>                        ▼
+<a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a> playbook  →  the engine tying all of the above together: per-host
+<a id="__codelineno-0-21" name="__codelineno-0-21" href="#__codelineno-0-21"></a>              execution, blocks/rescue/handlers/roles/strategies
+<a id="__codelineno-0-22" name="__codelineno-0-22" href="#__codelineno-0-22"></a>                        │
+<a id="__codelineno-0-23" name="__codelineno-0-23" href="#__codelineno-0-23"></a>                        ▼
+<a id="__codelineno-0-24" name="__codelineno-0-24" href="#__codelineno-0-24"></a>   cli     →  all 8 real ansible-* binaries, thin wrappers over playbook
 </code></pre></div>
-<p>Each component is usable on its own — <code>vault</code> has no dependency on the other
-three, and <code>inventory</code> and <code>vars</code> can be used together without <code>template</code> — so
-a program that only needs Vault-compatible decryption, say, does not pull in a
-Jinja2 engine it will never call.</p>
+<p>Each component is still usable on its own — <code>vault</code> has no dependency on the
+other seven, and <code>inventory</code>/<code>vars</code>/<code>template</code> can be exercised together
+without ever touching <code>modules</code> or <code>playbook</code> — so a program that only needs
+Vault-compatible decryption, say, does not pull in a Jinja2 engine or a
+playbook engine it will never call.</p>
 <table>
 <thead>
 <tr>
@@ -645,11 +774,32 @@ Jinja2 engine it will never call.</p>
 <td><code>go-regexp/engine</code>, <code>nikolalohinski/gonja/v2</code></td>
 <td>Real, tested, CI</td>
 </tr>
+<tr>
+<td><a href="facts/"><code>facts</code></a></td>
+<td><code>go-remoteexec/transport</code></td>
+<td>Real, tested, CI</td>
+</tr>
+<tr>
+<td><a href="modules/"><code>modules</code></a></td>
+<td><code>go-remoteexec/transport</code></td>
+<td>Real, tested, CI — 561 modules</td>
+</tr>
+<tr>
+<td><a href="playbook/"><code>playbook</code></a></td>
+<td><code>inventory</code>, <code>vars</code>, <code>template</code>, <code>modules</code>, <code>facts</code>, <code>go-remoteexec/transport</code></td>
+<td>Real, tested, CI — the engine tying the rest together</td>
+</tr>
+<tr>
+<td><a href="cli/"><code>cli</code></a></td>
+<td><code>playbook</code>, <code>vault</code>, <code>inventory</code>, <code>go-git</code></td>
+<td>Real, tested, CI — all 8 <code>ansible-*</code> binaries</td>
+</tr>
 </tbody>
 </table>
-<p>What is not yet built — module execution, the playbook/role/task engine that
-would actually drive <code>vars</code> and <code>template</code> together, fact gathering, and the
-<code>ansible-*</code> CLI binaries — is tracked in <a href="../roadmap/">Roadmap</a>.</p>
+<p>All eight are shipped and tagged. See <a href="../roadmap/">Roadmap</a> for what's
+still ahead beyond the current module/collection surface, and the
+<a href="https://go-ansible.github.io/">engine feature matrix</a> on the landing page
+for exactly which playbook directives are implemented today.</p>
 
 
 

@@ -10,13 +10,13 @@
       
       
       
-        <link rel="canonical" href="https://go-ansible.github.io/docs/0.1/components/template/">
+        <link rel="canonical" href="https://go-ansible.github.io/docs/0.1/components/facts/">
       
       
-        <link rel="prev" href="../vars/">
+        <link rel="prev" href="../template/">
       
       
-        <link rel="next" href="../facts/">
+        <link rel="next" href="../modules/">
       
       
         
@@ -27,7 +27,7 @@
     
     
       
-        <title>template — Jinja2-compatible templating - go-ansible docs</title>
+        <title>facts — fact gathering - go-ansible docs</title>
       
     
     
@@ -78,7 +78,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#template" class="md-skip">
+        <a href="#facts" class="md-skip">
           Skip to content
         </a>
       
@@ -117,7 +117,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              template — Jinja2-compatible templating
+              facts — fact gathering
             
           </span>
         </div>
@@ -464,6 +464,34 @@
                 
   
   
+  
+  
+    <li class="md-nav__item">
+      <a href="../template/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    template — Jinja2-compatible templating
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
     
   
   
@@ -483,7 +511,7 @@
   <span class="md-ellipsis">
     
   
-    template — Jinja2-compatible templating
+    facts — fact gathering
   
 
     
@@ -501,7 +529,7 @@
   <span class="md-ellipsis">
     
   
-    template — Jinja2-compatible templating
+    facts — fact gathering
   
 
     
@@ -538,17 +566,6 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#filter-and-test-library" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Filter and test library
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
   <a href="#example" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -560,10 +577,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#where-this-fits" class="md-nav__link">
+  <a href="#what-is-not-implemented" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Where this fits
+        What is not implemented
       
     </span>
   </a>
@@ -574,34 +591,6 @@
   
 </nav>
       
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../facts/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    facts — fact gathering
-  
-
-    
-  </span>
-  
-  
-
-      </a>
     </li>
   
 
@@ -790,17 +779,6 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#filter-and-test-library" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Filter and test library
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
   <a href="#example" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -812,10 +790,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#where-this-fits" class="md-nav__link">
+  <a href="#what-is-not-implemented" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Where this fits
+        What is not implemented
       
     </span>
   </a>
@@ -839,90 +817,48 @@
 
 
 
-<h1 id="template">template<a class="headerlink" href="#template" title="Permanent link">&para;</a></h1>
-<p><a href="https://github.com/go-ansible/template/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/go-ansible/template/actions/workflows/ci.yml/badge.svg" /></a></p>
-<p><code>github.com/go-ansible/template</code> renders Ansible's templating semantics on
-top of a Jinja2-compatible engine
-(<a href="https://github.com/NikolaLohinski/gonja"><code>nikolalohinski/gonja/v2</code></a>):
-string interpolation with <code>{{ }}</code>, control structures with <code>{% %}</code>, Ansible's
-own filter and test library layered on Jinja2's built-ins, and Ansible's rule
-that a value which is a <strong>single</strong> <code>{{ expr }}</code> with nothing else around it
-renders to the expression's <em>native type</em> (list, dict, int, bool…), not a
-string.</p>
+<h1 id="facts">facts<a class="headerlink" href="#facts" title="Permanent link">&para;</a></h1>
+<p><a href="https://github.com/go-ansible/facts/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/go-ansible/facts/actions/workflows/ci.yml/badge.svg" /></a></p>
+<p><code>github.com/go-ansible/facts</code> is the Go equivalent of Ansible's <code>setup</code>
+module: it gathers a target's facts — OS family, distribution, architecture,
+hostname, and more — in a <strong>single shell round trip</strong>, not by shipping and
+running a Python fact-gathering script the way real Ansible does.</p>
 <h2 id="api">API<a class="headerlink" href="#api" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kd">func</span><span class="w"> </span><span class="nx">New</span><span class="p">()</span><span class="w"> </span><span class="o">*</span><span class="nx">Engine</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">e</span><span class="w"> </span><span class="o">*</span><span class="nx">Engine</span><span class="p">)</span><span class="w"> </span><span class="nx">Render</span><span class="p">(</span><span class="nx">src</span><span class="w"> </span><span class="kt">string</span><span class="p">,</span><span class="w"> </span><span class="nx">data</span><span class="w"> </span><span class="kt">map</span><span class="p">[</span><span class="kt">string</span><span class="p">]</span><span class="kt">any</span><span class="p">)</span><span class="w"> </span><span class="p">(</span><span class="kt">string</span><span class="p">,</span><span class="w"> </span><span class="kt">error</span><span class="p">)</span>
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">e</span><span class="w"> </span><span class="o">*</span><span class="nx">Engine</span><span class="p">)</span><span class="w"> </span><span class="nx">Eval</span><span class="p">(</span><span class="nx">exprSrc</span><span class="w"> </span><span class="kt">string</span><span class="p">,</span><span class="w"> </span><span class="nx">data</span><span class="w"> </span><span class="kt">map</span><span class="p">[</span><span class="kt">string</span><span class="p">]</span><span class="kt">any</span><span class="p">)</span><span class="w"> </span><span class="p">(</span><span class="kt">any</span><span class="p">,</span><span class="w"> </span><span class="kt">error</span><span class="p">)</span>
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">e</span><span class="w"> </span><span class="o">*</span><span class="nx">Engine</span><span class="p">)</span><span class="w"> </span><span class="nx">EvalBool</span><span class="p">(</span><span class="nx">exprSrc</span><span class="w"> </span><span class="kt">string</span><span class="p">,</span><span class="w"> </span><span class="nx">data</span><span class="w"> </span><span class="kt">map</span><span class="p">[</span><span class="kt">string</span><span class="p">]</span><span class="kt">any</span><span class="p">)</span><span class="w"> </span><span class="p">(</span><span class="kt">bool</span><span class="p">,</span><span class="w"> </span><span class="kt">error</span><span class="p">)</span>
-<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">e</span><span class="w"> </span><span class="o">*</span><span class="nx">Engine</span><span class="p">)</span><span class="w"> </span><span class="nx">RenderValue</span><span class="p">(</span><span class="nx">raw</span><span class="w"> </span><span class="kt">any</span><span class="p">,</span><span class="w"> </span><span class="nx">data</span><span class="w"> </span><span class="kt">map</span><span class="p">[</span><span class="kt">string</span><span class="p">]</span><span class="kt">any</span><span class="p">)</span><span class="w"> </span><span class="p">(</span><span class="kt">any</span><span class="p">,</span><span class="w"> </span><span class="kt">error</span><span class="p">)</span>
-<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>
-<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="kd">func</span><span class="w"> </span><span class="nx">IsTemplate</span><span class="p">(</span><span class="nx">s</span><span class="w"> </span><span class="kt">string</span><span class="p">)</span><span class="w"> </span><span class="kt">bool</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kd">func</span><span class="w"> </span><span class="nx">Gather</span><span class="p">(</span><span class="nx">ctx</span><span class="w"> </span><span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span><span class="w"> </span><span class="nx">conn</span><span class="w"> </span><span class="nx">remoteexec</span><span class="p">.</span><span class="nx">Connection</span><span class="p">)</span><span class="w"> </span><span class="p">(</span><span class="kt">map</span><span class="p">[</span><span class="kt">string</span><span class="p">]</span><span class="kt">any</span><span class="p">,</span><span class="w"> </span><span class="kt">error</span><span class="p">)</span>
 </code></pre></div>
-<ul>
-<li><code>Render</code> renders a full template string (text mixed with <code>{{ }}</code>/<code>{% %}</code>)
-  to its string form — the equivalent of Ansible templating a whole file.</li>
-<li><code>Eval</code> evaluates a bare Jinja2 expression (no <code>{{ }}</code> wrapper — the raw text
-  of an Ansible <code>when:</code> condition, say) and returns its native Go value.</li>
-<li><code>EvalBool</code> evaluates an expression and applies Ansible/Jinja2 truthiness —
-  exactly the semantics a <code>when:</code> condition needs.</li>
-<li><code>RenderValue</code> is the one most callers want: given an arbitrary decoded YAML
-  value (a task's <code>args:</code> map, say), it walks maps and lists recursively,
-  templates every string it finds, and — critically — applies the
-  whole-expression rule per string, so <code>image: "{{ tag }}"</code> renders to a
-  string but <code>count: "{{ replicas }}"</code> can come back as a Go <code>int</code> if
-  <code>replicas</code> is one, rather than the string <code>"3"</code>. Non-string scalars pass
-  through unchanged. <code>IsTemplate</code> is the cheap pre-check <code>RenderValue</code> uses
-  internally to skip strings with no <code>{{</code>, <code>{%</code>, or <code>{#</code> at all.</li>
-</ul>
-<h2 id="filter-and-test-library">Filter and test library<a class="headerlink" href="#filter-and-test-library" title="Permanent link">&para;</a></h2>
-<p>Filters and tests are registered on top of gonja's Jinja2 built-ins, not
-instead of them. As of this writing the Ansible-specific set includes:</p>
-<p><strong>Filters</strong> — <code>to_json</code>/<code>to_nice_json</code>/<code>from_json</code>, <code>to_yaml</code>/<code>to_nice_yaml</code>/<code>from_yaml</code>,
-<code>regex_replace</code>/<code>regex_search</code>/<code>regex_findall</code>/<code>regex_escape</code> (backed by
-<a href="https://github.com/go-regexp/engine"><code>go-regexp/engine</code></a>, a PCRE-compatible
-engine, since Ansible's regex filters rely on Python <code>re</code> semantics that
-Go's <code>regexp</code> doesn't fully match), <code>bool</code>, <code>mandatory</code>, <code>ternary</code>, <code>combine</code>,
-<code>dict2items</code>/<code>items2dict</code>, <code>type_debug</code>, <code>quote</code>, <code>basename</code>/<code>dirname</code>,
-<code>b64encode</code>/<code>b64decode</code>, <code>md5</code>/<code>sha1</code>/<code>hash</code>.</p>
-<p><strong>Tests</strong> — <code>changed</code>, <code>success</code>/<code>succeeded</code>, <code>failed</code>/<code>failure</code>, <code>skipped</code>
-(each reads a registered task result's flags, e.g. <code>is changed</code>), and
-<code>version</code> (Ansible's <code>version_compare</code>-equivalent <code>is version(...)</code> test).</p>
+<p><code>Gather</code> runs one composed shell command over <code>conn</code> and parses its output
+into a flat <code>map[string]any</code> of fact names to values — the same shape
+<a href="../playbook/"><code>playbook</code></a> merges via <code>vars.InjectFacts</code> into both
+<code>ansible_facts.&lt;name&gt;</code> and the flattened <code>ansible_&lt;name&gt;</code> convention real
+Ansible playbooks rely on.</p>
 <h2 id="example">Example<a class="headerlink" href="#example" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="kn">package</span><span class="w"> </span><span class="nx">main</span>
 <a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>
 <a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="kn">import</span><span class="w"> </span><span class="p">(</span>
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="w">    </span><span class="s">"fmt"</span>
-<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="w">    </span><span class="s">"log"</span>
-<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>
-<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="w">    </span><span class="s">"github.com/go-ansible/template"</span>
-<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a><span class="p">)</span>
-<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>
-<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a><span class="kd">func</span><span class="w"> </span><span class="nx">main</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a><span class="w">    </span><span class="nx">e</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">template</span><span class="p">.</span><span class="nx">New</span><span class="p">()</span>
-<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a>
-<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a><span class="w">    </span><span class="c1">// A whole-expression template preserves the native type.</span>
-<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a><span class="w">    </span><span class="nx">v</span><span class="p">,</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">e</span><span class="p">.</span><span class="nx">RenderValue</span><span class="p">(</span><span class="s">"{{ replicas }}"</span><span class="p">,</span><span class="w"> </span><span class="kt">map</span><span class="p">[</span><span class="kt">string</span><span class="p">]</span><span class="kt">any</span><span class="p">{</span><span class="s">"replicas"</span><span class="p">:</span><span class="w"> </span><span class="mi">3</span><span class="p">})</span>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="w">    </span><span class="s">"context"</span>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="w">    </span><span class="s">"fmt"</span>
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="w">    </span><span class="s">"log"</span>
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a><span class="w">    </span><span class="s">"github.com/go-ansible/facts"</span>
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a><span class="w">    </span><span class="nx">remoteexec</span><span class="w"> </span><span class="s">"github.com/go-remoteexec/transport"</span>
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a><span class="p">)</span>
+<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>
+<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a><span class="kd">func</span><span class="w"> </span><span class="nx">main</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a><span class="w">    </span><span class="nx">conn</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">remoteexec</span><span class="p">.</span><span class="nx">NewLocal</span><span class="p">()</span>
+<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a><span class="w">    </span><span class="nx">gathered</span><span class="p">,</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">facts</span><span class="p">.</span><span class="nx">Gather</span><span class="p">(</span><span class="nx">context</span><span class="p">.</span><span class="nx">Background</span><span class="p">(),</span><span class="w"> </span><span class="nx">conn</span><span class="p">)</span>
 <a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="kc">nil</span><span class="w"> </span><span class="p">{</span>
 <a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a><span class="w">        </span><span class="nx">log</span><span class="p">.</span><span class="nx">Fatal</span><span class="p">(</span><span class="nx">err</span><span class="p">)</span>
 <a id="__codelineno-1-17" name="__codelineno-1-17" href="#__codelineno-1-17"></a><span class="w">    </span><span class="p">}</span>
-<a id="__codelineno-1-18" name="__codelineno-1-18" href="#__codelineno-1-18"></a><span class="w">    </span><span class="nx">fmt</span><span class="p">.</span><span class="nx">Printf</span><span class="p">(</span><span class="s">"%T %v\n"</span><span class="p">,</span><span class="w"> </span><span class="nx">v</span><span class="p">,</span><span class="w"> </span><span class="nx">v</span><span class="p">)</span><span class="w"> </span><span class="c1">// int 3</span>
-<a id="__codelineno-1-19" name="__codelineno-1-19" href="#__codelineno-1-19"></a>
-<a id="__codelineno-1-20" name="__codelineno-1-20" href="#__codelineno-1-20"></a><span class="w">    </span><span class="nx">s</span><span class="p">,</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">e</span><span class="p">.</span><span class="nx">Render</span><span class="p">(</span><span class="s">"Deploying {{ app }} to {{ env | upper }}"</span><span class="p">,</span><span class="w"> </span><span class="kt">map</span><span class="p">[</span><span class="kt">string</span><span class="p">]</span><span class="kt">any</span><span class="p">{</span>
-<a id="__codelineno-1-21" name="__codelineno-1-21" href="#__codelineno-1-21"></a><span class="w">        </span><span class="s">"app"</span><span class="p">:</span><span class="w"> </span><span class="s">"api"</span><span class="p">,</span><span class="w"> </span><span class="s">"env"</span><span class="p">:</span><span class="w"> </span><span class="s">"prod"</span><span class="p">,</span>
-<a id="__codelineno-1-22" name="__codelineno-1-22" href="#__codelineno-1-22"></a><span class="w">    </span><span class="p">})</span>
-<a id="__codelineno-1-23" name="__codelineno-1-23" href="#__codelineno-1-23"></a><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="kc">nil</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-1-24" name="__codelineno-1-24" href="#__codelineno-1-24"></a><span class="w">        </span><span class="nx">log</span><span class="p">.</span><span class="nx">Fatal</span><span class="p">(</span><span class="nx">err</span><span class="p">)</span>
-<a id="__codelineno-1-25" name="__codelineno-1-25" href="#__codelineno-1-25"></a><span class="w">    </span><span class="p">}</span>
-<a id="__codelineno-1-26" name="__codelineno-1-26" href="#__codelineno-1-26"></a><span class="w">    </span><span class="nx">fmt</span><span class="p">.</span><span class="nx">Println</span><span class="p">(</span><span class="nx">s</span><span class="p">)</span><span class="w"> </span><span class="c1">// Deploying api to PROD</span>
-<a id="__codelineno-1-27" name="__codelineno-1-27" href="#__codelineno-1-27"></a><span class="p">}</span>
+<a id="__codelineno-1-18" name="__codelineno-1-18" href="#__codelineno-1-18"></a><span class="w">    </span><span class="nx">fmt</span><span class="p">.</span><span class="nx">Println</span><span class="p">(</span><span class="nx">gathered</span><span class="p">[</span><span class="s">"os_family"</span><span class="p">],</span><span class="w"> </span><span class="nx">gathered</span><span class="p">[</span><span class="s">"architecture"</span><span class="p">])</span>
+<a id="__codelineno-1-19" name="__codelineno-1-19" href="#__codelineno-1-19"></a><span class="p">}</span>
 </code></pre></div>
-<h2 id="where-this-fits">Where this fits<a class="headerlink" href="#where-this-fits" title="Permanent link">&para;</a></h2>
-<p><code>template.Engine.Render</code>/<code>RenderValue</code> take a <code>map[string]any</code> — that's
-<a href="../vars/"><code>vars.Context.Merged()</code></a>'s return type, so the variable context
-built from an <a href="../inventory/"><code>inventory</code></a> plus the precedence ladder in
-<code>vars</code> is exactly what a caller hands to this engine to render a task's
-arguments.</p>
+<h2 id="what-is-not-implemented">What is not implemented<a class="headerlink" href="#what-is-not-implemented" title="Permanent link">&para;</a></h2>
+<p>Real Ansible's <code>setup</code> module gathers hundreds of facts via a <code>facter</code>/<code>ohai</code>-
+style plugin system with configurable <code>gather_subset:</code> filtering. This
+package gathers a fixed, commonly-used core set in one round trip rather than
+reproducing that plugin architecture — the facts it does return match real
+Ansible's naming and values exactly, verified against a real <code>ansible -m
+setup</code> run, but the <em>set</em> is narrower by design.</p>
 
 
 

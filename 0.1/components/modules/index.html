@@ -10,13 +10,13 @@
       
       
       
-        <link rel="canonical" href="https://go-ansible.github.io/docs/0.1/components/template/">
+        <link rel="canonical" href="https://go-ansible.github.io/docs/0.1/components/modules/">
       
       
-        <link rel="prev" href="../vars/">
+        <link rel="prev" href="../facts/">
       
       
-        <link rel="next" href="../facts/">
+        <link rel="next" href="../playbook/">
       
       
         
@@ -27,7 +27,7 @@
     
     
       
-        <title>template — Jinja2-compatible templating - go-ansible docs</title>
+        <title>modules — 561-module execution library - go-ansible docs</title>
       
     
     
@@ -78,7 +78,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#template" class="md-skip">
+        <a href="#modules" class="md-skip">
           Skip to content
         </a>
       
@@ -117,7 +117,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              template — Jinja2-compatible templating
+              modules — 561-module execution library
             
           </span>
         </div>
@@ -464,37 +464,10 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    template — Jinja2-compatible templating
-  
-
-    
-  </span>
-  
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../template/" class="md-nav__link">
         
   
   
@@ -510,70 +483,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#api" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        API
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#filter-and-test-library" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Filter and test library
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#example" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Example
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#where-this-fits" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Where this fits
-      
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -611,10 +520,37 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../modules/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    modules — 561-module execution library
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -630,6 +566,59 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#api" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        API
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#example" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Example
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#what-is-not-implemented" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What is not implemented
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -790,17 +779,6 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#filter-and-test-library" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Filter and test library
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
   <a href="#example" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -812,10 +790,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#where-this-fits" class="md-nav__link">
+  <a href="#what-is-not-implemented" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Where this fits
+        What is not implemented
       
     </span>
   </a>
@@ -839,90 +817,93 @@
 
 
 
-<h1 id="template">template<a class="headerlink" href="#template" title="Permanent link">&para;</a></h1>
-<p><a href="https://github.com/go-ansible/template/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/go-ansible/template/actions/workflows/ci.yml/badge.svg" /></a></p>
-<p><code>github.com/go-ansible/template</code> renders Ansible's templating semantics on
-top of a Jinja2-compatible engine
-(<a href="https://github.com/NikolaLohinski/gonja"><code>nikolalohinski/gonja/v2</code></a>):
-string interpolation with <code>{{ }}</code>, control structures with <code>{% %}</code>, Ansible's
-own filter and test library layered on Jinja2's built-ins, and Ansible's rule
-that a value which is a <strong>single</strong> <code>{{ expr }}</code> with nothing else around it
-renders to the expression's <em>native type</em> (list, dict, int, bool…), not a
-string.</p>
+<h1 id="modules">modules<a class="headerlink" href="#modules" title="Permanent link">&para;</a></h1>
+<p><a href="https://github.com/go-ansible/modules/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/go-ansible/modules/actions/workflows/ci.yml/badge.svg" /></a></p>
+<p><code>github.com/go-ansible/modules</code> implements Ansible's module execution model
+and the core module library: <strong>561 modules registered</strong> — all 62 of
+<code>ansible.builtin</code>, all 14 of <code>ansible.posix</code>, and 485 curated from
+<code>community.general</code> (577 real modules in that collection; the remainder is
+deliberately excluded, each with a real, checked reason — see the
+<a href="https://github.com/go-ansible">org profile</a> for the full list).</p>
+<p>Unlike real Ansible, which copies a Python script to the target and runs it
+there, a module here runs its logic on the <strong>control node</strong> and reaches the
+target only through a <a href="https://github.com/go-remoteexec/transport"><code>go-remoteexec/transport</code></a>
+<code>Connection</code>'s <code>Exec</code>/<code>Put</code>/<code>Fetch</code> primitives. The observable behavior is the
+same — the target ends up in the same state — but the difference is
+architectural: a module needs no Go toolchain, no interpreter, nothing
+installed on the target at all.</p>
 <h2 id="api">API<a class="headerlink" href="#api" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kd">func</span><span class="w"> </span><span class="nx">New</span><span class="p">()</span><span class="w"> </span><span class="o">*</span><span class="nx">Engine</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">e</span><span class="w"> </span><span class="o">*</span><span class="nx">Engine</span><span class="p">)</span><span class="w"> </span><span class="nx">Render</span><span class="p">(</span><span class="nx">src</span><span class="w"> </span><span class="kt">string</span><span class="p">,</span><span class="w"> </span><span class="nx">data</span><span class="w"> </span><span class="kt">map</span><span class="p">[</span><span class="kt">string</span><span class="p">]</span><span class="kt">any</span><span class="p">)</span><span class="w"> </span><span class="p">(</span><span class="kt">string</span><span class="p">,</span><span class="w"> </span><span class="kt">error</span><span class="p">)</span>
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">e</span><span class="w"> </span><span class="o">*</span><span class="nx">Engine</span><span class="p">)</span><span class="w"> </span><span class="nx">Eval</span><span class="p">(</span><span class="nx">exprSrc</span><span class="w"> </span><span class="kt">string</span><span class="p">,</span><span class="w"> </span><span class="nx">data</span><span class="w"> </span><span class="kt">map</span><span class="p">[</span><span class="kt">string</span><span class="p">]</span><span class="kt">any</span><span class="p">)</span><span class="w"> </span><span class="p">(</span><span class="kt">any</span><span class="p">,</span><span class="w"> </span><span class="kt">error</span><span class="p">)</span>
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">e</span><span class="w"> </span><span class="o">*</span><span class="nx">Engine</span><span class="p">)</span><span class="w"> </span><span class="nx">EvalBool</span><span class="p">(</span><span class="nx">exprSrc</span><span class="w"> </span><span class="kt">string</span><span class="p">,</span><span class="w"> </span><span class="nx">data</span><span class="w"> </span><span class="kt">map</span><span class="p">[</span><span class="kt">string</span><span class="p">]</span><span class="kt">any</span><span class="p">)</span><span class="w"> </span><span class="p">(</span><span class="kt">bool</span><span class="p">,</span><span class="w"> </span><span class="kt">error</span><span class="p">)</span>
-<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">e</span><span class="w"> </span><span class="o">*</span><span class="nx">Engine</span><span class="p">)</span><span class="w"> </span><span class="nx">RenderValue</span><span class="p">(</span><span class="nx">raw</span><span class="w"> </span><span class="kt">any</span><span class="p">,</span><span class="w"> </span><span class="nx">data</span><span class="w"> </span><span class="kt">map</span><span class="p">[</span><span class="kt">string</span><span class="p">]</span><span class="kt">any</span><span class="p">)</span><span class="w"> </span><span class="p">(</span><span class="kt">any</span><span class="p">,</span><span class="w"> </span><span class="kt">error</span><span class="p">)</span>
-<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>
-<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="kd">func</span><span class="w"> </span><span class="nx">IsTemplate</span><span class="p">(</span><span class="nx">s</span><span class="w"> </span><span class="kt">string</span><span class="p">)</span><span class="w"> </span><span class="kt">bool</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kd">type</span><span class="w"> </span><span class="nx">Result</span><span class="w"> </span><span class="kd">struct</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">    </span><span class="nx">Changed</span><span class="w"> </span><span class="kt">bool</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">    </span><span class="nx">Failed</span><span class="w">  </span><span class="kt">bool</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="w">    </span><span class="nx">Msg</span><span class="w">     </span><span class="kt">string</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="w">    </span><span class="nx">Facts</span><span class="w">   </span><span class="kt">map</span><span class="p">[</span><span class="kt">string</span><span class="p">]</span><span class="kt">any</span><span class="w"> </span><span class="c1">// merged into ansible_facts — set_fact, setup, ...</span>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="w">    </span><span class="nx">Extra</span><span class="w">   </span><span class="kt">map</span><span class="p">[</span><span class="kt">string</span><span class="p">]</span><span class="kt">any</span><span class="w"> </span><span class="c1">// module-specific fields — command's rc/stdout/stderr, ...</span>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="p">}</span>
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="kd">func</span><span class="w"> </span><span class="nx">Ok</span><span class="p">(</span><span class="nx">msg</span><span class="w"> </span><span class="kt">string</span><span class="p">)</span><span class="w"> </span><span class="nx">Result</span>
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="kd">func</span><span class="w"> </span><span class="nx">Changed</span><span class="p">(</span><span class="nx">msg</span><span class="w"> </span><span class="kt">string</span><span class="p">)</span><span class="w"> </span><span class="nx">Result</span>
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="kd">func</span><span class="w"> </span><span class="nx">Fail</span><span class="p">(</span><span class="nx">msg</span><span class="w"> </span><span class="kt">string</span><span class="p">)</span><span class="w"> </span><span class="nx">Result</span>
+<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">r</span><span class="w"> </span><span class="nx">Result</span><span class="p">)</span><span class="w"> </span><span class="nx">WithExtra</span><span class="p">(</span><span class="nx">key</span><span class="w"> </span><span class="kt">string</span><span class="p">,</span><span class="w"> </span><span class="nx">value</span><span class="w"> </span><span class="kt">any</span><span class="p">)</span><span class="w"> </span><span class="nx">Result</span>
+<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>
+<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a><span class="kd">type</span><span class="w"> </span><span class="nx">Func</span><span class="w"> </span><span class="kd">func</span><span class="p">(</span><span class="nx">ctx</span><span class="w"> </span><span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span><span class="w"> </span><span class="nx">conn</span><span class="w"> </span><span class="nx">remoteexec</span><span class="p">.</span><span class="nx">Connection</span><span class="p">,</span><span class="w"> </span><span class="nx">args</span><span class="w"> </span><span class="kt">map</span><span class="p">[</span><span class="kt">string</span><span class="p">]</span><span class="kt">any</span><span class="p">)</span><span class="w"> </span><span class="p">(</span><span class="nx">Result</span><span class="p">,</span><span class="w"> </span><span class="kt">error</span><span class="p">)</span>
+<a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a>
+<a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a><span class="kd">type</span><span class="w"> </span><span class="nx">Registry</span><span class="w"> </span><span class="kd">struct</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="cm">/* ... */</span><span class="w"> </span><span class="p">}</span>
+<a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a>
+<a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a><span class="kd">func</span><span class="w"> </span><span class="nx">NewRegistry</span><span class="p">()</span><span class="w"> </span><span class="o">*</span><span class="nx">Registry</span>
+<a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a><span class="kd">func</span><span class="w"> </span><span class="nx">Default</span><span class="p">()</span><span class="w"> </span><span class="o">*</span><span class="nx">Registry</span><span class="w"> </span><span class="c1">// pre-populated with all 561 built-in modules</span>
+<a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a><span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">r</span><span class="w"> </span><span class="o">*</span><span class="nx">Registry</span><span class="p">)</span><span class="w"> </span><span class="nx">Register</span><span class="p">(</span><span class="nx">name</span><span class="w"> </span><span class="kt">string</span><span class="p">,</span><span class="w"> </span><span class="nx">fn</span><span class="w"> </span><span class="nx">Func</span><span class="p">)</span>
+<a id="__codelineno-0-21" name="__codelineno-0-21" href="#__codelineno-0-21"></a><span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">r</span><span class="w"> </span><span class="o">*</span><span class="nx">Registry</span><span class="p">)</span><span class="w"> </span><span class="nx">Get</span><span class="p">(</span><span class="nx">name</span><span class="w"> </span><span class="kt">string</span><span class="p">)</span><span class="w"> </span><span class="p">(</span><span class="nx">Func</span><span class="p">,</span><span class="w"> </span><span class="kt">bool</span><span class="p">)</span>
+<a id="__codelineno-0-22" name="__codelineno-0-22" href="#__codelineno-0-22"></a><span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">r</span><span class="w"> </span><span class="o">*</span><span class="nx">Registry</span><span class="p">)</span><span class="w"> </span><span class="nx">Names</span><span class="p">()</span><span class="w"> </span><span class="p">[]</span><span class="kt">string</span>
+<a id="__codelineno-0-23" name="__codelineno-0-23" href="#__codelineno-0-23"></a><span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">r</span><span class="w"> </span><span class="o">*</span><span class="nx">Registry</span><span class="p">)</span><span class="w"> </span><span class="nx">Run</span><span class="p">(</span><span class="nx">ctx</span><span class="w"> </span><span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span><span class="w"> </span><span class="nx">name</span><span class="w"> </span><span class="kt">string</span><span class="p">,</span><span class="w"> </span><span class="nx">conn</span><span class="w"> </span><span class="nx">remoteexec</span><span class="p">.</span><span class="nx">Connection</span><span class="p">,</span><span class="w"> </span><span class="nx">args</span><span class="w"> </span><span class="kt">map</span><span class="p">[</span><span class="kt">string</span><span class="p">]</span><span class="kt">any</span><span class="p">)</span><span class="w"> </span><span class="p">(</span><span class="nx">Result</span><span class="p">,</span><span class="w"> </span><span class="kt">error</span><span class="p">)</span>
 </code></pre></div>
-<ul>
-<li><code>Render</code> renders a full template string (text mixed with <code>{{ }}</code>/<code>{% %}</code>)
-  to its string form — the equivalent of Ansible templating a whole file.</li>
-<li><code>Eval</code> evaluates a bare Jinja2 expression (no <code>{{ }}</code> wrapper — the raw text
-  of an Ansible <code>when:</code> condition, say) and returns its native Go value.</li>
-<li><code>EvalBool</code> evaluates an expression and applies Ansible/Jinja2 truthiness —
-  exactly the semantics a <code>when:</code> condition needs.</li>
-<li><code>RenderValue</code> is the one most callers want: given an arbitrary decoded YAML
-  value (a task's <code>args:</code> map, say), it walks maps and lists recursively,
-  templates every string it finds, and — critically — applies the
-  whole-expression rule per string, so <code>image: "{{ tag }}"</code> renders to a
-  string but <code>count: "{{ replicas }}"</code> can come back as a Go <code>int</code> if
-  <code>replicas</code> is one, rather than the string <code>"3"</code>. Non-string scalars pass
-  through unchanged. <code>IsTemplate</code> is the cheap pre-check <code>RenderValue</code> uses
-  internally to skip strings with no <code>{{</code>, <code>{%</code>, or <code>{#</code> at all.</li>
-</ul>
-<h2 id="filter-and-test-library">Filter and test library<a class="headerlink" href="#filter-and-test-library" title="Permanent link">&para;</a></h2>
-<p>Filters and tests are registered on top of gonja's Jinja2 built-ins, not
-instead of them. As of this writing the Ansible-specific set includes:</p>
-<p><strong>Filters</strong> — <code>to_json</code>/<code>to_nice_json</code>/<code>from_json</code>, <code>to_yaml</code>/<code>to_nice_yaml</code>/<code>from_yaml</code>,
-<code>regex_replace</code>/<code>regex_search</code>/<code>regex_findall</code>/<code>regex_escape</code> (backed by
-<a href="https://github.com/go-regexp/engine"><code>go-regexp/engine</code></a>, a PCRE-compatible
-engine, since Ansible's regex filters rely on Python <code>re</code> semantics that
-Go's <code>regexp</code> doesn't fully match), <code>bool</code>, <code>mandatory</code>, <code>ternary</code>, <code>combine</code>,
-<code>dict2items</code>/<code>items2dict</code>, <code>type_debug</code>, <code>quote</code>, <code>basename</code>/<code>dirname</code>,
-<code>b64encode</code>/<code>b64decode</code>, <code>md5</code>/<code>sha1</code>/<code>hash</code>.</p>
-<p><strong>Tests</strong> — <code>changed</code>, <code>success</code>/<code>succeeded</code>, <code>failed</code>/<code>failure</code>, <code>skipped</code>
-(each reads a registered task result's flags, e.g. <code>is changed</code>), and
-<code>version</code> (Ansible's <code>version_compare</code>-equivalent <code>is version(...)</code> test).</p>
+<p>A module's arguments arrive already Jinja2-rendered by the caller (this
+package never templates anything itself). A non-nil <code>error</code> from <code>Run</code> means
+the module could not determine an outcome at all (a transport failure); an
+<em>expected</em> failure — the <code>fail</code> module itself, <code>assert</code> on a false condition,
+a package manager reporting "not found" — is a <code>Result{Failed: true}</code> with a
+<code>nil</code> error, since it is not the module's own execution that went wrong.</p>
 <h2 id="example">Example<a class="headerlink" href="#example" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="kn">package</span><span class="w"> </span><span class="nx">main</span>
 <a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>
 <a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="kn">import</span><span class="w"> </span><span class="p">(</span>
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="w">    </span><span class="s">"fmt"</span>
-<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="w">    </span><span class="s">"log"</span>
-<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>
-<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="w">    </span><span class="s">"github.com/go-ansible/template"</span>
-<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a><span class="p">)</span>
-<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>
-<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a><span class="kd">func</span><span class="w"> </span><span class="nx">main</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a><span class="w">    </span><span class="nx">e</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">template</span><span class="p">.</span><span class="nx">New</span><span class="p">()</span>
-<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a>
-<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a><span class="w">    </span><span class="c1">// A whole-expression template preserves the native type.</span>
-<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a><span class="w">    </span><span class="nx">v</span><span class="p">,</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">e</span><span class="p">.</span><span class="nx">RenderValue</span><span class="p">(</span><span class="s">"{{ replicas }}"</span><span class="p">,</span><span class="w"> </span><span class="kt">map</span><span class="p">[</span><span class="kt">string</span><span class="p">]</span><span class="kt">any</span><span class="p">{</span><span class="s">"replicas"</span><span class="p">:</span><span class="w"> </span><span class="mi">3</span><span class="p">})</span>
-<a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="kc">nil</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a><span class="w">        </span><span class="nx">log</span><span class="p">.</span><span class="nx">Fatal</span><span class="p">(</span><span class="nx">err</span><span class="p">)</span>
-<a id="__codelineno-1-17" name="__codelineno-1-17" href="#__codelineno-1-17"></a><span class="w">    </span><span class="p">}</span>
-<a id="__codelineno-1-18" name="__codelineno-1-18" href="#__codelineno-1-18"></a><span class="w">    </span><span class="nx">fmt</span><span class="p">.</span><span class="nx">Printf</span><span class="p">(</span><span class="s">"%T %v\n"</span><span class="p">,</span><span class="w"> </span><span class="nx">v</span><span class="p">,</span><span class="w"> </span><span class="nx">v</span><span class="p">)</span><span class="w"> </span><span class="c1">// int 3</span>
-<a id="__codelineno-1-19" name="__codelineno-1-19" href="#__codelineno-1-19"></a>
-<a id="__codelineno-1-20" name="__codelineno-1-20" href="#__codelineno-1-20"></a><span class="w">    </span><span class="nx">s</span><span class="p">,</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">e</span><span class="p">.</span><span class="nx">Render</span><span class="p">(</span><span class="s">"Deploying {{ app }} to {{ env | upper }}"</span><span class="p">,</span><span class="w"> </span><span class="kt">map</span><span class="p">[</span><span class="kt">string</span><span class="p">]</span><span class="kt">any</span><span class="p">{</span>
-<a id="__codelineno-1-21" name="__codelineno-1-21" href="#__codelineno-1-21"></a><span class="w">        </span><span class="s">"app"</span><span class="p">:</span><span class="w"> </span><span class="s">"api"</span><span class="p">,</span><span class="w"> </span><span class="s">"env"</span><span class="p">:</span><span class="w"> </span><span class="s">"prod"</span><span class="p">,</span>
-<a id="__codelineno-1-22" name="__codelineno-1-22" href="#__codelineno-1-22"></a><span class="w">    </span><span class="p">})</span>
-<a id="__codelineno-1-23" name="__codelineno-1-23" href="#__codelineno-1-23"></a><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="kc">nil</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-1-24" name="__codelineno-1-24" href="#__codelineno-1-24"></a><span class="w">        </span><span class="nx">log</span><span class="p">.</span><span class="nx">Fatal</span><span class="p">(</span><span class="nx">err</span><span class="p">)</span>
-<a id="__codelineno-1-25" name="__codelineno-1-25" href="#__codelineno-1-25"></a><span class="w">    </span><span class="p">}</span>
-<a id="__codelineno-1-26" name="__codelineno-1-26" href="#__codelineno-1-26"></a><span class="w">    </span><span class="nx">fmt</span><span class="p">.</span><span class="nx">Println</span><span class="p">(</span><span class="nx">s</span><span class="p">)</span><span class="w"> </span><span class="c1">// Deploying api to PROD</span>
-<a id="__codelineno-1-27" name="__codelineno-1-27" href="#__codelineno-1-27"></a><span class="p">}</span>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="w">    </span><span class="s">"context"</span>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="w">    </span><span class="s">"fmt"</span>
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="w">    </span><span class="s">"log"</span>
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a><span class="w">    </span><span class="s">"github.com/go-ansible/modules"</span>
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a><span class="w">    </span><span class="nx">remoteexec</span><span class="w"> </span><span class="s">"github.com/go-remoteexec/transport"</span>
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a><span class="p">)</span>
+<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>
+<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a><span class="kd">func</span><span class="w"> </span><span class="nx">main</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a><span class="w">    </span><span class="nx">reg</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">modules</span><span class="p">.</span><span class="nx">Default</span><span class="p">()</span>
+<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a><span class="w">    </span><span class="nx">conn</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">remoteexec</span><span class="p">.</span><span class="nx">NewLocal</span><span class="p">()</span><span class="w"> </span><span class="c1">// runs on this machine</span>
+<a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a>
+<a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a><span class="w">    </span><span class="nx">result</span><span class="p">,</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">reg</span><span class="p">.</span><span class="nx">Run</span><span class="p">(</span><span class="nx">context</span><span class="p">.</span><span class="nx">Background</span><span class="p">(),</span><span class="w"> </span><span class="s">"copy"</span><span class="p">,</span><span class="w"> </span><span class="nx">conn</span><span class="p">,</span><span class="w"> </span><span class="kt">map</span><span class="p">[</span><span class="kt">string</span><span class="p">]</span><span class="kt">any</span><span class="p">{</span>
+<a id="__codelineno-1-17" name="__codelineno-1-17" href="#__codelineno-1-17"></a><span class="w">        </span><span class="s">"src"</span><span class="p">:</span><span class="w">  </span><span class="s">"/tmp/source.txt"</span><span class="p">,</span>
+<a id="__codelineno-1-18" name="__codelineno-1-18" href="#__codelineno-1-18"></a><span class="w">        </span><span class="s">"dest"</span><span class="p">:</span><span class="w"> </span><span class="s">"/tmp/dest.txt"</span><span class="p">,</span>
+<a id="__codelineno-1-19" name="__codelineno-1-19" href="#__codelineno-1-19"></a><span class="w">    </span><span class="p">})</span>
+<a id="__codelineno-1-20" name="__codelineno-1-20" href="#__codelineno-1-20"></a><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="kc">nil</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-1-21" name="__codelineno-1-21" href="#__codelineno-1-21"></a><span class="w">        </span><span class="nx">log</span><span class="p">.</span><span class="nx">Fatal</span><span class="p">(</span><span class="nx">err</span><span class="p">)</span>
+<a id="__codelineno-1-22" name="__codelineno-1-22" href="#__codelineno-1-22"></a><span class="w">    </span><span class="p">}</span>
+<a id="__codelineno-1-23" name="__codelineno-1-23" href="#__codelineno-1-23"></a><span class="w">    </span><span class="nx">fmt</span><span class="p">.</span><span class="nx">Println</span><span class="p">(</span><span class="nx">result</span><span class="p">.</span><span class="nx">Changed</span><span class="p">,</span><span class="w"> </span><span class="nx">result</span><span class="p">.</span><span class="nx">Msg</span><span class="p">)</span>
+<a id="__codelineno-1-24" name="__codelineno-1-24" href="#__codelineno-1-24"></a><span class="p">}</span>
 </code></pre></div>
-<h2 id="where-this-fits">Where this fits<a class="headerlink" href="#where-this-fits" title="Permanent link">&para;</a></h2>
-<p><code>template.Engine.Render</code>/<code>RenderValue</code> take a <code>map[string]any</code> — that's
-<a href="../vars/"><code>vars.Context.Merged()</code></a>'s return type, so the variable context
-built from an <a href="../inventory/"><code>inventory</code></a> plus the precedence ladder in
-<code>vars</code> is exactly what a caller hands to this engine to render a task's
-arguments.</p>
+<h2 id="what-is-not-implemented">What is not implemented<a class="headerlink" href="#what-is-not-implemented" title="Permanent link">&para;</a></h2>
+<p>Every architectural substitution and disclosed gap is documented in the
+module's own Go doc comment, not hidden — <code>ansible-doc &lt;module&gt;</code> (via the
+<a href="../cli/"><code>cli</code></a> package) prints it. The recurring patterns: a module whose
+real Python implementation calls a SaaS/cloud API directly instead shells out
+to that platform's own official CLI when one exists (<code>gh</code>/<code>glab</code>/<code>scw</code>/
+<code>aliyun</code>/<code>ilorest</code>/... — never a secret in argv, always an environment
+variable or a pre-existing authenticated session); a module real Ansible runs
+<em>from the controller</em> against the target's own SSH endpoint directly
+(<code>ansible.posix.synchronize</code>) fails loud rather than silently approximating,
+since this port's <code>Connection</code> abstraction has no way to expose a target's
+host/port/credentials from inside a module; and a handful of modules
+knowingly reproduce a real upstream bug verbatim rather than "fixing" it,
+because the reference implementation — not this project's own judgment — is
+the source of truth for what a real user's playbook may already depend on.</p>
 
 
 

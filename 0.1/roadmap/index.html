@@ -6,14 +6,14 @@
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
       
-        <meta name="description" content="A pure-Go (CGO=0), functional-parity port of Ansible: Vault-compatible encryption, inventory parsing, variable precedence, and Jinja2-compatible templating.">
+        <meta name="description" content="A pure-Go (CGO=0), functional-parity port of Ansible: Vault-compatible encryption, inventory parsing, variable precedence, Jinja2-compatible templating, fact gathering, 561 modules, the playbook engine, and all 8 ansible-* CLI binaries.">
       
       
       
         <link rel="canonical" href="https://go-ansible.github.io/docs/0.1/roadmap/">
       
       
-        <link rel="prev" href="../components/template/">
+        <link rel="prev" href="../components/cli/">
       
       
         <link rel="next" href="../contributing/">
@@ -486,6 +486,118 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../components/facts/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    facts — fact gathering
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../components/modules/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    modules — 561-module execution library
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../components/playbook/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    playbook — the playbook engine
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../components/cli/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    cli — the 8 ansible-* binaries
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -571,10 +683,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#in-progress" class="md-nav__link">
+  <a href="#whats-still-ahead" class="md-nav__link">
     <span class="md-ellipsis">
       
-        In progress
+        What's still ahead
       
     </span>
   </a>
@@ -665,10 +777,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#in-progress" class="md-nav__link">
+  <a href="#whats-still-ahead" class="md-nav__link">
     <span class="md-ellipsis">
       
-        In progress
+        What's still ahead
       
     </span>
   </a>
@@ -705,8 +817,8 @@
 
 <h1 id="roadmap">Roadmap<a class="headerlink" href="#roadmap" title="Permanent link">&para;</a></h1>
 <h2 id="shipped">Shipped<a class="headerlink" href="#shipped" title="Permanent link">&para;</a></h2>
-<p>Four components are real, tested Go libraries with CI running on every push
-and pull request:</p>
+<p>All eight planned components are real, tested Go libraries with CI running
+on every push and pull request:</p>
 <ul>
 <li><a href="../components/vault/"><code>vault</code></a> — Ansible Vault 1.1 compatible AES-256
   encryption</li>
@@ -715,39 +827,69 @@ and pull request:</p>
 <li><a href="../components/vars/"><code>vars</code></a> — the variable precedence ladder</li>
 <li><a href="../components/template/"><code>template</code></a> — Jinja2-compatible templating with
   Ansible's filter and test library</li>
+<li><a href="../components/facts/"><code>facts</code></a> — fact gathering, the <code>setup</code> module
+  equivalent</li>
+<li><a href="../components/modules/"><code>modules</code></a> — the module execution protocol plus
+  <strong>561 registered modules</strong> (all of <code>ansible.builtin</code> and <code>ansible.posix</code>,
+  and a curated 485 of <code>community.general</code>)</li>
+<li><a href="../components/playbook/"><code>playbook</code></a> — the playbook/role/task/handler
+  engine driving all of the above against a real play: loops, conditionals,
+  blocks with genuine per-host recovery, <code>become</code>, roles (nested variable
+  scoping composes to any depth), both the <code>linear</code> and <code>free</code> execution
+  strategies</li>
+<li><a href="../components/cli/"><code>cli</code></a> — all 8 real <code>ansible-*</code> binaries, plus a
+  multi-arch <code>FROM scratch</code> OCI image on every version tag</li>
 </ul>
-<h2 id="in-progress">In progress<a class="headerlink" href="#in-progress" title="Permanent link">&para;</a></h2>
-<p>The following repositories exist in the <a href="https://github.com/go-ansible">go-ansible</a>
-organization but do not yet have working code — this documentation makes no
-capability claims about them, and they are intentionally not linked from the
-components pages above until they do:</p>
+<p>A standalone <code>galaxy</code> repository was planned early on for a role/collection
+installer with its own Galaxy API client; the actual need turned out simple
+enough (clone a role from a git URL via <code>go-git</code>) to fold directly into
+<code>cli</code>'s <code>ansible-galaxy</code> binary instead, so that repository was never
+developed further and is not part of the current architecture.</p>
+<h2 id="whats-still-ahead">What's still ahead<a class="headerlink" href="#whats-still-ahead" title="Permanent link">&para;</a></h2>
 <ul>
-<li><strong><code>modules</code></strong> — the Ansible module execution protocol (the JSON-over-stdin/stdout
-  contract a module implements) plus the core module library</li>
-<li><strong><code>playbook</code></strong> — the playbook/role/task/handler engine: loops, conditionals,
-  blocks, strategies. This is the piece that will actually drive <code>vars</code> and
-  <code>template</code> together against a real play, rather than each being exercised
-  standalone as they are today.</li>
-<li><strong><code>facts</code></strong> — fact gathering, the Go equivalent of the <code>setup</code> module</li>
-<li><strong><code>galaxy</code></strong> — role and collection installer, <code>requirements.yml</code>, a Galaxy
-  API client</li>
-<li><strong><code>cli</code></strong> — the <code>ansible</code>, <code>ansible-playbook</code>, <code>ansible-vault</code>, and
-  <code>ansible-galaxy</code> binaries, once there is an engine underneath them worth
-  shipping a CLI for</li>
+<li><strong>~92 more <code>community.general</code> modules.</strong> The remainder is dominated by
+  named flagship platforms confirmed to have no comparable official CLI
+  (UTM, OneView, ManageIQ, PagerDuty, Datadog, Slack, the generic/WDC Redfish
+  family), confirmed-dead or no-CLI platforms, defunct/EOL products, and pure
+  notification-protocol modules with no CLI concept at all (IRC/Jabber/
+  Matrix/Telegram/Discord/...). A platform excluded today is not excluded
+  forever — several exclusions were later reversed after that platform
+  shipped a genuine official CLI (Huawei Cloud's KooCLI, HPE's <code>ilorest</code>,
+  Lenovo's <code>OneCli</code>, among others).</li>
+<li><strong>Cloud-provider collections</strong> — <code>amazon.aws</code>, <code>azure.azcollection</code>,
+  <code>google.cloud</code>, and similar. These need real Go SDK bindings per provider's
+  REST API, not shell composition over a CLI the way the rest of this port
+  works — a fundamentally different kind of work, not yet started, and not
+  scoped without a fresh decision to take it on.</li>
+<li><strong>Real Ansible's structured module documentation</strong> (<code>DOCUMENTATION</code>/
+  <code>EXAMPLES</code>/<code>RETURN</code> YAML) — <code>ansible-doc</code> here prints this port's own Go
+  doc comments instead, real content in a different shape.</li>
+<li><strong><code>ansible.cfg</code> file support</strong> — <code>ansible-config</code> reads real <code>ANSIBLE_*</code>
+  environment variables, but there is no config-file parser at all.</li>
 </ul>
+<p>See the <strong><a href="https://go-ansible.github.io/">engine feature matrix</a></strong> on the
+landing page for the current, code-checked status of every playbook
+directive, and the <a href="https://github.com/go-ansible">org profile</a> for the full,
+itemized list of <code>community.general</code> inclusions and exclusions with their
+reasons.</p>
 <h2 id="design-principles-carried-through-every-component">Design principles carried through every component<a class="headerlink" href="#design-principles-carried-through-every-component" title="Permanent link">&para;</a></h2>
 <ul>
 <li><strong>Byte/wire compatible, not merely similar.</strong> <code>vault</code> reproduces
   <code>ansible.parsing.vault.VaultAES256</code>'s exact format; a file it writes
-  decrypts with the real <code>ansible-vault</code> and vice versa. Every future
-  component holds itself to the same bar against the real <code>ansible-core</code>
-  behavior, not against this project's own prior guesses.</li>
-<li><strong>Pure Go, <code>CGO_ENABLED=0</code>.</strong> No component here, or planned, depends on a
-  C library or an external interpreter.</li>
+  decrypts with the real <code>ansible-vault</code> and vice versa. Every component
+  holds itself to the same bar against the real <code>ansible-core</code> behavior, not
+  against this project's own prior guesses — cross-validated against a real
+  installed <code>ansible-core</code> wherever that's possible.</li>
+<li><strong>Pure Go, <code>CGO_ENABLED=0</code>.</strong> No component here depends on a C library or
+  an external interpreter.</li>
 <li><strong>Each concern its own module.</strong> <code>vault</code> has no dependency on the other
-  three; a program that only needs Vault-compatible decryption does not pull
-  in a Jinja2 engine it will never call. The same separation is intended for
-  <code>modules</code>, <code>playbook</code>, <code>facts</code>, and <code>galaxy</code> as they land.</li>
+  seven; a program that only needs Vault-compatible decryption does not pull
+  in a Jinja2 engine or a playbook engine it will never call.</li>
+<li><strong>Fail loud, don't silently approximate.</strong> Where this port's architecture
+  cannot reach real Ansible's behavior — <code>ansible.posix.synchronize</code>'s
+  controller-side rsync, a SaaS platform with no official CLI — the module or
+  feature fails with an explicit, honest error rather than a plausible-
+  looking partial implementation.</li>
 </ul>
 
 
