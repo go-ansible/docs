@@ -836,7 +836,10 @@ on every push and pull request:</p>
   engine driving all of the above against a real play: loops, conditionals,
   blocks with genuine per-host recovery, <code>become</code>, roles (nested variable
   scoping composes to any depth), both the <code>linear</code> and <code>free</code> execution
-  strategies</li>
+  strategies, <code>until</code>/<code>retries</code>/<code>delay</code>, <code>run_once</code>, a real <code>Forks</code>
+  concurrency cap, <code>vars_prompt</code>, <code>async</code>/<code>poll</code> (for <code>command</code>/<code>shell</code>),
+  fully-qualified collection names, dynamic inventory scripts, and
+  <code>ansible.cfg</code> file support</li>
 <li><a href="../components/cli/"><code>cli</code></a> — all 8 real <code>ansible-*</code> binaries, plus a
   multi-arch <code>FROM scratch</code> OCI image on every version tag</li>
 </ul>
@@ -864,8 +867,14 @@ developed further and is not part of the current architecture.</p>
 <li><strong>Real Ansible's structured module documentation</strong> (<code>DOCUMENTATION</code>/
   <code>EXAMPLES</code>/<code>RETURN</code> YAML) — <code>ansible-doc</code> here prints this port's own Go
   doc comments instead, real content in a different shape.</li>
-<li><strong><code>ansible.cfg</code> file support</strong> — <code>ansible-config</code> reads real <code>ANSIBLE_*</code>
-  environment variables, but there is no config-file parser at all.</li>
+<li><strong>The namespace/collection metadata system</strong>, real
+  <code>ansible-galaxy collection install</code> (this port's <code>ansible-galaxy</code> only
+  clones a role from a git URL — no galaxy.ansible.com API), and
+  lookup/callback plugins.</li>
+<li><strong>Active kill-on-timeout for <code>async</code>/<code>poll</code>.</strong> An overrunning backgrounded
+  job is detected but not killed — real Ansible's <code>async_wrapper.py</code> sends
+  <code>killpg</code> to the whole process group, and there is no portable POSIX
+  equivalent without <code>setsid</code>, which macOS doesn't have.</li>
 </ul>
 <p>See the <strong><a href="https://go-ansible.github.io/">engine feature matrix</a></strong> on the
 landing page for the current, code-checked status of every playbook

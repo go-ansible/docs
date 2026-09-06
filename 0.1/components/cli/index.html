@@ -838,7 +838,7 @@ underneath, no subprocess boundary at all.</p>
 </tr>
 <tr>
 <td><code>ansible-playbook</code></td>
-<td>Runs a playbook via <a href="../playbook/"><code>playbook.Engine</code></a></td>
+<td>Runs a playbook via <a href="../playbook/"><code>playbook.Engine</code></a>; <code>-f</code>/<code>--forks</code> sets the concurrency cap, and <code>vars_prompt:</code> prompts at a real terminal (masked input for <code>private</code> vars, falling back to defaults when not a TTY)</td>
 </tr>
 <tr>
 <td><code>ansible-vault</code></td>
@@ -858,7 +858,7 @@ underneath, no subprocess boundary at all.</p>
 </tr>
 <tr>
 <td><code>ansible-config</code></td>
-<td><code>list</code>/<code>dump</code>/<code>view</code> — real <code>ANSIBLE_*</code> environment variable support, no <code>ansible.cfg</code> file parsing</td>
+<td><code>list</code>/<code>dump</code>/<code>view</code> — reads real <code>ANSIBLE_*</code> environment variables and, for the settings this port supports, an actual <code>ansible.cfg</code> <code>[defaults]</code> section (host var &gt; env var &gt; <code>ansible.cfg</code> &gt; compiled default; <code>$ANSIBLE_CONFIG</code> &gt; <code>./ansible.cfg</code> &gt; <code>~/.ansible.cfg</code> &gt; <code>/etc/ansible/ansible.cfg</code>, first found wins outright)</td>
 </tr>
 <tr>
 <td><code>ansible-console</code></td>
@@ -902,8 +902,11 @@ repository was planned early on for this; the actual implementation turned
 out simple enough to fold directly into <code>cli</code> instead, and the standalone
 repository was never developed further). <code>ansible-doc</code> prints this port's own
 Go doc comments, not real Ansible's structured <code>DOCUMENTATION</code>/<code>EXAMPLES</code>/
-<code>RETURN</code> YAML blocks. <code>ansible-config view</code> always fails honestly — there is
-no <code>ansible.cfg</code> file support at all.</p>
+<code>RETURN</code> YAML blocks. <code>ansible-config</code>'s <code>ansible.cfg</code> support covers only the
+settings this port itself reads (see <a href="../playbook/"><code>ConfigDefaults</code></a>) — an
+unrecognized-but-valid Ansible setting in the file is silently ignored rather
+than surfaced, matching how unset environment variables were already
+treated.</p>
 
 
 

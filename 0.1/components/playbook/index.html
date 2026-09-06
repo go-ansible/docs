@@ -826,8 +826,10 @@
 built." It now implements real per-host execution: <code>when</code>/<code>loop</code>/<code>register</code>,
 <code>block</code>/<code>rescue</code>/<code>always</code> with genuine per-host recovery, <code>notify</code>/handlers,
 <code>become</code>, roles, <code>include_tasks</code>/<code>import_tasks</code>/<code>include_role</code>/<code>import_role</code>/
-<code>import_playbook</code>, <code>delegate_to</code>, <code>serial</code> batching, tag filtering, and both
-the <code>linear</code> (default) and <code>free</code> execution strategies.</p>
+<code>import_playbook</code>, <code>delegate_to</code>, <code>serial</code> batching, tag filtering, both
+the <code>linear</code> (default) and <code>free</code> execution strategies, <code>until</code>/<code>retries</code>/
+<code>delay</code>, <code>run_once</code>, a real <code>Forks</code> concurrency cap, <code>vars_prompt</code>, and
+<code>async</code>/<code>poll</code> for <code>command</code>/<code>shell</code>.</p>
 <p>See the <strong><a href="https://go-ansible.github.io/">engine feature matrix</a></strong> on the
 landing page for the current, code-checked status of every playbook
 directive — that table is regenerated from <code>engine.go</code>/<code>playbook.go</code>
@@ -916,11 +918,19 @@ connection in tests.</p>
 <p><code>include_tasks</code>/<code>import_tasks</code>/<code>include_role</code>/<code>import_role</code> resolve
 <strong>statically at parse time</strong>, not real Ansible's dynamic, per-host,
 possibly-templated resolution — documented as narrower, not silently
-different. The namespace/collection metadata system, dynamic inventory
-plugins, and lookup/callback plugins are out of scope entirely. Any playbook
-<code>strategy</code> other than <code>linear</code>/<code>free</code> (<code>debug</code>, <code>host_pinned</code>, a strategy
-plugin) is rejected with an explicit parse error rather than silently treated
-as <code>linear</code>.</p>
+different. The namespace/collection metadata system, Python-style inventory
+<em>plugins</em>, and lookup/callback plugins are out of scope entirely (executable
+inventory <em>scripts</em> — the <code>--list</code>/<code>--host</code> protocol — are supported; see
+<a href="../inventory/">inventory</a>). Any playbook <code>strategy</code> other than <code>linear</code>/
+<code>free</code> (<code>debug</code>, <code>host_pinned</code>, a strategy plugin) is rejected with an
+explicit parse error rather than silently treated as <code>linear</code>.
+<code>async</code>/<code>poll</code> only genuinely backgrounds <code>command</code>/<code>shell</code> on the target
+— the only two modules whose entire work reduces to one remote invocation —
+and an overrunning job is detected on timeout but not actively killed, since
+real Ansible's <code>killpg</code> has no portable POSIX equivalent without <code>setsid</code>
+(absent on macOS). <code>run_once</code> broadcasts its <code>register:</code> value across a
+batch but is not coordinated across <code>strategy: free</code>'s independent per-host
+lanes.</p>
 
 
 

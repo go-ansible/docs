@@ -493,6 +493,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#dynamic-inventory-scripts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Dynamic inventory scripts
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#group-ancestry-and-merge-order" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -812,6 +823,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#dynamic-inventory-scripts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Dynamic inventory scripts
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#group-ancestry-and-merge-order" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -899,6 +921,16 @@ directly inside it (except <code>group_vars/</code> and <code>host_vars/</code>)
 merged in name order, and then <code>group_vars/&lt;name&gt;.yml</code> (or a
 <code>group_vars/&lt;name&gt;/*.yml</code> directory) and the equivalent <code>host_vars/</code> siblings
 are merged in, <strong>group vars before host vars</strong>, matching Ansible's precedence.</p>
+<h2 id="dynamic-inventory-scripts">Dynamic inventory scripts<a class="headerlink" href="#dynamic-inventory-scripts" title="Permanent link">&para;</a></h2>
+<p><code>Load</code> detects an executable <code>path</code> (<code>IsScript</code>, checking the file mode's
+executable bit) and runs it as a dynamic inventory script instead of parsing
+it as YAML/INI, against the real script protocol: <code>path --list</code> for the full
+group/host graph, <code>path --host &lt;name&gt;</code> for one host's vars when a group
+entry doesn't already provide them via the <code>_meta.hostvars</code> optimization.
+Each group in <code>--list</code>'s output may be either the shorthand array of
+hostnames or the full <code>{hosts, vars, children}</code> object form — both parse.
+<code>group_vars</code>/<code>host_vars</code> directories are not consulted for a script-backed
+inventory, matching real Ansible.</p>
 <h2 id="group-ancestry-and-merge-order">Group ancestry and merge order<a class="headerlink" href="#group-ancestry-and-merge-order" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">inv</span><span class="w"> </span><span class="o">*</span><span class="nx">Inventory</span><span class="p">)</span><span class="w"> </span><span class="nx">GroupsForHost</span><span class="p">(</span><span class="nx">hostName</span><span class="w"> </span><span class="kt">string</span><span class="p">)</span><span class="w"> </span><span class="p">[]</span><span class="o">*</span><span class="nx">Group</span>
 </code></pre></div>
