@@ -830,8 +830,8 @@ on every push and pull request:</p>
 <li><a href="../components/facts/"><code>facts</code></a> — fact gathering, the <code>setup</code> module
   equivalent</li>
 <li><a href="../components/modules/"><code>modules</code></a> — the module execution protocol plus
-  <strong>563 registered modules</strong> (all of <code>ansible.builtin</code> and <code>ansible.posix</code>,
-  and a curated 487 of <code>community.general</code>)</li>
+  <strong>566 registered modules</strong> (all of <code>ansible.builtin</code> and <code>ansible.posix</code>,
+  and a curated 490 of <code>community.general</code>)</li>
 <li><a href="../components/playbook/"><code>playbook</code></a> — the playbook/role/task/handler
   engine driving all of the above against a real play: loops, conditionals,
   blocks with genuine per-host recovery, <code>become</code>, roles (nested variable
@@ -850,20 +850,26 @@ enough (clone a role from a git URL via <code>go-git</code>) to fold directly in
 developed further and is not part of the current architecture.</p>
 <h2 id="whats-still-ahead">What's still ahead<a class="headerlink" href="#whats-still-ahead" title="Permanent link">&para;</a></h2>
 <ul>
-<li><strong>~90 more <code>community.general</code> modules.</strong> The remainder is dominated by
+<li><strong>~87 more <code>community.general</code> modules.</strong> The remainder is dominated by
   named flagship platforms confirmed to have no comparable official CLI
   (UTM, OneView, ManageIQ, PagerDuty, Datadog, Slack, WDC's own Redfish
   family), confirmed-dead or no-CLI platforms, defunct/EOL products, and pure
   notification-protocol modules with no CLI concept at all (IRC/Jabber/
-  Matrix/Telegram/Discord/...). The vendor-neutral <code>redfish_command</code>/
-  <code>redfish_config</code>/<code>redfish_info</code> were reconsidered after this batch found a
-  genuinely viable path — DMTF's own <code>redfishtool</code>, whose <code>-c cfgFile</code> option
-  reads credentials from a file rather than argv — but are not implemented
-  yet: real <code>redfish_command.py</code> alone has ~35 commands across 6 categories,
-  a properly-scoped batch of its own. A platform excluded today is not excluded
+  Matrix/Telegram/Discord/...). A platform excluded today is not excluded
   forever — several exclusions were later reversed after that platform
   shipped a genuine official CLI (Huawei Cloud's KooCLI, HPE's <code>ilorest</code>,
   Lenovo's <code>OneCli</code>, among others).</li>
+<li><strong>The rest of <code>redfish_command</code>/<code>redfish_config</code>/<code>redfish_info</code>.</strong> The
+  vendor-neutral trio now ships via DMTF's own <code>redfishtool</code> (its <code>-c
+  cfgFile</code> option reads credentials from a file rather than argv), covering
+  real Systems/Chassis power, boot override, indicator LED, sessions,
+  account management, and Manager power/logs/network-protocol/host-interface
+  config — but real <code>redfish_command.py</code> alone declares ~35 commands across
+  6 categories, and <code>redfish_info</code> a further ~39. Virtual media (needs
+  vendor-specific empty-slot matching this port has no hardware to verify
+  against), storage/RAID configuration, and most of <code>redfish_info</code>'s own
+  inventory commands remain unimplemented — disclosed, not silently assumed
+  to work.</li>
 <li><strong>Cloud-provider collections</strong> — <code>amazon.aws</code>, <code>azure.azcollection</code>,
   <code>google.cloud</code>, and similar. These need real Go SDK bindings per provider's
   REST API, not shell composition over a CLI the way the rest of this port
