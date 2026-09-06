@@ -25,7 +25,7 @@ inventory  →  hosts, groups, group_vars/host_vars
               using Ansible's filter and test library
                         │
                         ▼
- modules   →  executes a task's module (561 registered) against a
+ modules   →  executes a task's module (563 registered) against a
               real target connection, using the rendered arguments
                         │
                         ▼
@@ -49,7 +49,7 @@ playbook engine it will never call.
 | [`vars`](vars.md) | — (consumes `inventory`'s output, but has no import dependency on it) | Real, tested, CI |
 | [`template`](template.md) | `go-regexp/engine`, `nikolalohinski/gonja/v2` | Real, tested, CI |
 | [`facts`](facts.md) | `go-remoteexec/transport` | Real, tested, CI |
-| [`modules`](modules.md) | `go-remoteexec/transport` | Real, tested, CI — 561 modules |
+| [`modules`](modules.md) | `go-remoteexec/transport` | Real, tested, CI — 563 modules |
 | [`playbook`](playbook.md) | `inventory`, `vars`, `template`, `modules`, `facts`, `go-remoteexec/transport` | Real, tested, CI — the engine tying the rest together |
 | [`cli`](cli.md) | `playbook`, `vault`, `inventory`, `go-git` | Real, tested, CI — all 8 `ansible-*` binaries |
 

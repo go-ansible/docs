@@ -15,8 +15,8 @@ on every push and pull request:
 - [`facts`](components/facts.md) — fact gathering, the `setup` module
   equivalent
 - [`modules`](components/modules.md) — the module execution protocol plus
-  **561 registered modules** (all of `ansible.builtin` and `ansible.posix`,
-  and a curated 485 of `community.general`)
+  **563 registered modules** (all of `ansible.builtin` and `ansible.posix`,
+  and a curated 487 of `community.general`)
 - [`playbook`](components/playbook.md) — the playbook/role/task/handler
   engine driving all of the above against a real play: loops, conditionals,
   blocks with genuine per-host recovery, `become`, roles (nested variable
@@ -36,12 +36,17 @@ developed further and is not part of the current architecture.
 
 ## What's still ahead
 
-- **~92 more `community.general` modules.** The remainder is dominated by
+- **~90 more `community.general` modules.** The remainder is dominated by
   named flagship platforms confirmed to have no comparable official CLI
-  (UTM, OneView, ManageIQ, PagerDuty, Datadog, Slack, the generic/WDC Redfish
+  (UTM, OneView, ManageIQ, PagerDuty, Datadog, Slack, WDC's own Redfish
   family), confirmed-dead or no-CLI platforms, defunct/EOL products, and pure
   notification-protocol modules with no CLI concept at all (IRC/Jabber/
-  Matrix/Telegram/Discord/...). A platform excluded today is not excluded
+  Matrix/Telegram/Discord/...). The vendor-neutral `redfish_command`/
+  `redfish_config`/`redfish_info` were reconsidered after this batch found a
+  genuinely viable path — DMTF's own `redfishtool`, whose `-c cfgFile` option
+  reads credentials from a file rather than argv — but are not implemented
+  yet: real `redfish_command.py` alone has ~35 commands across 6 categories,
+  a properly-scoped batch of its own. A platform excluded today is not excluded
   forever — several exclusions were later reversed after that platform
   shipped a genuine official CLI (Huawei Cloud's KooCLI, HPE's `ilorest`,
   Lenovo's `OneCli`, among others).

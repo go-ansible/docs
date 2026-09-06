@@ -3,8 +3,8 @@
 [![CI](https://github.com/go-ansible/modules/actions/workflows/ci.yml/badge.svg)](https://github.com/go-ansible/modules/actions/workflows/ci.yml)
 
 `github.com/go-ansible/modules` implements Ansible's module execution model
-and the core module library: **561 modules registered** — all 62 of
-`ansible.builtin`, all 14 of `ansible.posix`, and 485 curated from
+and the core module library: **563 modules registered** — all 62 of
+`ansible.builtin`, all 14 of `ansible.posix`, and 487 curated from
 `community.general` (577 real modules in that collection; the remainder is
 deliberately excluded, each with a real, checked reason — see the
 [org profile](https://github.com/go-ansible) for the full list).
@@ -38,7 +38,7 @@ type Func func(ctx context.Context, conn remoteexec.Connection, args map[string]
 type Registry struct { /* ... */ }
 
 func NewRegistry() *Registry
-func Default() *Registry // pre-populated with all 561 built-in modules
+func Default() *Registry // pre-populated with all 563 built-in modules
 func (r *Registry) Register(name string, fn Func)
 func (r *Registry) Get(name string) (Func, bool)
 func (r *Registry) Names() []string
