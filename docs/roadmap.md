@@ -57,9 +57,11 @@ developed further and is not part of the current architecture.
   categories, and `redfish_info` a further ~39, so real gaps remain in
   each: virtual media (needs vendor-specific empty-slot matching this port
   has no hardware to verify against), storage/RAID configuration,
-  `redfish_info`'s own remaining Systems/Chassis inventory commands (CPU,
-  memory, storage, BIOS attributes/registries, and a few
-  Chassis-specific/HPE-specific ones), and `GetUpdateStatus` specifically
+  `redfish_info`'s own remaining storage inventory commands (a deep,
+  dual-code-path traversal covering both the modern Storage resource shape
+  and the older SimpleStorage one), BIOS registries (needs vendor-aware HPE
+  iLO4/iLO5 workarounds this port has no hardware to verify against), a few
+  Chassis-specific/HPE-specific commands, and `GetUpdateStatus` specifically
   (blocked on an
   architectural ceiling:
   redfishtool's own `raw` subcommand exposes only a response's JSON body,
