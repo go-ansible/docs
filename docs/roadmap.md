@@ -50,15 +50,17 @@ developed further and is not part of the current architecture.
   cfgFile` option reads credentials from a file rather than argv), covering
   real Systems/Chassis power, boot override, indicator LED, sessions,
   account management, and Manager power/logs/network-protocol/host-interface
-  config, plus (in `redfish_info`) inventory and config info across all 7
-  real categories — Systems, Chassis, Accounts, Sessions, Update, Manager,
-  and Service. Real `redfish_command.py` alone declares ~35 commands across
-  6 categories, and `redfish_info` a further ~39, so real gaps remain in
+  config, plus (in `redfish_info`) inventory, config, and health-report info
+  across all 7 real categories — Systems, Chassis, Accounts, Sessions,
+  Update, Manager (now complete — every real Manager command is wired), and
+  Service. Real `redfish_command.py` alone declares ~35 commands across 6
+  categories, and `redfish_info` a further ~39, so real gaps remain in
   each: virtual media (needs vendor-specific empty-slot matching this port
   has no hardware to verify against), storage/RAID configuration,
-  `redfish_info`'s own health-report commands across Systems/Chassis/Manager
-  (each needs a deeper multi-subsystem traversal than a simple property
-  whitelist), and `GetUpdateStatus` specifically (blocked on an
+  `redfish_info`'s own remaining Systems/Chassis inventory commands (CPU,
+  memory, storage, BIOS attributes/registries, and a few
+  Chassis-specific/HPE-specific ones), and `GetUpdateStatus` specifically
+  (blocked on an
   architectural ceiling:
   redfishtool's own `raw` subcommand exposes only a response's JSON body,
   never the distinguishing HTTP status code real Ansible's own status logic
