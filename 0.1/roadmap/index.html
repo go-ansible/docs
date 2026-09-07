@@ -870,9 +870,10 @@ developed further and is not part of the current architecture.</p>
   6 categories, and <code>redfish_info</code> a further ~39, so real gaps remain in
   each: virtual media (needs vendor-specific empty-slot matching this port
   has no hardware to verify against), storage/RAID configuration,
-  <code>redfish_info</code>'s own health-report/log/host-interface commands (each needs
-  a deeper multi-level resource walk than a simple property whitelist), and
-  <code>GetUpdateStatus</code> specifically (blocked on an architectural ceiling:
+  <code>redfish_info</code>'s own health-report commands across Systems/Chassis/Manager
+  (each needs a deeper multi-subsystem traversal than a simple property
+  whitelist), and <code>GetUpdateStatus</code> specifically (blocked on an
+  architectural ceiling:
   redfishtool's own <code>raw</code> subcommand exposes only a response's JSON body,
   never the distinguishing HTTP status code real Ansible's own status logic
   depends on) — disclosed, not silently assumed to work.</li>
