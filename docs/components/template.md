@@ -58,7 +58,10 @@ gonja's own built-in, which already matches what real Ansible's `unique`
 delegates to), `log`/`pow`/`root`, `human_readable`/`human_to_bytes` (byte-exact
 port of `ansible.module_utils.common.text.formatters`' size tables),
 `rekey_on_member`, `to_uuid` (RFC 4122 UUID v5, Ansible's own default
-namespace), `comment` (plain/erlang/c/cblock/xml styles, plus a full set of
+namespace), `product`/`permutations`/`combinations`/`zip`/`zip_longest`
+(Go has no `itertools` equivalent — each is a hand-traced, order-exact port
+of the real Python algorithm, not just its result set), `comment`
+(plain/erlang/c/cblock/xml styles, plus a full set of
 overridable decoration/prefix/postfix parameters), and the path filters
 `basename`/`dirname`/`path_join`/`splitext`/`expanduser`/`expandvars`/
 `realpath`/`relpath`/`normpath`/`commonpath`/`win_basename`/`win_dirname`/
