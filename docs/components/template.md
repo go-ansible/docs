@@ -49,14 +49,23 @@ instead of them. As of this writing the Ansible-specific set includes:
 [`go-regexp/engine`](https://github.com/go-regexp/engine), a PCRE-compatible
 engine, since Ansible's regex filters rely on Python `re` semantics that
 Go's `regexp` doesn't fully match), `bool`, `mandatory`, `ternary`, `combine`,
-`dict2items`/`items2dict`, `type_debug`, `quote`, `basename`/`dirname`,
-`b64encode`/`b64decode`, `md5`/`sha1`/`hash`, `union`/`intersect`/`difference`/
+`dict2items`/`items2dict`, `type_debug`, `quote`,
+`b64encode`/`b64decode`, `md5`/`sha1`/`checksum` (an alias for `sha1`, matching
+real Ansible), `hash` (generic — defaults to sha1, takes an algorithm name:
+md5/sha1/sha224/sha256/sha384/sha512), `union`/`intersect`/`difference`/
 `symmetric_difference` (set theory over lists — `unique` itself is left to
 gonja's own built-in, which already matches what real Ansible's `unique`
 delegates to), `log`/`pow`/`root`, `human_readable`/`human_to_bytes` (byte-exact
 port of `ansible.module_utils.common.text.formatters`' size tables),
 `rekey_on_member`, `to_uuid` (RFC 4122 UUID v5, Ansible's own default
-namespace).
+namespace), `comment` (plain/erlang/c/cblock/xml styles, plus a full set of
+overridable decoration/prefix/postfix parameters), and the path filters
+`basename`/`dirname`/`path_join`/`splitext`/`expanduser`/`expandvars`/
+`realpath`/`relpath`/`normpath`/`commonpath`/`win_basename`/`win_dirname`/
+`win_splitdrive` — ported from real Python's own `posixpath`/`ntpath`/
+`genericpath` source (not just `os.path`'s documented behavior), since the
+two disagree on a few edge cases Go's `path`/`path/filepath` packages don't
+reproduce (e.g. `os.path.basename('/foo/bar/')` is `''`, not `'bar'`).
 
 **Tests** — `changed`, `success`/`succeeded`, `failed`/`failure`, `skipped`
 (each reads a registered task result's flags, e.g. `is changed`), and
