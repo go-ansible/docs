@@ -38,6 +38,16 @@ func IsTemplate(s string) bool
   `replicas` is one, rather than the string `"3"`. Non-string scalars pass
   through unchanged. `IsTemplate` is the cheap pre-check `RenderValue` uses
   internally to skip strings with no `{{`, `{%`, or `{#` at all.
+- `omit` is a real global, matching Ansible's own sentinel
+  (`ansible._internal._templating._utils.Omit`): `{{ x | default(omit) }}`
+  evaluates to `template.Omit` when `x` is undefined, and `RenderValue`
+  drops the containing map key or list item entirely rather than passing
+  the sentinel through — so `playbook`'s existing
+  `Template.RenderValue(task.Args, ...)` call already makes
+  `some_arg: "{{ x | default(omit) }}"` omit `some_arg` from the module
+  call outright when `x` is unset, with no changes needed outside this
+  package. A bare top-level `omit` result (nothing to drop it from) is an
+  error, matching real Ansible's own `AnsibleValueOmittedError`.
 
 ## Filter and test library
 
