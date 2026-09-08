@@ -78,7 +78,13 @@ overridable decoration/prefix/postfix parameters), and the path filters
 `win_splitdrive` — ported from real Python's own `posixpath`/`ntpath`/
 `genericpath` source (not just `os.path`'s documented behavior), since the
 two disagree on a few edge cases Go's `path`/`path/filepath` packages don't
-reproduce (e.g. `os.path.basename('/foo/bar/')` is `''`, not `'bar'`).
+reproduce (e.g. `os.path.basename('/foo/bar/')` is `''`, not `'bar'`),
+`extract` (chained container lookups by key/index), `flatten`
+(nested-list collapsing, with a `levels` depth limit), `subelements`
+(pairs each element of a list/dict with every item its dotted accessor
+finds), and `split` (Python's `str.split()` semantics exactly, including
+the different behavior of the default whitespace-run split vs. an
+explicit separator).
 
 **Tests** — `changed`, `success`/`succeeded`, `failed`/`failure`, `skipped`
 (each reads a registered task result's flags, e.g. `is changed`), and
