@@ -918,9 +918,20 @@ reproduce (e.g. <code>os.path.basename('/foo/bar/')</code> is <code>''</code>, n
 (pairs each element of a list/dict with every item its dotted accessor
 finds), <code>split</code> (Python's <code>str.split()</code> semantics exactly, including
 the different behavior of the default whitespace-run split vs. an
-explicit separator), and <code>fileglob</code> (real filesystem globbing, filtered
+explicit separator), <code>fileglob</code> (real filesystem globbing, filtered
 to regular files only — <code>filepath.Glob</code> plus an <code>os.Stat</code> check, matching
-real Ansible's own <code>[g for g in glob.glob(pathname) if os.path.isfile(g)]</code>).</p>
+real Ansible's own <code>[g for g in glob.glob(pathname) if os.path.isfile(g)]</code>),
+and <code>to_datetime</code>/<code>strftime</code> (Python <code>%</code>-directive date parsing/formatting,
+translated to Go's reference-time layout tokens). <code>to_datetime</code> returns a
+Unix-timestamp <code>float64</code> rather than a datetime object — a deliberate,
+disclosed divergence: gonja's own binary-operator evaluator only
+implements arithmetic for numeric values, so a <code>time.Time</code>-shaped result
+would make <code>(a | to_datetime) - (b | to_datetime)</code> — real Ansible's own
+dominant use of this filter, elapsed-time math between two parsed dates —
+silently wrong instead of working. The float representation makes that
+subtraction (and <code>&lt;</code>/<code>&gt;</code> comparisons) work correctly through gonja's
+existing numeric operators, at the cost of <code>{{ x | to_datetime }}</code>
+printing a raw number instead of Python's own formatted datetime repr.</p>
 <p><strong>Tests</strong> — <code>changed</code>, <code>success</code>/<code>succeeded</code>, <code>failed</code>/<code>failure</code>, <code>skipped</code>
 (each reads a registered task result's flags, e.g. <code>is changed</code>), and
 <code>version</code> (Ansible's <code>version_compare</code>-equivalent <code>is version(...)</code> test).</p>
