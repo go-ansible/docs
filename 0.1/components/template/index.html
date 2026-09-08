@@ -874,6 +874,16 @@ string.</p>
   <code>replicas</code> is one, rather than the string <code>"3"</code>. Non-string scalars pass
   through unchanged. <code>IsTemplate</code> is the cheap pre-check <code>RenderValue</code> uses
   internally to skip strings with no <code>{{</code>, <code>{%</code>, or <code>{#</code> at all.</li>
+<li><code>omit</code> is a real global, matching Ansible's own sentinel
+  (<code>ansible._internal._templating._utils.Omit</code>): <code>{{ x | default(omit) }}</code>
+  evaluates to <code>template.Omit</code> when <code>x</code> is undefined, and <code>RenderValue</code>
+  drops the containing map key or list item entirely rather than passing
+  the sentinel through — so <code>playbook</code>'s existing
+  <code>Template.RenderValue(task.Args, ...)</code> call already makes
+  <code>some_arg: "{{ x | default(omit) }}"</code> omit <code>some_arg</code> from the module
+  call outright when <code>x</code> is unset, with no changes needed outside this
+  package. A bare top-level <code>omit</code> result (nothing to drop it from) is an
+  error, matching real Ansible's own <code>AnsibleValueOmittedError</code>.</li>
 </ul>
 <h2 id="filter-and-test-library">Filter and test library<a class="headerlink" href="#filter-and-test-library" title="Permanent link">&para;</a></h2>
 <p>Filters and tests are registered on top of gonja's Jinja2 built-ins, not
