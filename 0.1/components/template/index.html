@@ -916,9 +916,11 @@ reproduce (e.g. <code>os.path.basename('/foo/bar/')</code> is <code>''</code>, n
 <code>extract</code> (chained container lookups by key/index), <code>flatten</code>
 (nested-list collapsing, with a <code>levels</code> depth limit), <code>subelements</code>
 (pairs each element of a list/dict with every item its dotted accessor
-finds), and <code>split</code> (Python's <code>str.split()</code> semantics exactly, including
+finds), <code>split</code> (Python's <code>str.split()</code> semantics exactly, including
 the different behavior of the default whitespace-run split vs. an
-explicit separator).</p>
+explicit separator), and <code>fileglob</code> (real filesystem globbing, filtered
+to regular files only — <code>filepath.Glob</code> plus an <code>os.Stat</code> check, matching
+real Ansible's own <code>[g for g in glob.glob(pathname) if os.path.isfile(g)]</code>).</p>
 <p><strong>Tests</strong> — <code>changed</code>, <code>success</code>/<code>succeeded</code>, <code>failed</code>/<code>failure</code>, <code>skipped</code>
 (each reads a registered task result's flags, e.g. <code>is changed</code>), and
 <code>version</code> (Ansible's <code>version_compare</code>-equivalent <code>is version(...)</code> test).</p>
