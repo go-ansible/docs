@@ -50,7 +50,13 @@ instead of them. As of this writing the Ansible-specific set includes:
 engine, since Ansible's regex filters rely on Python `re` semantics that
 Go's `regexp` doesn't fully match), `bool`, `mandatory`, `ternary`, `combine`,
 `dict2items`/`items2dict`, `type_debug`, `quote`, `basename`/`dirname`,
-`b64encode`/`b64decode`, `md5`/`sha1`/`hash`.
+`b64encode`/`b64decode`, `md5`/`sha1`/`hash`, `union`/`intersect`/`difference`/
+`symmetric_difference` (set theory over lists — `unique` itself is left to
+gonja's own built-in, which already matches what real Ansible's `unique`
+delegates to), `log`/`pow`/`root`, `human_readable`/`human_to_bytes` (byte-exact
+port of `ansible.module_utils.common.text.formatters`' size tables),
+`rekey_on_member`, `to_uuid` (RFC 4122 UUID v5, Ansible's own default
+namespace).
 
 **Tests** — `changed`, `success`/`succeeded`, `failed`/`failure`, `skipped`
 (each reads a registered task result's flags, e.g. `is changed`), and
