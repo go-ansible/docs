@@ -84,9 +84,20 @@ reproduce (e.g. `os.path.basename('/foo/bar/')` is `''`, not `'bar'`),
 (pairs each element of a list/dict with every item its dotted accessor
 finds), `split` (Python's `str.split()` semantics exactly, including
 the different behavior of the default whitespace-run split vs. an
-explicit separator), and `fileglob` (real filesystem globbing, filtered
+explicit separator), `fileglob` (real filesystem globbing, filtered
 to regular files only — `filepath.Glob` plus an `os.Stat` check, matching
-real Ansible's own `[g for g in glob.glob(pathname) if os.path.isfile(g)]`).
+real Ansible's own `[g for g in glob.glob(pathname) if os.path.isfile(g)]`),
+and `to_datetime`/`strftime` (Python `%`-directive date parsing/formatting,
+translated to Go's reference-time layout tokens). `to_datetime` returns a
+Unix-timestamp `float64` rather than a datetime object — a deliberate,
+disclosed divergence: gonja's own binary-operator evaluator only
+implements arithmetic for numeric values, so a `time.Time`-shaped result
+would make `(a | to_datetime) - (b | to_datetime)` — real Ansible's own
+dominant use of this filter, elapsed-time math between two parsed dates —
+silently wrong instead of working. The float representation makes that
+subtraction (and `<`/`>` comparisons) work correctly through gonja's
+existing numeric operators, at the cost of `{{ x | to_datetime }}`
+printing a raw number instead of Python's own formatted datetime repr.
 
 **Tests** — `changed`, `success`/`succeeded`, `failed`/`failure`, `skipped`
 (each reads a registered task result's flags, e.g. `is changed`), and
