@@ -883,14 +883,23 @@ instead of them. As of this writing the Ansible-specific set includes:</p>
 <a href="https://github.com/go-regexp/engine"><code>go-regexp/engine</code></a>, a PCRE-compatible
 engine, since Ansible's regex filters rely on Python <code>re</code> semantics that
 Go's <code>regexp</code> doesn't fully match), <code>bool</code>, <code>mandatory</code>, <code>ternary</code>, <code>combine</code>,
-<code>dict2items</code>/<code>items2dict</code>, <code>type_debug</code>, <code>quote</code>, <code>basename</code>/<code>dirname</code>,
-<code>b64encode</code>/<code>b64decode</code>, <code>md5</code>/<code>sha1</code>/<code>hash</code>, <code>union</code>/<code>intersect</code>/<code>difference</code>/
+<code>dict2items</code>/<code>items2dict</code>, <code>type_debug</code>, <code>quote</code>,
+<code>b64encode</code>/<code>b64decode</code>, <code>md5</code>/<code>sha1</code>/<code>checksum</code> (an alias for <code>sha1</code>, matching
+real Ansible), <code>hash</code> (generic — defaults to sha1, takes an algorithm name:
+md5/sha1/sha224/sha256/sha384/sha512), <code>union</code>/<code>intersect</code>/<code>difference</code>/
 <code>symmetric_difference</code> (set theory over lists — <code>unique</code> itself is left to
 gonja's own built-in, which already matches what real Ansible's <code>unique</code>
 delegates to), <code>log</code>/<code>pow</code>/<code>root</code>, <code>human_readable</code>/<code>human_to_bytes</code> (byte-exact
 port of <code>ansible.module_utils.common.text.formatters</code>' size tables),
 <code>rekey_on_member</code>, <code>to_uuid</code> (RFC 4122 UUID v5, Ansible's own default
-namespace).</p>
+namespace), <code>comment</code> (plain/erlang/c/cblock/xml styles, plus a full set of
+overridable decoration/prefix/postfix parameters), and the path filters
+<code>basename</code>/<code>dirname</code>/<code>path_join</code>/<code>splitext</code>/<code>expanduser</code>/<code>expandvars</code>/
+<code>realpath</code>/<code>relpath</code>/<code>normpath</code>/<code>commonpath</code>/<code>win_basename</code>/<code>win_dirname</code>/
+<code>win_splitdrive</code> — ported from real Python's own <code>posixpath</code>/<code>ntpath</code>/
+<code>genericpath</code> source (not just <code>os.path</code>'s documented behavior), since the
+two disagree on a few edge cases Go's <code>path</code>/<code>path/filepath</code> packages don't
+reproduce (e.g. <code>os.path.basename('/foo/bar/')</code> is <code>''</code>, not <code>'bar'</code>).</p>
 <p><strong>Tests</strong> — <code>changed</code>, <code>success</code>/<code>succeeded</code>, <code>failed</code>/<code>failure</code>, <code>skipped</code>
 (each reads a registered task result's flags, e.g. <code>is changed</code>), and
 <code>version</code> (Ansible's <code>version_compare</code>-equivalent <code>is version(...)</code> test).</p>
