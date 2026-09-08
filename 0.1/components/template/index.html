@@ -912,7 +912,13 @@ overridable decoration/prefix/postfix parameters), and the path filters
 <code>win_splitdrive</code> — ported from real Python's own <code>posixpath</code>/<code>ntpath</code>/
 <code>genericpath</code> source (not just <code>os.path</code>'s documented behavior), since the
 two disagree on a few edge cases Go's <code>path</code>/<code>path/filepath</code> packages don't
-reproduce (e.g. <code>os.path.basename('/foo/bar/')</code> is <code>''</code>, not <code>'bar'</code>).</p>
+reproduce (e.g. <code>os.path.basename('/foo/bar/')</code> is <code>''</code>, not <code>'bar'</code>),
+<code>extract</code> (chained container lookups by key/index), <code>flatten</code>
+(nested-list collapsing, with a <code>levels</code> depth limit), <code>subelements</code>
+(pairs each element of a list/dict with every item its dotted accessor
+finds), and <code>split</code> (Python's <code>str.split()</code> semantics exactly, including
+the different behavior of the default whitespace-run split vs. an
+explicit separator).</p>
 <p><strong>Tests</strong> — <code>changed</code>, <code>success</code>/<code>succeeded</code>, <code>failed</code>/<code>failure</code>, <code>skipped</code>
 (each reads a registered task result's flags, e.g. <code>is changed</code>), and
 <code>version</code> (Ansible's <code>version_compare</code>-equivalent <code>is version(...)</code> test).</p>
