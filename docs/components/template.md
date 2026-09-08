@@ -82,9 +82,11 @@ reproduce (e.g. `os.path.basename('/foo/bar/')` is `''`, not `'bar'`),
 `extract` (chained container lookups by key/index), `flatten`
 (nested-list collapsing, with a `levels` depth limit), `subelements`
 (pairs each element of a list/dict with every item its dotted accessor
-finds), and `split` (Python's `str.split()` semantics exactly, including
+finds), `split` (Python's `str.split()` semantics exactly, including
 the different behavior of the default whitespace-run split vs. an
-explicit separator).
+explicit separator), and `fileglob` (real filesystem globbing, filtered
+to regular files only — `filepath.Glob` plus an `os.Stat` check, matching
+real Ansible's own `[g for g in glob.glob(pathname) if os.path.isfile(g)]`).
 
 **Tests** — `changed`, `success`/`succeeded`, `failed`/`failure`, `skipped`
 (each reads a registered task result's flags, e.g. `is changed`), and
