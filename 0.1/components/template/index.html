@@ -884,7 +884,13 @@ instead of them. As of this writing the Ansible-specific set includes:</p>
 engine, since Ansible's regex filters rely on Python <code>re</code> semantics that
 Go's <code>regexp</code> doesn't fully match), <code>bool</code>, <code>mandatory</code>, <code>ternary</code>, <code>combine</code>,
 <code>dict2items</code>/<code>items2dict</code>, <code>type_debug</code>, <code>quote</code>, <code>basename</code>/<code>dirname</code>,
-<code>b64encode</code>/<code>b64decode</code>, <code>md5</code>/<code>sha1</code>/<code>hash</code>.</p>
+<code>b64encode</code>/<code>b64decode</code>, <code>md5</code>/<code>sha1</code>/<code>hash</code>, <code>union</code>/<code>intersect</code>/<code>difference</code>/
+<code>symmetric_difference</code> (set theory over lists — <code>unique</code> itself is left to
+gonja's own built-in, which already matches what real Ansible's <code>unique</code>
+delegates to), <code>log</code>/<code>pow</code>/<code>root</code>, <code>human_readable</code>/<code>human_to_bytes</code> (byte-exact
+port of <code>ansible.module_utils.common.text.formatters</code>' size tables),
+<code>rekey_on_member</code>, <code>to_uuid</code> (RFC 4122 UUID v5, Ansible's own default
+namespace).</p>
 <p><strong>Tests</strong> — <code>changed</code>, <code>success</code>/<code>succeeded</code>, <code>failed</code>/<code>failure</code>, <code>skipped</code>
 (each reads a registered task result's flags, e.g. <code>is changed</code>), and
 <code>version</code> (Ansible's <code>version_compare</code>-equivalent <code>is version(...)</code> test).</p>
