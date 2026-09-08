@@ -52,20 +52,19 @@ developed further and is not part of the current architecture.
   account management, and Manager power/logs/network-protocol/host-interface
   config, plus (in `redfish_info`) inventory, config, and health-report info
   across all 7 real categories — Systems, Chassis, Accounts, Sessions,
-  Update, Manager (now complete — every real Manager command is wired), and
-  Service. Real `redfish_command.py` alone declares ~35 commands across 6
-  categories, and `redfish_info` a further ~39, so real gaps remain in
+  Update, Manager, and Service. Manager and Chassis are now complete (every
+  real command wired), Systems has 13 of its 14 real commands, and Update
+  has 3 of 4. Real `redfish_command.py` alone declares ~35 commands across
+  6 categories, and `redfish_info` a further ~39, so real gaps remain in
   each: virtual media (needs vendor-specific empty-slot matching this port
-  has no hardware to verify against), storage/RAID configuration, BIOS
-  registries (needs vendor-aware HPE iLO4/iLO5 workarounds this port has no
-  hardware to verify against — the last unwired Systems command in
-  `redfish_info`, which is otherwise complete: 13 of 14 real commands), a few
-  Chassis-specific/HPE-specific commands, and `GetUpdateStatus` specifically
-  (blocked on an
-  architectural ceiling:
-  redfishtool's own `raw` subcommand exposes only a response's JSON body,
-  never the distinguishing HTTP status code real Ansible's own status logic
-  depends on) — disclosed, not silently assumed to work.
+  has no hardware to verify against), storage/RAID configuration, and two
+  specific commands genuinely unreachable through further CLI-substitution
+  work — `GetBiosRegistries` (needs vendor-aware HPE iLO4/iLO5 workarounds
+  this port has no hardware to verify against) and `GetUpdateStatus`
+  (blocked on an architectural ceiling: redfishtool's own `raw` subcommand
+  exposes only a response's JSON body, never the distinguishing HTTP status
+  code real Ansible's own status logic depends on) — disclosed, not
+  silently assumed to work.
 - **Cloud-provider collections** — `amazon.aws`, `azure.azcollection`,
   `google.cloud`, and similar. These need real Go SDK bindings per provider's
   REST API, not shell composition over a CLI the way the rest of this port
