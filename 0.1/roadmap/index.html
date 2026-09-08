@@ -870,11 +870,10 @@ developed further and is not part of the current architecture.</p>
   Service. Real <code>redfish_command.py</code> alone declares ~35 commands across 6
   categories, and <code>redfish_info</code> a further ~39, so real gaps remain in
   each: virtual media (needs vendor-specific empty-slot matching this port
-  has no hardware to verify against), storage/RAID configuration,
-  <code>redfish_info</code>'s own remaining storage inventory commands (a deep,
-  dual-code-path traversal covering both the modern Storage resource shape
-  and the older SimpleStorage one), BIOS registries (needs vendor-aware HPE
-  iLO4/iLO5 workarounds this port has no hardware to verify against), a few
+  has no hardware to verify against), storage/RAID configuration, BIOS
+  registries (needs vendor-aware HPE iLO4/iLO5 workarounds this port has no
+  hardware to verify against — the last unwired Systems command in
+  <code>redfish_info</code>, which is otherwise complete: 13 of 14 real commands), a few
   Chassis-specific/HPE-specific commands, and <code>GetUpdateStatus</code> specifically
   (blocked on an
   architectural ceiling:
