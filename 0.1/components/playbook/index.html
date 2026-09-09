@@ -633,6 +633,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#measured-against-real-ansible" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Measured against real Ansible
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#example" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -801,6 +812,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#measured-against-real-ansible" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Measured against real Ansible
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#example" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -956,6 +978,43 @@ runs here, so there is nothing to raise real Ansible's separate
 <code>v2_playbook_on_handler_task_start</code> from.</p>
 <p><code>Engine.OnResult</code> remains as the one-hook shorthand for a caller that only
 wants results and no play or recap events.</p>
+<h2 id="measured-against-real-ansible">Measured against real Ansible<a class="headerlink" href="#measured-against-real-ansible" title="Permanent link">&para;</a></h2>
+<p>The engine's control flow has been run side by side with <strong>real
+ansible-core 2.21.4</strong>: the same playbook through both, across two hosts,
+appending markers to a log so that <em>ordering</em> is compared and not just
+outcomes — which is what <code>block</code>/<code>rescue</code>/<code>always</code> and handler timing
+actually turn on.</p>
+<p>Most of it held on the first run: block/rescue/always ordering and
+membership, a handler firing exactly once for two notifying tasks, a
+handler correctly <em>not</em> firing for an unchanged task, <code>run_once</code> running
+once across both hosts, <code>changed_when</code>/<code>failed_when</code>/<code>ignore_errors</code>, and
+every <code>when:</code> form. Two things did not, both about loops, and both are
+fixed:</p>
+<ul>
+<li><strong><code>register</code> on a looped task produced no <code>results</code> list</strong>, so
+  <code>{{ r.results | map(attribute='stdout') }}</code> — everyday usage — failed
+  outright. A looped task now registers exactly what real Ansible
+  registers: <code>changed</code>, <code>failed</code>, <code>msg</code> (<code>"All items completed"</code>) and
+  <code>results</code>, with <strong>none</strong> of the module's own fields at the top level,
+  and one entry per iteration carrying the module fields plus <code>item</code> and
+  <code>ansible_loop_var</code>. A task that is not looping still registers its
+  fields flat.</li>
+<li><strong><code>loop_control.index_var</code> was parsed nowhere</strong> and rendered empty. It
+  is now bound per iteration, 0-based.</li>
+</ul>
+<p>Two differences are known and not yet addressed:</p>
+<ul>
+<li><code>command</code> results lack the <code>start</code>/<code>end</code>/<code>delta</code> timing fields real
+  Ansible includes.</li>
+<li>The PLAY RECAP has no <code>unreachable</code>/<code>rescued</code>/<code>ignored</code> columns, so a
+  failure that was rescued or ignored is still counted under <code>failed</code>
+  where real Ansible separates them.</li>
+</ul>
+<p>Real ansible-core 2.21 also <strong>requires a conditional to evaluate to a
+boolean</strong> — a <code>when:</code> yielding a dict or list is an error there
+(<code>ALLOW_BROKEN_CONDITIONALS</code> relaxes it), where this engine applies
+ordinary truthiness. That is a deliberate upstream tightening rather than
+a defect here, recorded so the difference is known.</p>
 <h2 id="example">Example<a class="headerlink" href="#example" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="kn">package</span><span class="w"> </span><span class="nx">main</span>
 <a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>
