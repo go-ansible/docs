@@ -113,6 +113,46 @@ runs here, so there is nothing to raise real Ansible's separate
 `Engine.OnResult` remains as the one-hook shorthand for a caller that only
 wants results and no play or recap events.
 
+## Measured against real Ansible
+
+The engine's control flow has been run side by side with **real
+ansible-core 2.21.4**: the same playbook through both, across two hosts,
+appending markers to a log so that *ordering* is compared and not just
+outcomes — which is what `block`/`rescue`/`always` and handler timing
+actually turn on.
+
+Most of it held on the first run: block/rescue/always ordering and
+membership, a handler firing exactly once for two notifying tasks, a
+handler correctly *not* firing for an unchanged task, `run_once` running
+once across both hosts, `changed_when`/`failed_when`/`ignore_errors`, and
+every `when:` form. Two things did not, both about loops, and both are
+fixed:
+
+- **`register` on a looped task produced no `results` list**, so
+  `{{ r.results | map(attribute='stdout') }}` — everyday usage — failed
+  outright. A looped task now registers exactly what real Ansible
+  registers: `changed`, `failed`, `msg` (`"All items completed"`) and
+  `results`, with **none** of the module's own fields at the top level,
+  and one entry per iteration carrying the module fields plus `item` and
+  `ansible_loop_var`. A task that is not looping still registers its
+  fields flat.
+- **`loop_control.index_var` was parsed nowhere** and rendered empty. It
+  is now bound per iteration, 0-based.
+
+Two differences are known and not yet addressed:
+
+- `command` results lack the `start`/`end`/`delta` timing fields real
+  Ansible includes.
+- The PLAY RECAP has no `unreachable`/`rescued`/`ignored` columns, so a
+  failure that was rescued or ignored is still counted under `failed`
+  where real Ansible separates them.
+
+Real ansible-core 2.21 also **requires a conditional to evaluate to a
+boolean** — a `when:` yielding a dict or list is an error there
+(`ALLOW_BROKEN_CONDITIONALS` relaxes it), where this engine applies
+ordinary truthiness. That is a deliberate upstream tightening rather than
+a defect here, recorded so the difference is known.
+
 ## Example
 
 ```go
