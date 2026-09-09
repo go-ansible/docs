@@ -21,6 +21,11 @@ func (e *Engine) Eval(exprSrc string, data map[string]any) (any, error)
 func (e *Engine) EvalBool(exprSrc string, data map[string]any) (bool, error)
 func (e *Engine) RenderValue(raw any, data map[string]any) (any, error)
 
+// Set to receive warnings a render has nowhere else to send — currently
+// only a lookup called with errors=warn. Left nil, such a lookup
+// degrades to errors=ignore.
+Engine.OnWarning func(msg string)
+
 func IsTemplate(s string) bool
 ```
 
@@ -110,6 +115,28 @@ implemented once, not duplicated per consumer.
 **Tests** — `changed`, `success`/`succeeded`, `failed`/`failure`, `skipped`
 (each reads a registered task result's flags, e.g. `is changed`), and
 `version` (Ansible's `version_compare`-equivalent `is version(...)` test).
+
+**Lookups** — `lookup(name, ...)` plus `query(...)`/`q(...)` (the same
+thing with `wantlist` forced on), registered as Jinja *global functions*
+exactly as real Ansible registers them, not as filters. The two universal
+keyword arguments every lookup call accepts are handled by the shared
+dispatcher rather than per plugin: `wantlist` (default false) and
+`errors` (`strict`/`warn`/`ignore`, default `strict`). Result shaping
+matches real Ansible's own: one result unwraps to a scalar, several
+all-string results join with a bare comma, anything else stays a list.
+Plugins shipped so far are `env`, `pipe` (runs on the controller, like
+real Ansible) and `file`. A lookup receives the live variable context of
+its call site, which this port supplies by building the lookup globals
+per render rather than once per engine — gonja's own context type cannot
+enumerate what is in scope at call time, so the caller's own variable map
+is captured directly instead. Two real, disclosed narrowings versus
+upstream: `pipe` uses the process's working directory rather than a
+per-play basedir, and `file` resolves a relative path against that same
+working directory rather than through a role's `files/` search path,
+which go-ansible does not model yet. `errors=warn` reports through the
+caller-supplied `Engine.OnWarning` hook, since this package has no
+display layer of its own; with no hook installed it degrades to
+`errors=ignore`.
 
 ## Example
 
