@@ -30,11 +30,23 @@ type Engine struct {
 	ExtraVars map[string]any
 	Connect   Connector
 
-	BaseDir  string
-	RunTags  []string
-	SkipTags []string
-	OnResult func(Result)
+	BaseDir   string
+	RunTags   []string
+	SkipTags  []string
+	OnResult  func(Result)
+	Callbacks []Callback
 }
+
+// Callback is a reporting plugin — see "Callback plugins" below.
+type Callback interface {
+	OnPlayStart(play Play)
+	OnTaskResult(r Result)
+	OnStats(rr *RunResult)
+}
+
+type BaseCallback struct{} // no-op defaults; embed and override what you need
+
+func NewDefaultCallback(w io.Writer, color bool) *DefaultCallback
 
 func New(inv *inventory.Inventory) *Engine
 func (e *Engine) RunPlaybook(ctx context.Context, pb Playbook) (*RunResult, error)
@@ -63,6 +75,43 @@ func (rr *RunResult) Summary() map[string]*HostSummary // real Ansible's PLAY RE
 [`go-remoteexec/transport`](https://github.com/go-remoteexec/transport). Set
 `Connect` to a custom `Connector` to run against a fake or instrumented
 connection in tests.
+
+## Callback plugins
+
+Real Ansible reports a run through **callback plugins**
+(`ansible.plugins.callback.CallbackBase` and its `v2_*` hooks), loading one
+`stdout`-type plugin alongside any number of `notification`-type ones.
+`Callback` is this port's equivalent, and `Engine.Callbacks` is a list for
+that same reason. Embed `BaseCallback` to implement only the hooks you care
+about, exactly the way a real callback plugin overrides only the `v2_*`
+methods it needs.
+
+`DefaultCallback` is this port's `ansible.builtin.default`: PLAY and TASK
+banners, a colored line per result, and a PLAY RECAP. It is what
+[`cli`](cli.md)'s `ansible-playbook` and `ansible-pull` install, and it
+serializes its own hooks — results genuinely arrive from one goroutine per
+host, so an implementation that keeps state or writes to a shared stream
+must do the same. Its banners are not padded out with asterisks the way
+real Ansible's `Display.banner` pads them to the terminal width.
+
+Three hooks, where real Ansible has 24, because a hook nothing in this port
+can raise and nothing can consume would be an empty promise:
+
+| hook | real equivalent |
+| --- | --- |
+| `OnPlayStart` | `v2_playbook_on_play_start` |
+| `OnTaskResult` | `v2_runner_on_ok`/`_failed`/`_skipped` collapsed into one, since `Result` already carries which it is |
+| `OnStats` | `v2_playbook_on_stats` — raised once per `RunPlaybook` call, **including when a play errors out**, so a recap still covers whatever did run |
+
+Two absences worth naming, both disclosed rather than stubbed:
+`v2_playbook_on_start` prints nothing at real Ansible's own default
+verbosity (it only fires above `-v`), and this port has no verbosity concept
+to gate it on; and handler runs are indistinguishable from ordinary task
+runs here, so there is nothing to raise real Ansible's separate
+`v2_playbook_on_handler_task_start` from.
+
+`Engine.OnResult` remains as the one-hook shorthand for a caller that only
+wants results and no play or recap events.
 
 ## Example
 
