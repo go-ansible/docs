@@ -549,6 +549,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#measured-against-real-ansible" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Measured against real Ansible
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#example" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -801,6 +812,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#measured-against-real-ansible" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Measured against real Ansible
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#example" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -969,6 +991,39 @@ which go-ansible does not model yet. <code>errors=warn</code> reports through th
 caller-supplied <code>Engine.OnWarning</code> hook, since this package has no
 display layer of its own; with no hook installed it degrades to
 <code>errors=ignore</code>.</p>
+<h2 id="measured-against-real-ansible">Measured against real Ansible<a class="headerlink" href="#measured-against-real-ansible" title="Permanent link">&para;</a></h2>
+<p>The filter and lookup surface has been run side by side with <strong>real
+ansible-core 2.21.4</strong>: one playbook through both engines, each writing
+<code>key=value</code> lines to a file, then diffed. That matters because until then
+every filter had been checked against a reference value <em>derived from
+reading ansible-core's source</em> — and a reference derived from a reading
+can be wrong in exactly the way the reading was.</p>
+<p>Most of it held. Every <code>itertools</code> port (<code>product</code>, <code>permutations</code>,
+<code>combinations</code>, <code>zip</code>, <code>zip_longest</code>), <code>subelements</code>, <code>rekey_on_member</code>,
+<code>flatten</code>, <code>split</code>, the set-theory filters and every lookup matched
+exactly, ordering included. Five filters did not, and were fixed in
+v0.11.0: <code>type_debug</code> was reporting Go type names rather than Python's
+(so <code>when: x | type_debug == 'dict'</code> was silently false), <code>ternary</code> was
+missing its third <code>none_val</code> argument, <code>to_json</code> used Go's compact
+separators and ignored <code>indent</code>, <code>to_yaml</code> and <code>to_nice_yaml</code> were the
+same function, and <code>root(3)</code> was a ULP out because Go's <code>math.Pow</code>
+differs from the C <code>pow()</code> Python calls.</p>
+<p>Three differences remain, all below the filter layer and disclosed rather
+than papered over:</p>
+<ul>
+<li><strong>Dict key order.</strong> Real Ansible emits a dict in insertion order,
+  because Python dicts keep it. A Go map does not, and the order is gone
+  before a value ever reaches a filter — it was lost when the YAML was
+  decoded. Keys are sorted instead, so output is at least deterministic.</li>
+<li><strong>Backslashes in string literals.</strong> Real Ansible treats them literally
+  (<code>'a\b'</code> renders <code>a\b</code>, <code>'a\\b'</code> renders <code>a\\b</code>); gonja applies escape
+  processing and rejects an unknown escape outright, so <code>'C:\Users\foo'</code>
+  is a parse error here and ordinary in real Ansible. This is in gonja's
+  lexer, not in this package.</li>
+<li><strong><code>to_nice_yaml</code> sequence indentation.</strong> yaml.v3 indents a block
+  sequence under its key where PyYAML puts the dashes at the key's own
+  indentation. The two parse identically.</li>
+</ul>
 <h2 id="example">Example<a class="headerlink" href="#example" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="kn">package</span><span class="w"> </span><span class="nx">main</span>
 <a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>
