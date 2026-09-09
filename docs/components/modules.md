@@ -59,6 +59,43 @@ the module could not determine an outcome at all (a transport failure); an
 a package manager reporting "not found" — is a `Result{Failed: true}` with a
 `nil` error, since it is not the module's own execution that went wrong.
 
+`Run` also finalizes a result on its way out, which is where real Ansible
+does the same work (`AnsibleModule.exit_json`) rather than leaving each of
+the ~40 modules that produce output to remember it: a trailing newline is
+trimmed off `stdout`/`stderr`, and a matching `stdout_lines`/`stderr_lines`
+is added. The trim is exactly Python's `rstrip("\r\n")` — every trailing
+carriage return and newline goes, trailing spaces and tabs survive, and
+leading newlines survive.
+
+## Measured against real Ansible
+
+The module surface has been run side by side with **real ansible-core
+2.21.4**: the same playbook through both engines, **twice**, comparing the
+registered results *and* `diff -r` of the filesystem trees each produced.
+Running it twice is the point — the second pass is what shows whether
+idempotence matches, which is where a module port most easily drifts.
+
+Across `file` (directory/touch/absent), `copy`, `template`, `lineinfile`
+(both plain and `regexp`), `blockinfile`, `replace`, `stat`, `slurp`,
+`find`, `command`, `shell`, `set_fact` and `assert`, the compared values
+are **byte-identical to real Ansible on both passes**, and the two produced
+trees match exactly, permissions included.
+
+Two defects were found and fixed that way, neither of which any unit test
+had caught:
+
+- **`stdout` kept its trailing newline**, and **`stdout_lines`/`stderr_lines`
+  did not exist at all** — `{{ result.stdout_lines }}` is everyday playbook
+  usage and rendered `null`. Both are handled in `Run`, as above.
+- **`assert: that: ["x == 5"]`** — the form every real playbook uses —
+  failed with "did not evaluate to a boolean". This package's own
+  documentation already stated that the playbook engine would evaluate
+  those expressions before calling the module, and nothing did; the
+  engine now does, in [`playbook`](playbook.md)'s `runDirective`, for the
+  same reason real Ansible makes `assert` an action plugin rather than a
+  module — the conditions are Jinja2 expressions over the host's own
+  variables, and only the engine holds those.
+
 ## Example
 
 ```go
