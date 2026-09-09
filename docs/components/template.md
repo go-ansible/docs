@@ -98,6 +98,14 @@ silently wrong instead of working. The float representation makes that
 subtraction (and `<`/`>` comparisons) work correctly through gonja's
 existing numeric operators, at the cost of `{{ x | to_datetime }}`
 printing a raw number instead of Python's own formatted datetime repr.
+`password_hash` (crypt(3)/MCF password hashing — md5/sha256/sha512-crypt
+and bcrypt/blowfish, matching real Ansible's own hashtype names, defaults,
+and implicit rounds/cost — real Ansible's own sha256/sha512 defaults are
+535000/656000 rounds, deliberately far above crypt(3)'s own spec default
+of 5000) via [`go-encryptions/unixcrypt`](https://github.com/go-encryptions/unixcrypt),
+a small shared library extracted from `go-puppet/puppet`'s own `pw_hash()`
+implementation (Puppet's stdlib equivalent) so the crypt(3) algorithms are
+implemented once, not duplicated per consumer.
 
 **Tests** — `changed`, `success`/`succeeded`, `failed`/`failure`, `skipped`
 (each reads a registered task result's flags, e.g. `is changed`), and
