@@ -138,6 +138,42 @@ caller-supplied `Engine.OnWarning` hook, since this package has no
 display layer of its own; with no hook installed it degrades to
 `errors=ignore`.
 
+## Measured against real Ansible
+
+The filter and lookup surface has been run side by side with **real
+ansible-core 2.21.4**: one playbook through both engines, each writing
+`key=value` lines to a file, then diffed. That matters because until then
+every filter had been checked against a reference value *derived from
+reading ansible-core's source* — and a reference derived from a reading
+can be wrong in exactly the way the reading was.
+
+Most of it held. Every `itertools` port (`product`, `permutations`,
+`combinations`, `zip`, `zip_longest`), `subelements`, `rekey_on_member`,
+`flatten`, `split`, the set-theory filters and every lookup matched
+exactly, ordering included. Five filters did not, and were fixed in
+v0.11.0: `type_debug` was reporting Go type names rather than Python's
+(so `when: x | type_debug == 'dict'` was silently false), `ternary` was
+missing its third `none_val` argument, `to_json` used Go's compact
+separators and ignored `indent`, `to_yaml` and `to_nice_yaml` were the
+same function, and `root(3)` was a ULP out because Go's `math.Pow`
+differs from the C `pow()` Python calls.
+
+Three differences remain, all below the filter layer and disclosed rather
+than papered over:
+
+- **Dict key order.** Real Ansible emits a dict in insertion order,
+  because Python dicts keep it. A Go map does not, and the order is gone
+  before a value ever reaches a filter — it was lost when the YAML was
+  decoded. Keys are sorted instead, so output is at least deterministic.
+- **Backslashes in string literals.** Real Ansible treats them literally
+  (`'a\b'` renders `a\b`, `'a\\b'` renders `a\\b`); gonja applies escape
+  processing and rejects an unknown escape outright, so `'C:\Users\foo'`
+  is a parse error here and ordinary in real Ansible. This is in gonja's
+  lexer, not in this package.
+- **`to_nice_yaml` sequence indentation.** yaml.v3 indents a block
+  sequence under its key where PyYAML puts the dashes at the key's own
+  indentation. The two parse identically.
+
 ## Example
 
 ```go
