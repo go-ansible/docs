@@ -622,6 +622,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#callback-plugins" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Callback plugins
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#example" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -779,6 +790,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#callback-plugins" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Callback plugins
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#example" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -843,31 +865,43 @@ here would not.</p>
 <a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="w">    </span><span class="nx">ExtraVars</span><span class="w"> </span><span class="kt">map</span><span class="p">[</span><span class="kt">string</span><span class="p">]</span><span class="kt">any</span>
 <a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="w">    </span><span class="nx">Connect</span><span class="w">   </span><span class="nx">Connector</span>
 <a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>
-<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="w">    </span><span class="nx">BaseDir</span><span class="w">  </span><span class="kt">string</span>
-<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="w">    </span><span class="nx">RunTags</span><span class="w">  </span><span class="p">[]</span><span class="kt">string</span>
-<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="w">    </span><span class="nx">SkipTags</span><span class="w"> </span><span class="p">[]</span><span class="kt">string</span>
-<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="w">    </span><span class="nx">OnResult</span><span class="w"> </span><span class="kd">func</span><span class="p">(</span><span class="nx">Result</span><span class="p">)</span>
-<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="p">}</span>
-<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>
-<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a><span class="kd">func</span><span class="w"> </span><span class="nx">New</span><span class="p">(</span><span class="nx">inv</span><span class="w"> </span><span class="o">*</span><span class="nx">inventory</span><span class="p">.</span><span class="nx">Inventory</span><span class="p">)</span><span class="w"> </span><span class="o">*</span><span class="nx">Engine</span>
-<a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a><span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">e</span><span class="w"> </span><span class="o">*</span><span class="nx">Engine</span><span class="p">)</span><span class="w"> </span><span class="nx">RunPlaybook</span><span class="p">(</span><span class="nx">ctx</span><span class="w"> </span><span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span><span class="w"> </span><span class="nx">pb</span><span class="w"> </span><span class="nx">Playbook</span><span class="p">)</span><span class="w"> </span><span class="p">(</span><span class="o">*</span><span class="nx">RunResult</span><span class="p">,</span><span class="w"> </span><span class="kt">error</span><span class="p">)</span>
-<a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a>
-<a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a><span class="kd">type</span><span class="w"> </span><span class="nx">Playbook</span><span class="w"> </span><span class="p">[]</span><span class="nx">Play</span>
-<a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a>
-<a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a><span class="kd">func</span><span class="w"> </span><span class="nx">Parse</span><span class="p">(</span><span class="nx">data</span><span class="w"> </span><span class="p">[]</span><span class="kt">byte</span><span class="p">)</span><span class="w"> </span><span class="p">(</span><span class="nx">Playbook</span><span class="p">,</span><span class="w"> </span><span class="kt">error</span><span class="p">)</span>
-<a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a><span class="kd">func</span><span class="w"> </span><span class="nx">ParseFile</span><span class="p">(</span><span class="nx">path</span><span class="w"> </span><span class="kt">string</span><span class="p">)</span><span class="w"> </span><span class="p">(</span><span class="nx">Playbook</span><span class="p">,</span><span class="w"> </span><span class="kt">error</span><span class="p">)</span>
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="w">    </span><span class="nx">BaseDir</span><span class="w">   </span><span class="kt">string</span>
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="w">    </span><span class="nx">RunTags</span><span class="w">   </span><span class="p">[]</span><span class="kt">string</span>
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="w">    </span><span class="nx">SkipTags</span><span class="w">  </span><span class="p">[]</span><span class="kt">string</span>
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="w">    </span><span class="nx">OnResult</span><span class="w">  </span><span class="kd">func</span><span class="p">(</span><span class="nx">Result</span><span class="p">)</span>
+<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="w">    </span><span class="nx">Callbacks</span><span class="w"> </span><span class="p">[]</span><span class="nx">Callback</span>
+<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a><span class="p">}</span>
+<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>
+<a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a><span class="c1">// Callback is a reporting plugin — see "Callback plugins" below.</span>
+<a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a><span class="kd">type</span><span class="w"> </span><span class="nx">Callback</span><span class="w"> </span><span class="kd">interface</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a><span class="w">    </span><span class="nx">OnPlayStart</span><span class="p">(</span><span class="nx">play</span><span class="w"> </span><span class="nx">Play</span><span class="p">)</span>
+<a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a><span class="w">    </span><span class="nx">OnTaskResult</span><span class="p">(</span><span class="nx">r</span><span class="w"> </span><span class="nx">Result</span><span class="p">)</span>
+<a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a><span class="w">    </span><span class="nx">OnStats</span><span class="p">(</span><span class="nx">rr</span><span class="w"> </span><span class="o">*</span><span class="nx">RunResult</span><span class="p">)</span>
+<a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a><span class="p">}</span>
 <a id="__codelineno-0-21" name="__codelineno-0-21" href="#__codelineno-0-21"></a>
-<a id="__codelineno-0-22" name="__codelineno-0-22" href="#__codelineno-0-22"></a><span class="kd">type</span><span class="w"> </span><span class="nx">Result</span><span class="w"> </span><span class="kd">struct</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-0-23" name="__codelineno-0-23" href="#__codelineno-0-23"></a><span class="w">    </span><span class="nx">Host</span><span class="p">,</span><span class="w"> </span><span class="nx">Task</span><span class="p">,</span><span class="w"> </span><span class="nx">Module</span><span class="w">     </span><span class="kt">string</span>
-<a id="__codelineno-0-24" name="__codelineno-0-24" href="#__codelineno-0-24"></a><span class="w">    </span><span class="nx">Changed</span><span class="p">,</span><span class="w"> </span><span class="nx">Failed</span><span class="p">,</span><span class="w"> </span><span class="nx">Skipped</span><span class="w"> </span><span class="kt">bool</span>
-<a id="__codelineno-0-25" name="__codelineno-0-25" href="#__codelineno-0-25"></a><span class="w">    </span><span class="nx">Msg</span><span class="w">   </span><span class="kt">string</span>
-<a id="__codelineno-0-26" name="__codelineno-0-26" href="#__codelineno-0-26"></a><span class="w">    </span><span class="nx">Extra</span><span class="w"> </span><span class="kt">map</span><span class="p">[</span><span class="kt">string</span><span class="p">]</span><span class="kt">any</span>
-<a id="__codelineno-0-27" name="__codelineno-0-27" href="#__codelineno-0-27"></a><span class="p">}</span>
+<a id="__codelineno-0-22" name="__codelineno-0-22" href="#__codelineno-0-22"></a><span class="kd">type</span><span class="w"> </span><span class="nx">BaseCallback</span><span class="w"> </span><span class="kd">struct</span><span class="p">{}</span><span class="w"> </span><span class="c1">// no-op defaults; embed and override what you need</span>
+<a id="__codelineno-0-23" name="__codelineno-0-23" href="#__codelineno-0-23"></a>
+<a id="__codelineno-0-24" name="__codelineno-0-24" href="#__codelineno-0-24"></a><span class="kd">func</span><span class="w"> </span><span class="nx">NewDefaultCallback</span><span class="p">(</span><span class="nx">w</span><span class="w"> </span><span class="nx">io</span><span class="p">.</span><span class="nx">Writer</span><span class="p">,</span><span class="w"> </span><span class="nx">color</span><span class="w"> </span><span class="kt">bool</span><span class="p">)</span><span class="w"> </span><span class="o">*</span><span class="nx">DefaultCallback</span>
+<a id="__codelineno-0-25" name="__codelineno-0-25" href="#__codelineno-0-25"></a>
+<a id="__codelineno-0-26" name="__codelineno-0-26" href="#__codelineno-0-26"></a><span class="kd">func</span><span class="w"> </span><span class="nx">New</span><span class="p">(</span><span class="nx">inv</span><span class="w"> </span><span class="o">*</span><span class="nx">inventory</span><span class="p">.</span><span class="nx">Inventory</span><span class="p">)</span><span class="w"> </span><span class="o">*</span><span class="nx">Engine</span>
+<a id="__codelineno-0-27" name="__codelineno-0-27" href="#__codelineno-0-27"></a><span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">e</span><span class="w"> </span><span class="o">*</span><span class="nx">Engine</span><span class="p">)</span><span class="w"> </span><span class="nx">RunPlaybook</span><span class="p">(</span><span class="nx">ctx</span><span class="w"> </span><span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span><span class="w"> </span><span class="nx">pb</span><span class="w"> </span><span class="nx">Playbook</span><span class="p">)</span><span class="w"> </span><span class="p">(</span><span class="o">*</span><span class="nx">RunResult</span><span class="p">,</span><span class="w"> </span><span class="kt">error</span><span class="p">)</span>
 <a id="__codelineno-0-28" name="__codelineno-0-28" href="#__codelineno-0-28"></a>
-<a id="__codelineno-0-29" name="__codelineno-0-29" href="#__codelineno-0-29"></a><span class="kd">type</span><span class="w"> </span><span class="nx">RunResult</span><span class="w"> </span><span class="kd">struct</span><span class="p">{</span><span class="w"> </span><span class="nx">Plays</span><span class="w"> </span><span class="p">[]</span><span class="nx">PlayResult</span><span class="w"> </span><span class="p">}</span>
+<a id="__codelineno-0-29" name="__codelineno-0-29" href="#__codelineno-0-29"></a><span class="kd">type</span><span class="w"> </span><span class="nx">Playbook</span><span class="w"> </span><span class="p">[]</span><span class="nx">Play</span>
 <a id="__codelineno-0-30" name="__codelineno-0-30" href="#__codelineno-0-30"></a>
-<a id="__codelineno-0-31" name="__codelineno-0-31" href="#__codelineno-0-31"></a><span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">rr</span><span class="w"> </span><span class="o">*</span><span class="nx">RunResult</span><span class="p">)</span><span class="w"> </span><span class="nx">Failed</span><span class="p">()</span><span class="w"> </span><span class="kt">bool</span>
-<a id="__codelineno-0-32" name="__codelineno-0-32" href="#__codelineno-0-32"></a><span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">rr</span><span class="w"> </span><span class="o">*</span><span class="nx">RunResult</span><span class="p">)</span><span class="w"> </span><span class="nx">Summary</span><span class="p">()</span><span class="w"> </span><span class="kt">map</span><span class="p">[</span><span class="kt">string</span><span class="p">]</span><span class="o">*</span><span class="nx">HostSummary</span><span class="w"> </span><span class="c1">// real Ansible's PLAY RECAP, by host</span>
+<a id="__codelineno-0-31" name="__codelineno-0-31" href="#__codelineno-0-31"></a><span class="kd">func</span><span class="w"> </span><span class="nx">Parse</span><span class="p">(</span><span class="nx">data</span><span class="w"> </span><span class="p">[]</span><span class="kt">byte</span><span class="p">)</span><span class="w"> </span><span class="p">(</span><span class="nx">Playbook</span><span class="p">,</span><span class="w"> </span><span class="kt">error</span><span class="p">)</span>
+<a id="__codelineno-0-32" name="__codelineno-0-32" href="#__codelineno-0-32"></a><span class="kd">func</span><span class="w"> </span><span class="nx">ParseFile</span><span class="p">(</span><span class="nx">path</span><span class="w"> </span><span class="kt">string</span><span class="p">)</span><span class="w"> </span><span class="p">(</span><span class="nx">Playbook</span><span class="p">,</span><span class="w"> </span><span class="kt">error</span><span class="p">)</span>
+<a id="__codelineno-0-33" name="__codelineno-0-33" href="#__codelineno-0-33"></a>
+<a id="__codelineno-0-34" name="__codelineno-0-34" href="#__codelineno-0-34"></a><span class="kd">type</span><span class="w"> </span><span class="nx">Result</span><span class="w"> </span><span class="kd">struct</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-0-35" name="__codelineno-0-35" href="#__codelineno-0-35"></a><span class="w">    </span><span class="nx">Host</span><span class="p">,</span><span class="w"> </span><span class="nx">Task</span><span class="p">,</span><span class="w"> </span><span class="nx">Module</span><span class="w">     </span><span class="kt">string</span>
+<a id="__codelineno-0-36" name="__codelineno-0-36" href="#__codelineno-0-36"></a><span class="w">    </span><span class="nx">Changed</span><span class="p">,</span><span class="w"> </span><span class="nx">Failed</span><span class="p">,</span><span class="w"> </span><span class="nx">Skipped</span><span class="w"> </span><span class="kt">bool</span>
+<a id="__codelineno-0-37" name="__codelineno-0-37" href="#__codelineno-0-37"></a><span class="w">    </span><span class="nx">Msg</span><span class="w">   </span><span class="kt">string</span>
+<a id="__codelineno-0-38" name="__codelineno-0-38" href="#__codelineno-0-38"></a><span class="w">    </span><span class="nx">Extra</span><span class="w"> </span><span class="kt">map</span><span class="p">[</span><span class="kt">string</span><span class="p">]</span><span class="kt">any</span>
+<a id="__codelineno-0-39" name="__codelineno-0-39" href="#__codelineno-0-39"></a><span class="p">}</span>
+<a id="__codelineno-0-40" name="__codelineno-0-40" href="#__codelineno-0-40"></a>
+<a id="__codelineno-0-41" name="__codelineno-0-41" href="#__codelineno-0-41"></a><span class="kd">type</span><span class="w"> </span><span class="nx">RunResult</span><span class="w"> </span><span class="kd">struct</span><span class="p">{</span><span class="w"> </span><span class="nx">Plays</span><span class="w"> </span><span class="p">[]</span><span class="nx">PlayResult</span><span class="w"> </span><span class="p">}</span>
+<a id="__codelineno-0-42" name="__codelineno-0-42" href="#__codelineno-0-42"></a>
+<a id="__codelineno-0-43" name="__codelineno-0-43" href="#__codelineno-0-43"></a><span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">rr</span><span class="w"> </span><span class="o">*</span><span class="nx">RunResult</span><span class="p">)</span><span class="w"> </span><span class="nx">Failed</span><span class="p">()</span><span class="w"> </span><span class="kt">bool</span>
+<a id="__codelineno-0-44" name="__codelineno-0-44" href="#__codelineno-0-44"></a><span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">rr</span><span class="w"> </span><span class="o">*</span><span class="nx">RunResult</span><span class="p">)</span><span class="w"> </span><span class="nx">Summary</span><span class="p">()</span><span class="w"> </span><span class="kt">map</span><span class="p">[</span><span class="kt">string</span><span class="p">]</span><span class="o">*</span><span class="nx">HostSummary</span><span class="w"> </span><span class="c1">// real Ansible's PLAY RECAP, by host</span>
 </code></pre></div>
 <p><code>New</code> returns an <code>Engine</code> pre-wired with the built-in module registry
 (<a href="../modules/"><code>modules.Default()</code></a>), a fresh template engine, and
@@ -875,6 +909,53 @@ here would not.</p>
 <a href="https://github.com/go-remoteexec/transport"><code>go-remoteexec/transport</code></a>. Set
 <code>Connect</code> to a custom <code>Connector</code> to run against a fake or instrumented
 connection in tests.</p>
+<h2 id="callback-plugins">Callback plugins<a class="headerlink" href="#callback-plugins" title="Permanent link">&para;</a></h2>
+<p>Real Ansible reports a run through <strong>callback plugins</strong>
+(<code>ansible.plugins.callback.CallbackBase</code> and its <code>v2_*</code> hooks), loading one
+<code>stdout</code>-type plugin alongside any number of <code>notification</code>-type ones.
+<code>Callback</code> is this port's equivalent, and <code>Engine.Callbacks</code> is a list for
+that same reason. Embed <code>BaseCallback</code> to implement only the hooks you care
+about, exactly the way a real callback plugin overrides only the <code>v2_*</code>
+methods it needs.</p>
+<p><code>DefaultCallback</code> is this port's <code>ansible.builtin.default</code>: PLAY and TASK
+banners, a colored line per result, and a PLAY RECAP. It is what
+<a href="../cli/"><code>cli</code></a>'s <code>ansible-playbook</code> and <code>ansible-pull</code> install, and it
+serializes its own hooks — results genuinely arrive from one goroutine per
+host, so an implementation that keeps state or writes to a shared stream
+must do the same. Its banners are not padded out with asterisks the way
+real Ansible's <code>Display.banner</code> pads them to the terminal width.</p>
+<p>Three hooks, where real Ansible has 24, because a hook nothing in this port
+can raise and nothing can consume would be an empty promise:</p>
+<table>
+<thead>
+<tr>
+<th>hook</th>
+<th>real equivalent</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>OnPlayStart</code></td>
+<td><code>v2_playbook_on_play_start</code></td>
+</tr>
+<tr>
+<td><code>OnTaskResult</code></td>
+<td><code>v2_runner_on_ok</code>/<code>_failed</code>/<code>_skipped</code> collapsed into one, since <code>Result</code> already carries which it is</td>
+</tr>
+<tr>
+<td><code>OnStats</code></td>
+<td><code>v2_playbook_on_stats</code> — raised once per <code>RunPlaybook</code> call, <strong>including when a play errors out</strong>, so a recap still covers whatever did run</td>
+</tr>
+</tbody>
+</table>
+<p>Two absences worth naming, both disclosed rather than stubbed:
+<code>v2_playbook_on_start</code> prints nothing at real Ansible's own default
+verbosity (it only fires above <code>-v</code>), and this port has no verbosity concept
+to gate it on; and handler runs are indistinguishable from ordinary task
+runs here, so there is nothing to raise real Ansible's separate
+<code>v2_playbook_on_handler_task_start</code> from.</p>
+<p><code>Engine.OnResult</code> remains as the one-hook shorthand for a caller that only
+wants results and no play or recap events.</p>
 <h2 id="example">Example<a class="headerlink" href="#example" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="kn">package</span><span class="w"> </span><span class="nx">main</span>
 <a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>
