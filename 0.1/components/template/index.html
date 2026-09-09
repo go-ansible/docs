@@ -931,7 +931,15 @@ dominant use of this filter, elapsed-time math between two parsed dates —
 silently wrong instead of working. The float representation makes that
 subtraction (and <code>&lt;</code>/<code>&gt;</code> comparisons) work correctly through gonja's
 existing numeric operators, at the cost of <code>{{ x | to_datetime }}</code>
-printing a raw number instead of Python's own formatted datetime repr.</p>
+printing a raw number instead of Python's own formatted datetime repr.
+<code>password_hash</code> (crypt(3)/MCF password hashing — md5/sha256/sha512-crypt
+and bcrypt/blowfish, matching real Ansible's own hashtype names, defaults,
+and implicit rounds/cost — real Ansible's own sha256/sha512 defaults are
+535000/656000 rounds, deliberately far above crypt(3)'s own spec default
+of 5000) via <a href="https://github.com/go-encryptions/unixcrypt"><code>go-encryptions/unixcrypt</code></a>,
+a small shared library extracted from <code>go-puppet/puppet</code>'s own <code>pw_hash()</code>
+implementation (Puppet's stdlib equivalent) so the crypt(3) algorithms are
+implemented once, not duplicated per consumer.</p>
 <p><strong>Tests</strong> — <code>changed</code>, <code>success</code>/<code>succeeded</code>, <code>failed</code>/<code>failure</code>, <code>skipped</code>
 (each reads a registered task result's flags, e.g. <code>is changed</code>), and
 <code>version</code> (Ansible's <code>version_compare</code>-equivalent <code>is version(...)</code> test).</p>
