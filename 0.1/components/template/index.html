@@ -857,7 +857,12 @@ string.</p>
 <a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">e</span><span class="w"> </span><span class="o">*</span><span class="nx">Engine</span><span class="p">)</span><span class="w"> </span><span class="nx">EvalBool</span><span class="p">(</span><span class="nx">exprSrc</span><span class="w"> </span><span class="kt">string</span><span class="p">,</span><span class="w"> </span><span class="nx">data</span><span class="w"> </span><span class="kt">map</span><span class="p">[</span><span class="kt">string</span><span class="p">]</span><span class="kt">any</span><span class="p">)</span><span class="w"> </span><span class="p">(</span><span class="kt">bool</span><span class="p">,</span><span class="w"> </span><span class="kt">error</span><span class="p">)</span>
 <a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">e</span><span class="w"> </span><span class="o">*</span><span class="nx">Engine</span><span class="p">)</span><span class="w"> </span><span class="nx">RenderValue</span><span class="p">(</span><span class="nx">raw</span><span class="w"> </span><span class="kt">any</span><span class="p">,</span><span class="w"> </span><span class="nx">data</span><span class="w"> </span><span class="kt">map</span><span class="p">[</span><span class="kt">string</span><span class="p">]</span><span class="kt">any</span><span class="p">)</span><span class="w"> </span><span class="p">(</span><span class="kt">any</span><span class="p">,</span><span class="w"> </span><span class="kt">error</span><span class="p">)</span>
 <a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>
-<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="kd">func</span><span class="w"> </span><span class="nx">IsTemplate</span><span class="p">(</span><span class="nx">s</span><span class="w"> </span><span class="kt">string</span><span class="p">)</span><span class="w"> </span><span class="kt">bool</span>
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="c1">// Set to receive warnings a render has nowhere else to send — currently</span>
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="c1">// only a lookup called with errors=warn. Left nil, such a lookup</span>
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="c1">// degrades to errors=ignore.</span>
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="nx">Engine</span><span class="p">.</span><span class="nx">OnWarning</span><span class="w"> </span><span class="kd">func</span><span class="p">(</span><span class="nx">msg</span><span class="w"> </span><span class="kt">string</span><span class="p">)</span>
+<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>
+<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a><span class="kd">func</span><span class="w"> </span><span class="nx">IsTemplate</span><span class="p">(</span><span class="nx">s</span><span class="w"> </span><span class="kt">string</span><span class="p">)</span><span class="w"> </span><span class="kt">bool</span>
 </code></pre></div>
 <ul>
 <li><code>Render</code> renders a full template string (text mixed with <code>{{ }}</code>/<code>{% %}</code>)
@@ -943,6 +948,27 @@ implemented once, not duplicated per consumer.</p>
 <p><strong>Tests</strong> — <code>changed</code>, <code>success</code>/<code>succeeded</code>, <code>failed</code>/<code>failure</code>, <code>skipped</code>
 (each reads a registered task result's flags, e.g. <code>is changed</code>), and
 <code>version</code> (Ansible's <code>version_compare</code>-equivalent <code>is version(...)</code> test).</p>
+<p><strong>Lookups</strong> — <code>lookup(name, ...)</code> plus <code>query(...)</code>/<code>q(...)</code> (the same
+thing with <code>wantlist</code> forced on), registered as Jinja <em>global functions</em>
+exactly as real Ansible registers them, not as filters. The two universal
+keyword arguments every lookup call accepts are handled by the shared
+dispatcher rather than per plugin: <code>wantlist</code> (default false) and
+<code>errors</code> (<code>strict</code>/<code>warn</code>/<code>ignore</code>, default <code>strict</code>). Result shaping
+matches real Ansible's own: one result unwraps to a scalar, several
+all-string results join with a bare comma, anything else stays a list.
+Plugins shipped so far are <code>env</code>, <code>pipe</code> (runs on the controller, like
+real Ansible) and <code>file</code>. A lookup receives the live variable context of
+its call site, which this port supplies by building the lookup globals
+per render rather than once per engine — gonja's own context type cannot
+enumerate what is in scope at call time, so the caller's own variable map
+is captured directly instead. Two real, disclosed narrowings versus
+upstream: <code>pipe</code> uses the process's working directory rather than a
+per-play basedir, and <code>file</code> resolves a relative path against that same
+working directory rather than through a role's <code>files/</code> search path,
+which go-ansible does not model yet. <code>errors=warn</code> reports through the
+caller-supplied <code>Engine.OnWarning</code> hook, since this package has no
+display layer of its own; with no hook installed it degrades to
+<code>errors=ignore</code>.</p>
 <h2 id="example">Example<a class="headerlink" href="#example" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="kn">package</span><span class="w"> </span><span class="nx">main</span>
 <a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>
