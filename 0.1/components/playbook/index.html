@@ -1010,6 +1010,34 @@ fixed:</p>
   failure that was rescued or ignored is still counted under <code>failed</code>
   where real Ansible separates them.</li>
 </ul>
+<p>A second pass covered <strong>roles, the include/import family and the variable
+precedence ladder</strong>, and found five more, all now fixed:</p>
+<ul>
+<li><strong><code>set_fact</code> sat below play vars.</strong> It wrote into the same layer as
+  gathered facts, so a play var and a <code>set_fact</code> of the same name
+  resolved to the play var. <code>set_fact</code> and <code>include_vars</code> now write to
+  the rung the ladder already reserved for them. A consequence worth
+  knowing: <code>meta: clear_facts</code> no longer clears a <code>set_fact</code>, which
+  matches real Ansible — it only did before because the two shared a
+  layer.</li>
+<li><strong>Role vars did not outlive their role.</strong> Every role variable read as
+  undefined the moment the role ended. Whether they should depends on
+  how the role was invoked, measured by running each form on its own: a
+  <code>roles:</code> entry and <code>import_role</code> are static and their variables
+  persist for the play, while <code>include_role</code> is dynamic and scopes them.
+  Only <code>include_role</code> is scoped now.</li>
+<li><strong><code>meta/main.yml</code> was never read</strong>, so role <code>dependencies:</code> never ran.
+  They now run depth-first before the role's own tasks, each keeping its
+  own defaults and vars; a cycle is reported by name.</li>
+<li><strong>A relative <code>src:</code> inside a role was not found.</strong> <code>copy: {src:
+  hello.txt}</code> in a role failed with "no such file or directory" —  every
+  role that ships a file. <code>copy</code>/<code>template</code>/<code>script</code>/<code>unarchive</code> now
+  search the role's own <code>files/</code> (<code>templates/</code> for <code>template</code>) first.</li>
+</ul>
+<p>That second finding nearly shipped wrong. A first probe ran
+<code>include_role</code> and <code>import_role</code> in the same file and appeared to show
+<code>include_role</code>'s variables persisting; splitting them apart showed it was
+the <em>static</em> <code>import_role</code> injecting them play-wide from the start.</p>
 <p>Real ansible-core 2.21 also <strong>requires a conditional to evaluate to a
 boolean</strong> — a <code>when:</code> yielding a dict or list is an error there
 (<code>ALLOW_BROKEN_CONDITIONALS</code> relaxes it), where this engine applies

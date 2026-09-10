@@ -2,50 +2,50 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
     <url>
          <loc>https://go-ansible.github.io/docs/0.1/</loc>
-         <lastmod>2026-09-09</lastmod>
+         <lastmod>2026-09-10</lastmod>
     </url>
     <url>
          <loc>https://go-ansible.github.io/docs/0.1/contributing/</loc>
-         <lastmod>2026-09-09</lastmod>
+         <lastmod>2026-09-10</lastmod>
     </url>
     <url>
          <loc>https://go-ansible.github.io/docs/0.1/roadmap/</loc>
-         <lastmod>2026-09-09</lastmod>
+         <lastmod>2026-09-10</lastmod>
     </url>
     <url>
          <loc>https://go-ansible.github.io/docs/0.1/components/</loc>
-         <lastmod>2026-09-09</lastmod>
+         <lastmod>2026-09-10</lastmod>
     </url>
     <url>
          <loc>https://go-ansible.github.io/docs/0.1/components/cli/</loc>
-         <lastmod>2026-09-09</lastmod>
+         <lastmod>2026-09-10</lastmod>
     </url>
     <url>
          <loc>https://go-ansible.github.io/docs/0.1/components/facts/</loc>
-         <lastmod>2026-09-09</lastmod>
+         <lastmod>2026-09-10</lastmod>
     </url>
     <url>
          <loc>https://go-ansible.github.io/docs/0.1/components/inventory/</loc>
-         <lastmod>2026-09-09</lastmod>
+         <lastmod>2026-09-10</lastmod>
     </url>
     <url>
          <loc>https://go-ansible.github.io/docs/0.1/components/modules/</loc>
-         <lastmod>2026-09-09</lastmod>
+         <lastmod>2026-09-10</lastmod>
     </url>
     <url>
          <loc>https://go-ansible.github.io/docs/0.1/components/playbook/</loc>
-         <lastmod>2026-09-09</lastmod>
+         <lastmod>2026-09-10</lastmod>
     </url>
     <url>
          <loc>https://go-ansible.github.io/docs/0.1/components/template/</loc>
-         <lastmod>2026-09-09</lastmod>
+         <lastmod>2026-09-10</lastmod>
     </url>
     <url>
          <loc>https://go-ansible.github.io/docs/0.1/components/vars/</loc>
-         <lastmod>2026-09-09</lastmod>
+         <lastmod>2026-09-10</lastmod>
     </url>
     <url>
          <loc>https://go-ansible.github.io/docs/0.1/components/vault/</loc>
-         <lastmod>2026-09-09</lastmod>
+         <lastmod>2026-09-10</lastmod>
     </url>
 </urlset>
