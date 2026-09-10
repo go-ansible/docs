@@ -147,6 +147,35 @@ Two differences are known and not yet addressed:
   failure that was rescued or ignored is still counted under `failed`
   where real Ansible separates them.
 
+A second pass covered **roles, the include/import family and the variable
+precedence ladder**, and found five more, all now fixed:
+
+- **`set_fact` sat below play vars.** It wrote into the same layer as
+  gathered facts, so a play var and a `set_fact` of the same name
+  resolved to the play var. `set_fact` and `include_vars` now write to
+  the rung the ladder already reserved for them. A consequence worth
+  knowing: `meta: clear_facts` no longer clears a `set_fact`, which
+  matches real Ansible — it only did before because the two shared a
+  layer.
+- **Role vars did not outlive their role.** Every role variable read as
+  undefined the moment the role ended. Whether they should depends on
+  how the role was invoked, measured by running each form on its own: a
+  `roles:` entry and `import_role` are static and their variables
+  persist for the play, while `include_role` is dynamic and scopes them.
+  Only `include_role` is scoped now.
+- **`meta/main.yml` was never read**, so role `dependencies:` never ran.
+  They now run depth-first before the role's own tasks, each keeping its
+  own defaults and vars; a cycle is reported by name.
+- **A relative `src:` inside a role was not found.** `copy: {src:
+  hello.txt}` in a role failed with "no such file or directory" —  every
+  role that ships a file. `copy`/`template`/`script`/`unarchive` now
+  search the role's own `files/` (`templates/` for `template`) first.
+
+That second finding nearly shipped wrong. A first probe ran
+`include_role` and `import_role` in the same file and appeared to show
+`include_role`'s variables persisting; splitting them apart showed it was
+the *static* `import_role` injecting them play-wide from the start.
+
 Real ansible-core 2.21 also **requires a conditional to evaluate to a
 boolean** — a `when:` yielding a dict or list is an error there
 (`ALLOW_BROKEN_CONDITIONALS` relaxes it), where this engine applies
