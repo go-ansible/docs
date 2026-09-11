@@ -146,6 +146,33 @@ Two differences are known and not yet addressed:
 - *(fixed)* The PLAY RECAP now carries `unreachable`/`rescued`/`ignored`
   and counts as real Ansible counts — see below.
 
+A fourth pass measured what the default callback actually *prints*, and
+found four things wrong at once:
+
+| | real | here (before) |
+| --- | --- | --- |
+| `debug: {msg: hello}` | dumps `{"msg": "hello"}` | printed nothing |
+| `debug: {var: d}` | the variable's **value** | the variable's **name** |
+| play with `hosts: all`, no name | `PLAY [all]` | `PLAY` |
+| unnamed task | `TASK [debug]` | no banner |
+
+A debug task printing nothing is the notable one — real Ansible dumps any
+result carrying `_ansible_verbose_always`, pretty-printed at four spaces
+with its own `_ansible_*` keys stripped, and that marker is the whole
+reason a debug task shows anything. `debug: {var: X}` resolves in the
+engine alongside `assert`, which is exactly why real Ansible makes both
+action plugins rather than modules.
+
+The unnamed-play banner is worth recording as a caution: it was wrong
+because of an earlier *reading* of `default.py` here — the `"PLAY"`
+fallback is real, but `get_name()` has already substituted the hosts
+pattern by the time it is reached. Measuring caught what reading did not.
+
+A failure `ignore_errors` swallowed now prints `...ignoring`, so a red
+line that did not stop the run is not mistaken for one that did. One
+difference remains: a failure line here is `failed: [h] => msg` where
+real Ansible writes `fatal: [h]: FAILED! => {json}`.
+
 A third pass measured the **PLAY RECAP and the exit code**, and found the
 counting wrong in three ways at once. For a play with one of each
 outcome:
