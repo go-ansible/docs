@@ -141,8 +141,6 @@ fixed:
 
 Two differences are known and not yet addressed:
 
-- `command` results lack the `start`/`end`/`delta` timing fields real
-  Ansible includes.
 - *(fixed)* The PLAY RECAP now carries `unreachable`/`rescued`/`ignored`
   and counts as real Ansible counts — see below.
 
@@ -169,9 +167,28 @@ fallback is real, but `get_name()` has already substituted the hosts
 pattern by the time it is reached. Measuring caught what reading did not.
 
 A failure `ignore_errors` swallowed now prints `...ignoring`, so a red
-line that did not stop the run is not mistaken for one that did. One
-difference remains: a failure line here is `failed: [h] => msg` where
-real Ansible writes `fatal: [h]: FAILED! => {json}`.
+line that did not stop the run is not mistaken for one that did.
+
+A fifth pass took the failure line itself. It read
+`failed: [h] => non-zero return code: 3` — a code and nothing else, not
+the command, not its stderr. Real Ansible inlines the whole result, which
+is how a reader sees *why* it failed, and gives an unreachable host its
+own prefix:
+
+```
+fatal: [h1]: FAILED! => {"changed": true, "cmd": "...", "rc": 3, "stderr": "to-stderr", ...}
+fatal: [nope]: UNREACHABLE! => {..., "unreachable": true}
+```
+
+That JSON comes from [`template`](template.md)'s exported `ToJSON` rather
+than a second emitter, so a failure line and the `to_json` filter cannot
+drift apart. **Sharing it immediately found three defects that had
+nothing to do with failure lines**, each invisible until a real command's
+whole result was printed: `to_json` was escaping `<`, `>` and `&` (so
+every URL and shell redirect it wrote came out mangled), `shell` reported
+`cmd` as a one-element list where real Ansible gives the string, and a
+non-zero exit used wording of our own. Printing more of the truth is a
+good way to find out what is wrong with it.
 
 A third pass measured the **PLAY RECAP and the exit code**, and found the
 counting wrong in three ways at once. For a play with one of each
