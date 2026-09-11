@@ -143,9 +143,31 @@ Two differences are known and not yet addressed:
 
 - `command` results lack the `start`/`end`/`delta` timing fields real
   Ansible includes.
-- The PLAY RECAP has no `unreachable`/`rescued`/`ignored` columns, so a
-  failure that was rescued or ignored is still counted under `failed`
-  where real Ansible separates them.
+- *(fixed)* The PLAY RECAP now carries `unreachable`/`rescued`/`ignored`
+  and counts as real Ansible counts — see below.
+
+A third pass measured the **PLAY RECAP and the exit code**, and found the
+counting wrong in three ways at once. For a play with one of each
+outcome:
+
+```
+real: ok=4 changed=1 unreachable=0 failed=0 skipped=1 rescued=1 ignored=1
+here: ok=3 changed=1                failed=2 skipped=1
+```
+
+None of the three rules is guessable from the column names: a **changed**
+task counts under `ok` as well; an **ignored** failure counts under `ok`
+*and* `ignored`, not `failed`; and a **rescued** one counts under
+`rescued`, not `failed`. Rescue is not derivable from the results at all
+— it is a property of the *block*, and the failing task inside looks
+identical either way — so `PlayResult` records it as the block unwinds.
+
+Fixing the columns exposed a second defect: the recap said `failed=0`
+while `ansible-playbook` still exited 2. `RunResult.Failed` now answers
+the question the exit code actually asks — the host's **final** state,
+not the history — so a run whose only failures were ignored or rescued
+exits 0, as real `ansible-playbook` does, while a genuine failure still
+exits 2.
 
 A second pass covered **roles, the include/import family and the variable
 precedence ladder**, and found five more, all now fixed:
