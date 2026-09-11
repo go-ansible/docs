@@ -1009,6 +1009,53 @@ fixed:</p>
 <li><em>(fixed)</em> The PLAY RECAP now carries <code>unreachable</code>/<code>rescued</code>/<code>ignored</code>
   and counts as real Ansible counts — see below.</li>
 </ul>
+<p>A fourth pass measured what the default callback actually <em>prints</em>, and
+found four things wrong at once:</p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>real</th>
+<th>here (before)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>debug: {msg: hello}</code></td>
+<td>dumps <code>{"msg": "hello"}</code></td>
+<td>printed nothing</td>
+</tr>
+<tr>
+<td><code>debug: {var: d}</code></td>
+<td>the variable's <strong>value</strong></td>
+<td>the variable's <strong>name</strong></td>
+</tr>
+<tr>
+<td>play with <code>hosts: all</code>, no name</td>
+<td><code>PLAY [all]</code></td>
+<td><code>PLAY</code></td>
+</tr>
+<tr>
+<td>unnamed task</td>
+<td><code>TASK [debug]</code></td>
+<td>no banner</td>
+</tr>
+</tbody>
+</table>
+<p>A debug task printing nothing is the notable one — real Ansible dumps any
+result carrying <code>_ansible_verbose_always</code>, pretty-printed at four spaces
+with its own <code>_ansible_*</code> keys stripped, and that marker is the whole
+reason a debug task shows anything. <code>debug: {var: X}</code> resolves in the
+engine alongside <code>assert</code>, which is exactly why real Ansible makes both
+action plugins rather than modules.</p>
+<p>The unnamed-play banner is worth recording as a caution: it was wrong
+because of an earlier <em>reading</em> of <code>default.py</code> here — the <code>"PLAY"</code>
+fallback is real, but <code>get_name()</code> has already substituted the hosts
+pattern by the time it is reached. Measuring caught what reading did not.</p>
+<p>A failure <code>ignore_errors</code> swallowed now prints <code>...ignoring</code>, so a red
+line that did not stop the run is not mistaken for one that did. One
+difference remains: a failure line here is <code>failed: [h] =&gt; msg</code> where
+real Ansible writes <code>fatal: [h]: FAILED! =&gt; {json}</code>.</p>
 <p>A third pass measured the <strong>PLAY RECAP and the exit code</strong>, and found the
 counting wrong in three ways at once. For a play with one of each
 outcome:</p>
