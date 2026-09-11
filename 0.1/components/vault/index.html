@@ -454,6 +454,28 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#interoperable-with-real-ansible-in-both-directions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Interoperable with real Ansible, in both directions
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#where-it-is-wired-in" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Where it is wired in
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#example" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -779,6 +801,28 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#interoperable-with-real-ansible-in-both-directions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Interoperable with real Ansible, in both directions
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#where-it-is-wired-in" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Where it is wired in
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#example" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -833,6 +877,8 @@ byte-for-byte, so a file written by this package decrypts with the real
 <a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="kd">func</span><span class="w"> </span><span class="nx">Encrypt</span><span class="p">(</span><span class="nx">plaintext</span><span class="w"> </span><span class="p">[]</span><span class="kt">byte</span><span class="p">,</span><span class="w"> </span><span class="nx">password</span><span class="w"> </span><span class="kt">string</span><span class="p">,</span><span class="w"> </span><span class="nx">vaultID</span><span class="w"> </span><span class="kt">string</span><span class="p">)</span><span class="w"> </span><span class="p">(</span><span class="kt">string</span><span class="p">,</span><span class="w"> </span><span class="kt">error</span><span class="p">)</span>
 <a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>
 <a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="kd">func</span><span class="w"> </span><span class="nx">Decrypt</span><span class="p">(</span><span class="nx">vaultText</span><span class="w"> </span><span class="kt">string</span><span class="p">,</span><span class="w"> </span><span class="nx">password</span><span class="w"> </span><span class="kt">string</span><span class="p">)</span><span class="w"> </span><span class="p">([]</span><span class="kt">byte</span><span class="p">,</span><span class="w"> </span><span class="kt">error</span><span class="p">)</span>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="kd">func</span><span class="w"> </span><span class="nx">MaybeDecrypt</span><span class="p">(</span><span class="nx">data</span><span class="w"> </span><span class="p">[]</span><span class="kt">byte</span><span class="p">,</span><span class="w"> </span><span class="nx">password</span><span class="w"> </span><span class="kt">string</span><span class="p">)</span><span class="w"> </span><span class="p">([]</span><span class="kt">byte</span><span class="p">,</span><span class="w"> </span><span class="kt">error</span><span class="p">)</span>
 </code></pre></div>
 <ul>
 <li><code>IsVault</code> checks the first line for the <code>$ANSIBLE_VAULT</code> header — cheap
@@ -848,7 +894,37 @@ byte-for-byte, so a file written by this package decrypts with the real
   <a href="https://pkg.go.dev/crypto/subtle#ConstantTimeCompare"><code>crypto/subtle.ConstantTimeCompare</code></a>
   and fails closed with <code>ErrHMACMismatch</code> on any mismatch — almost always a
   wrong password — before ever attempting to decrypt.</li>
+<li><code>MaybeDecrypt</code> is what a caller reading YAML files actually wants:
+  plaintext through untouched, ciphertext decrypted. Real Ansible accepts
+  an encrypted file anywhere it accepts a plaintext one, and the call site
+  cannot know in advance which it has. Encrypted content with <strong>no</strong>
+  password is an error rather than a silent pass-through — handing the
+  ciphertext back as content would surface much later as an unreadable
+  YAML parse, far from the cause.</li>
 </ul>
+<h2 id="interoperable-with-real-ansible-in-both-directions">Interoperable with real Ansible, in both directions<a class="headerlink" href="#interoperable-with-real-ansible-in-both-directions" title="Permanent link">&para;</a></h2>
+<p>Verified rather than assumed, against real ansible-core 2.21.4: each tool
+decrypts and views what the other encrypted, for both <code>decrypt</code> and <code>view</code>.
+That matters because a vault format that is <em>almost</em> right is worse than
+none — it would encrypt secrets nobody else can ever read back.</p>
+<h2 id="where-it-is-wired-in">Where it is wired in<a class="headerlink" href="#where-it-is-wired-in" title="Permanent link">&para;</a></h2>
+<p>Every YAML file the ecosystem loads goes through <code>MaybeDecrypt</code>, so an
+encrypted one works anywhere a plaintext one does:</p>
+<ul>
+<li><a href="../inventory/"><code>inventory</code></a>: <code>LoadWithVault</code> — the inventory file itself,
+  and any <code>group_vars</code>/<code>host_vars</code> merged alongside it. <code>group_vars/*/vault.yml</code>
+  is the canonical place real Ansible users keep secrets.</li>
+<li><a href="../playbook/"><code>playbook</code></a>: <code>ParseFileWithVault</code> for what a parse pulls in
+  (the playbook, <code>vars_files</code>, a role's own <code>defaults</code>/<code>vars</code>/<code>tasks</code>/<code>meta</code>),
+  and <code>Engine.VaultPassword</code> for <code>include_vars</code>, which is read at run time.</li>
+<li><a href="../cli/"><code>cli</code></a>: <code>ansible-playbook --vault-password-file</code>, plus
+  <code>--ask-vault-password</code> and the <code>--vault-pass-file</code>/<code>--ask-vault-pass</code>
+  spellings. The password is resolved before anything is read, since the
+  inventory itself may be encrypted, and only when the caller says one
+  exists — a plaintext run never stops to prompt.</li>
+</ul>
+<p><code>Load</code> and <code>ParseFile</code> are the same calls with an empty password, so
+plaintext loading is unchanged.</p>
 <h2 id="example">Example<a class="headerlink" href="#example" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="kn">package</span><span class="w"> </span><span class="nx">main</span>
 <a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>
@@ -878,6 +954,10 @@ byte-for-byte, so a file written by this package decrypts with the real
 only cipher <code>ansible-vault</code> writes since Ansible 2.3, so it is also the only
 one worth reading. <code>Decrypt</code> returns an explicit error naming the cipher if it
 ever encounters anything else, rather than silently producing garbage.</p>
+<p><code>ansible-vault</code> implements <code>encrypt</code>, <code>decrypt</code> and <code>view</code>. Real Ansible also
+has <code>create</code>, <code>edit</code>, <code>rekey</code> and <code>encrypt_string</code>; those are not here yet.
+Inline <code>!vault</code> tagged scalars inside an otherwise-plaintext YAML file are not
+supported either — only whole encrypted files.</p>
 
 
 
