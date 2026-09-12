@@ -22,6 +22,8 @@ func Encrypt(plaintext []byte, password string, vaultID string) (string, error)
 func Decrypt(vaultText string, password string) ([]byte, error)
 
 func MaybeDecrypt(data []byte, password string) ([]byte, error)
+
+func UnmarshalYAML(data []byte, password string, out any) error
 ```
 
 - `IsVault` checks the first line for the `$ANSIBLE_VAULT` header — cheap
@@ -44,6 +46,23 @@ func MaybeDecrypt(data []byte, password string) ([]byte, error)
   password is an error rather than a silent pass-through — handing the
   ciphertext back as content would surface much later as an unreadable
   YAML parse, far from the cause.
+- `UnmarshalYAML` decodes YAML carrying secrets in **either** shape real
+  Ansible accepts — the whole file encrypted, or individual
+  `!vault`-tagged scalars inside an otherwise-plaintext file — and
+  otherwise decodes exactly as `yaml.Unmarshal` would. The second shape
+  is what `encrypt_string` produces, and how one secret lives in a vars
+  file everybody else can read:
+
+  ```yaml
+  api_key: !vault |
+            $ANSIBLE_VAULT;1.1;AES256
+            3865...
+  region: eu-west
+  ```
+
+  Each tagged scalar is decrypted in place, so the caller gets a plain
+  value and never sees the ciphertext. A missing password is an error
+  only if something actually needs decrypting.
 
 ## Interoperable with real Ansible, in both directions
 
@@ -106,7 +125,13 @@ only cipher `ansible-vault` writes since Ansible 2.3, so it is also the only
 one worth reading. `Decrypt` returns an explicit error naming the cipher if it
 ever encounters anything else, rather than silently producing garbage.
 
-`ansible-vault` implements `encrypt`, `decrypt` and `view`. Real Ansible also
-has `create`, `edit`, `rekey` and `encrypt_string`; those are not here yet.
-Inline `!vault` tagged scalars inside an otherwise-plaintext YAML file are not
-supported either — only whole encrypted files.
+`ansible-vault` implements `encrypt`, `decrypt`, `view`, `rekey` and
+`encrypt_string`. Real Ansible also has `create` and `edit`, which open the
+decrypted content in `$EDITOR`; those are not here yet.
+
+`encrypt_string` deliberately shipped *after* the reading side. Writing a
+`!vault` scalar this ecosystem could not read back would have been worse than
+not writing one at all — so `UnmarshalYAML` and its wiring landed first, and
+both directions are verified: real Ansible runs a playbook whose `vars_files`
+is what this wrote, and this runs one whose `vars_files` is what real
+`ansible-vault` wrote.
