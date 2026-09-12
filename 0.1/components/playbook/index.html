@@ -1155,20 +1155,27 @@ and worth stating plainly.</p>
 <p>The flag reaches a module through its own arguments, under real Ansible's
 wire name <code>_ansible_check_mode</code>, so adding check mode changed no
 signature anywhere in <a href="../modules/"><code>modules</code></a>.</p>
-<p><strong>Supported today</strong>: <code>copy</code> and <code>template</code> (both already decided whether
-they would change before acting, so a dry run answers the same question
-and does not act on it — and <code>template</code> still renders, since a broken
-template should fail the check rather than wait for the real run);
-<code>command</code> and <code>shell</code> (which decline with real Ansible's own <em>"Command
-would have run if not in check mode"</em> and report skipped, since neither
-can know what the command would have done); and the read-only modules
-<code>debug</code>, <code>fail</code>, <code>stat</code>, <code>find</code> and <code>slurp</code>, which change nothing either
-way.</p>
-<p><strong>Not yet</strong>: <code>file</code>, <code>lineinfile</code>, <code>blockinfile</code>, <code>replace</code> and the rest.
-Each mutates from several branches, and a dry run that is only mostly
-right is worse than one that honestly declines — so they are added one at
-a time, each with its own test, rather than declared supported and hoped
-about. <code>--diff</code> is not implemented at all.</p>
+<p><strong>Supported today</strong>:</p>
+<ul>
+<li><code>copy</code>, <code>template</code>, <code>file</code>, <code>lineinfile</code>, <code>blockinfile</code> and <code>replace</code> —
+  each already decided whether it <em>would</em> change before touching
+  anything, so a dry run answers the same question and stops short of the
+  write. <code>template</code> still renders, since a broken template should fail the
+  check rather than wait for the real run. <code>file</code> mutates from six
+  branches, so all six go through one helper that is a no-op under check
+  mode — routing them through one place is what makes the absence of a
+  stray mutation <em>auditable</em> rather than hoped about.</li>
+<li><code>command</code> and <code>shell</code> decline with real Ansible's own <em>"Command would
+  have run if not in check mode"</em> and report <strong>skipped</strong>, since neither
+  can know what the command would have done.</li>
+<li><code>debug</code>, <code>fail</code>, <code>stat</code>, <code>find</code> and <code>slurp</code> change nothing either way,
+  so a check run executes them — real Ansible reports <code>debug</code> as <code>ok</code> in
+  a check run, not <code>skipping</code>.</li>
+</ul>
+<p><strong>Everything else is skipped</strong>, and a test asserts that an unported
+writing module does <em>not</em> claim support — it failed, correctly, on the
+change that added the four editing modules, until their tests existed.
+<code>--diff</code> is not implemented at all.</p>
 <p>Real ansible-core 2.21 also <strong>requires a conditional to evaluate to a
 boolean</strong> — a <code>when:</code> yielding a dict or list is an error there
 (<code>ALLOW_BROKEN_CONDITIONALS</code> relaxes it), where this engine applies
