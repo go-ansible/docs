@@ -125,9 +125,26 @@ only cipher `ansible-vault` writes since Ansible 2.3, so it is also the only
 one worth reading. `Decrypt` returns an explicit error naming the cipher if it
 ever encounters anything else, rather than silently producing garbage.
 
-`ansible-vault` implements `encrypt`, `decrypt`, `view`, `rekey` and
-`encrypt_string`. Real Ansible also has `create` and `edit`, which open the
-decrypted content in `$EDITOR`; those are not here yet.
+`ansible-vault` implements every subcommand real Ansible has: `encrypt`,
+`decrypt`, `view`, `rekey`, `encrypt_string`, `create` and `edit`.
+
+`create` and `edit` open `$EDITOR` (defaulting to `vi`, split on spaces so
+`EDITOR="code -w"` works). `create` refuses an existing file rather than
+destroying it, and is gated on stdout being a terminal with the same
+`--skip-tty-check` escape real Ansible offers. `edit` keeps the file's own
+vault id, and an edit that changes nothing leaves the file untouched —
+re-encrypting identical content would rewrite it with a fresh salt and look
+like a change in version control.
+
+The temporary file those two use holds the secret in the clear, so it is
+created `0600`, lives in the system temp directory rather than beside the
+target — which may be inside a repository — and is removed on every path
+out, including when the editor fails.
+
+These two are the only part of this ecosystem whose behaviour was taken
+from reading real Ansible's source rather than from running it: both
+refuse to start without a terminal, so there is nothing to observe from a
+script. Everything around them is verified against real `ansible-vault`.
 
 `encrypt_string` deliberately shipped *after* the reading side. Writing a
 `!vault` scalar this ecosystem could not read back would have been worse than
