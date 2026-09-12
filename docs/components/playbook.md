@@ -242,6 +242,46 @@ That second finding nearly shipped wrong. A first probe ran
 `include_role`'s variables persisting; splitting them apart showed it was
 the *static* `import_role` injecting them play-wide from the start.
 
+## Check mode
+
+`Engine.CheckMode` — `ansible-playbook --check` — runs a playbook without
+changing anything. How real Ansible does it was measured before any of it
+was written, and the answer shaped the whole design: a module that
+**supports** a dry run is run and reports what it *would* do; one that
+does **not** is **skipped**, never run for real.
+
+```
+TASK [copy (supports check mode)]     changed: [h1]     ← created nothing
+TASK [command (does NOT support it)]  skipping: [h1]    ← never executed
+TASK [debug]                          ok: [h1]
+```
+
+That asymmetry is what makes the module side safe to fill in one module
+at a time: the default for anything unported is **inaction**, not
+"modify anyway". A partially-supported check mode is therefore not
+dangerous — which is the opposite of what it looks like from the outside,
+and worth stating plainly.
+
+The flag reaches a module through its own arguments, under real Ansible's
+wire name `_ansible_check_mode`, so adding check mode changed no
+signature anywhere in [`modules`](modules.md).
+
+**Supported today**: `copy` and `template` (both already decided whether
+they would change before acting, so a dry run answers the same question
+and does not act on it — and `template` still renders, since a broken
+template should fail the check rather than wait for the real run);
+`command` and `shell` (which decline with real Ansible's own *"Command
+would have run if not in check mode"* and report skipped, since neither
+can know what the command would have done); and the read-only modules
+`debug`, `fail`, `stat`, `find` and `slurp`, which change nothing either
+way.
+
+**Not yet**: `file`, `lineinfile`, `blockinfile`, `replace` and the rest.
+Each mutates from several branches, and a dry run that is only mostly
+right is worse than one that honestly declines — so they are added one at
+a time, each with its own test, rather than declared supported and hoped
+about. `--diff` is not implemented at all.
+
 Real ansible-core 2.21 also **requires a conditional to evaluate to a
 boolean** — a `when:` yielding a dict or list is an error there
 (`ALLOW_BROKEN_CONDITIONALS` relaxes it), where this engine applies
