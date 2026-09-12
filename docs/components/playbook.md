@@ -266,21 +266,27 @@ The flag reaches a module through its own arguments, under real Ansible's
 wire name `_ansible_check_mode`, so adding check mode changed no
 signature anywhere in [`modules`](modules.md).
 
-**Supported today**: `copy` and `template` (both already decided whether
-they would change before acting, so a dry run answers the same question
-and does not act on it — and `template` still renders, since a broken
-template should fail the check rather than wait for the real run);
-`command` and `shell` (which decline with real Ansible's own *"Command
-would have run if not in check mode"* and report skipped, since neither
-can know what the command would have done); and the read-only modules
-`debug`, `fail`, `stat`, `find` and `slurp`, which change nothing either
-way.
+**Supported today**:
 
-**Not yet**: `file`, `lineinfile`, `blockinfile`, `replace` and the rest.
-Each mutates from several branches, and a dry run that is only mostly
-right is worse than one that honestly declines — so they are added one at
-a time, each with its own test, rather than declared supported and hoped
-about. `--diff` is not implemented at all.
+- `copy`, `template`, `file`, `lineinfile`, `blockinfile` and `replace` —
+  each already decided whether it *would* change before touching
+  anything, so a dry run answers the same question and stops short of the
+  write. `template` still renders, since a broken template should fail the
+  check rather than wait for the real run. `file` mutates from six
+  branches, so all six go through one helper that is a no-op under check
+  mode — routing them through one place is what makes the absence of a
+  stray mutation *auditable* rather than hoped about.
+- `command` and `shell` decline with real Ansible's own *"Command would
+  have run if not in check mode"* and report **skipped**, since neither
+  can know what the command would have done.
+- `debug`, `fail`, `stat`, `find` and `slurp` change nothing either way,
+  so a check run executes them — real Ansible reports `debug` as `ok` in
+  a check run, not `skipping`.
+
+**Everything else is skipped**, and a test asserts that an unported
+writing module does *not* claim support — it failed, correctly, on the
+change that added the four editing modules, until their tests existed.
+`--diff` is not implemented at all.
 
 Real ansible-core 2.21 also **requires a conditional to evaluate to a
 boolean** — a `when:` yielding a dict or list is an error there
