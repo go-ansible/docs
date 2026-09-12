@@ -970,9 +970,23 @@ plaintext loading is unchanged.</p>
 only cipher <code>ansible-vault</code> writes since Ansible 2.3, so it is also the only
 one worth reading. <code>Decrypt</code> returns an explicit error naming the cipher if it
 ever encounters anything else, rather than silently producing garbage.</p>
-<p><code>ansible-vault</code> implements <code>encrypt</code>, <code>decrypt</code>, <code>view</code>, <code>rekey</code> and
-<code>encrypt_string</code>. Real Ansible also has <code>create</code> and <code>edit</code>, which open the
-decrypted content in <code>$EDITOR</code>; those are not here yet.</p>
+<p><code>ansible-vault</code> implements every subcommand real Ansible has: <code>encrypt</code>,
+<code>decrypt</code>, <code>view</code>, <code>rekey</code>, <code>encrypt_string</code>, <code>create</code> and <code>edit</code>.</p>
+<p><code>create</code> and <code>edit</code> open <code>$EDITOR</code> (defaulting to <code>vi</code>, split on spaces so
+<code>EDITOR="code -w"</code> works). <code>create</code> refuses an existing file rather than
+destroying it, and is gated on stdout being a terminal with the same
+<code>--skip-tty-check</code> escape real Ansible offers. <code>edit</code> keeps the file's own
+vault id, and an edit that changes nothing leaves the file untouched —
+re-encrypting identical content would rewrite it with a fresh salt and look
+like a change in version control.</p>
+<p>The temporary file those two use holds the secret in the clear, so it is
+created <code>0600</code>, lives in the system temp directory rather than beside the
+target — which may be inside a repository — and is removed on every path
+out, including when the editor fails.</p>
+<p>These two are the only part of this ecosystem whose behaviour was taken
+from reading real Ansible's source rather than from running it: both
+refuse to start without a terminal, so there is nothing to observe from a
+script. Everything around them is verified against real <code>ansible-vault</code>.</p>
 <p><code>encrypt_string</code> deliberately shipped <em>after</em> the reading side. Writing a
 <code>!vault</code> scalar this ecosystem could not read back would have been worse than
 not writing one at all — so <code>UnmarshalYAML</code> and its wiring landed first, and
