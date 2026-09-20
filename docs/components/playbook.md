@@ -364,6 +364,73 @@ a path that differs between two runs on the same machine. This port
 renders in memory and has no such file, so it names the destination
 instead.
 
+## Tags
+
+Tag selection is a port of real Ansible's `evaluate_tags`
+(`ansible/playbook/taggable.py`), which is more than an intersection
+test:
+
+- A task with no tags carries the implicit tag `untagged` — that is what
+  lets `--tags untagged` and `--skip-tags untagged` select it at all.
+- `all`, `tagged`, `untagged`, `always` and `never` are special names on
+  **both** sides.
+- The run side is evaluated **before** the skip side, not the reverse.
+- An empty run list means `all`, which is what excludes `never`.
+
+That last substitution is what real Ansible does in its **CLI** rather
+than its config (`ansible/cli/__init__.py`, whose own comment explains
+why: making `["all"]` the config default would turn `--tags foo` into
+`["all", "foo"]`). It is applied in the engine here instead, so every
+entry point gets it — **a task tagged `never` running by default is a
+safety failure**, and guarding a destructive task is the only thing
+`never` is for.
+
+A task excluded by tags produces **no output at all** — no banner, no
+`skipping:` line, and nothing in the recap. That is the difference
+between *selection* and *skipping*: tags decide which tasks are in the
+play, whereas `when:` skips a task that is. This port reported the first
+as the second, which also made the recap's own `skipped` count wrong.
+
+Tag *inheritance* — play tags and block tags reaching the tasks inside —
+was already correct, and is covered by its own measured table.
+
+## Rolling updates and reporting
+
+`serial:` batching was already correct; what was missing was that real
+Ansible **re-banners the play and the task for each batch**, which is
+what makes the boundaries of a rolling update visible while it runs.
+
+Other reporting details, each measured rather than assumed:
+
+- `run_once:` always runs on the play's **first** host. This port used
+  whichever host won a race, so a `run_once` task that registered a
+  variable recorded a different `inventory_hostname` from run to run.
+- A delegated task reports where it ran — `ok: [h1 -> h5]` — on its ok,
+  changed and fatal lines, but **not** on `skipping:`, because a skipped
+  task never connected anywhere.
+- A task being retried prints
+  `FAILED - RETRYING: [h1]: name (2 retries left).` after each failed
+  attempt, in `COLOR_DEBUG`'s dark gray, *after* its task banner.
+  Without it a loop with a `delay:` is indistinguishable from a hang.
+- A play whose pattern matched nothing says `skipping: no hosts matched`.
+- The recap ends with a blank line, and an **ignored failure that
+  changed something counts under `changed`**.
+
+### Known gaps
+
+- Real ansible-core 2.21 prints a structured `[ERROR]` block naming the
+  playbook file, line, column and a source excerpt. This port has no
+  source-position tracking, so it prints only the `fatal:` line.
+- Real also emits `[WARNING]: Could not match supplied host pattern` on
+  **stderr**; `DefaultCallback` holds a single output stream.
+- For a command whose executable does not exist, real reports
+  `changed=false` (it execs directly and gets `ENOENT`) where this port
+  reports `changed=true` with `rc=127`, because the command reaches the
+  target through a shell. `command` does *not* interpret shell
+  metacharacters here — that part matches. Distinguishing the two needs
+  an exec-versus-shell distinction at the transport, and keying off
+  `rc == 127` would misfire on a program that legitimately exits 127.
+
 Real ansible-core 2.21 also **requires a conditional to evaluate to a
 boolean** — a `when:` yielding a dict or list is an error there
 (`ALLOW_BROKEN_CONDITIONALS` relaxes it), where this engine applies
