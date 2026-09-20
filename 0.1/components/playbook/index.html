@@ -655,6 +655,45 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#diff-mode" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Diff mode
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Diff mode">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#why-the-renderer-is-a-port-not-a-reimplementation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Why the renderer is a port, not a reimplementation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#one-disclosed-divergence" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        One disclosed divergence
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#example" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -841,6 +880,45 @@
       
     </span>
   </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#diff-mode" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Diff mode
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Diff mode">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#why-the-renderer-is-a-port-not-a-reimplementation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Why the renderer is a port, not a reimplementation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#one-disclosed-divergence" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        One disclosed divergence
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -1174,51 +1252,115 @@ signature anywhere in <a href="../modules/"><code>modules</code></a>.</p>
 </ul>
 <p><strong>Everything else is skipped</strong>, and a test asserts that an unported
 writing module does <em>not</em> claim support — it failed, correctly, on the
-change that added the four editing modules, until their tests existed.
-<code>--diff</code> is not implemented at all.</p>
+change that added the four editing modules, until their tests existed.</p>
+<h2 id="diff-mode">Diff mode<a class="headerlink" href="#diff-mode" title="Permanent link">&para;</a></h2>
+<p><code>Engine.DiffMode</code> — <code>ansible-playbook --diff</code> / <code>-D</code> — shows what each
+task changed, as a unified diff printed before the line saying what
+happened. It composes with check mode: <code>--diff --check</code> shows the diff of
+a change deliberately not made.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>TASK [edit existing file]
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>--- before: /etc/app.conf (content)
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>+++ after: /etc/app.conf (content)
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>@@ -1,2 +1,3 @@
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a> alpha
+<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a> beta
+<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a>+gamma
+<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a>
+<a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a>changed: [h1]
+</code></pre></div>
+<p>Like <code>--check</code>, the flag reaches a module through its own arguments,
+under real Ansible's wire name <code>_ansible_diff</code>. A module that does not
+report a diff simply prints nothing extra, so turning the flag on can
+never fail a run. <code>copy</code>, <code>template</code>, <code>lineinfile</code>, <code>blockinfile</code> and
+<code>replace</code> report one today.</p>
+<h3 id="why-the-renderer-is-a-port-not-a-reimplementation">Why the renderer is a port, not a reimplementation<a class="headerlink" href="#why-the-renderer-is-a-port-not-a-reimplementation" title="Permanent link">&para;</a></h3>
+<p>Go has no unified diff in its standard library, and writing "a" unified
+diff is not enough: the output has to be the one real Ansible prints.
+Real Ansible calls Python's <code>difflib</code>, so <code>difflib</code> is what was ported —
+<code>SequenceMatcher</code> with its autojunk rule, <code>get_opcodes</code>,
+<code>get_grouped_opcodes</code>, <code>_format_range_unified</code> — together with
+<code>CallbackBase._get_diff</code>'s header lines, skip messages and trailing blank
+line.</p>
+<p>A plain longest-common-subsequence walk was written first and is <em>wrong</em>:
+<code>SequenceMatcher</code> places an inserted duplicate of an existing line
+<strong>before</strong> that line where an LCS walk places it after. Both are valid
+diffs of the same length; only one matches. Three more details that a
+reimplementation gets wrong, each caught by measurement rather than by
+reading:</p>
+<ul>
+<li>A one-line hunk range prints no length — <code>@@ -1 +0,0 @@</code>, not
+  <code>@@ -1,1 +0,0 @@</code>.</li>
+<li>Lines keep their terminators, so a file whose last line lacks a newline
+  differs from one where it does; real Ansible appends
+  <code>\ No newline at end of file</code> to that line before diffing.</li>
+<li>A replace emits every removal and <strong>then</strong> every addition, never
+  interleaved.</li>
+</ul>
+<p>Verified against 373 cases whose expected output was produced by calling
+real ansible-core 2.21.4's own <code>_get_diff</code> — two shapes measured from a
+live run, eleven hand-picked edge cases, 300 randomised pairs, and 60
+large ones crossing <code>difflib</code>'s 200-element autojunk threshold. The
+randomised half earned its place by finding the <code>SequenceMatcher</code>
+divergence on its twentieth case; each of the three details above was
+confirmed load-bearing by breaking it, failing 19, 217 and all cases.</p>
+<p>Running the same playbook through this port and through real
+ansible-core produces identical transcripts, both with and without
+<code>--check</code>, apart from the banner asterisk padding this port does not
+emit.</p>
+<h3 id="one-disclosed-divergence">One disclosed divergence<a class="headerlink" href="#one-disclosed-divergence" title="Permanent link">&para;</a></h3>
+<p>Real Ansible has no single convention for the <code>---</code>/<code>+++</code> headers — each
+module names its sides its own way, and each is reproduced: <code>(content)</code>
+suffixes for <code>lineinfile</code> and <code>blockinfile</code>, bare paths for <code>replace</code> and
+for <code>copy</code> with <code>content:</code>, and the <strong>source</strong> path for <code>copy</code> with
+<code>src:</code>.</p>
+<p><code>template</code> is the exception. Real Ansible renders to a temporary file and
+names <em>that</em> as the after side — <code>~/.ansible/tmp/ansible-local-.../x.j2</code>,
+a path that differs between two runs on the same machine. This port
+renders in memory and has no such file, so it names the destination
+instead.</p>
 <p>Real ansible-core 2.21 also <strong>requires a conditional to evaluate to a
 boolean</strong> — a <code>when:</code> yielding a dict or list is an error there
 (<code>ALLOW_BROKEN_CONDITIONALS</code> relaxes it), where this engine applies
 ordinary truthiness. That is a deliberate upstream tightening rather than
 a defect here, recorded so the difference is known.</p>
 <h2 id="example">Example<a class="headerlink" href="#example" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="kn">package</span><span class="w"> </span><span class="nx">main</span>
-<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>
-<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="kn">import</span><span class="w"> </span><span class="p">(</span>
-<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="w">    </span><span class="s">"context"</span>
-<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="w">    </span><span class="s">"fmt"</span>
-<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="w">    </span><span class="s">"log"</span>
-<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a>
-<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a><span class="w">    </span><span class="s">"github.com/go-ansible/inventory"</span>
-<a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a><span class="w">    </span><span class="s">"github.com/go-ansible/playbook"</span>
-<a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a><span class="p">)</span>
-<a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a>
-<a id="__codelineno-4-12" name="__codelineno-4-12" href="#__codelineno-4-12"></a><span class="kd">func</span><span class="w"> </span><span class="nx">main</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-4-13" name="__codelineno-4-13" href="#__codelineno-4-13"></a><span class="w">    </span><span class="nx">inv</span><span class="p">,</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">inventory</span><span class="p">.</span><span class="nx">ParseYAML</span><span class="p">([]</span><span class="kt">byte</span><span class="p">(</span><span class="s">`</span>
-<a id="__codelineno-4-14" name="__codelineno-4-14" href="#__codelineno-4-14"></a><span class="s">all:</span>
-<a id="__codelineno-4-15" name="__codelineno-4-15" href="#__codelineno-4-15"></a><span class="s">  hosts:</span>
-<a id="__codelineno-4-16" name="__codelineno-4-16" href="#__codelineno-4-16"></a><span class="s">    localhost:</span>
-<a id="__codelineno-4-17" name="__codelineno-4-17" href="#__codelineno-4-17"></a><span class="s">      ansible_connection: local</span>
-<a id="__codelineno-4-18" name="__codelineno-4-18" href="#__codelineno-4-18"></a><span class="s">`</span><span class="p">))</span>
-<a id="__codelineno-4-19" name="__codelineno-4-19" href="#__codelineno-4-19"></a><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="kc">nil</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-4-20" name="__codelineno-4-20" href="#__codelineno-4-20"></a><span class="w">        </span><span class="nx">log</span><span class="p">.</span><span class="nx">Fatal</span><span class="p">(</span><span class="nx">err</span><span class="p">)</span>
-<a id="__codelineno-4-21" name="__codelineno-4-21" href="#__codelineno-4-21"></a><span class="w">    </span><span class="p">}</span>
-<a id="__codelineno-4-22" name="__codelineno-4-22" href="#__codelineno-4-22"></a>
-<a id="__codelineno-4-23" name="__codelineno-4-23" href="#__codelineno-4-23"></a><span class="w">    </span><span class="nx">pb</span><span class="p">,</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">playbook</span><span class="p">.</span><span class="nx">ParseFile</span><span class="p">(</span><span class="s">"site.yml"</span><span class="p">)</span>
-<a id="__codelineno-4-24" name="__codelineno-4-24" href="#__codelineno-4-24"></a><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="kc">nil</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-4-25" name="__codelineno-4-25" href="#__codelineno-4-25"></a><span class="w">        </span><span class="nx">log</span><span class="p">.</span><span class="nx">Fatal</span><span class="p">(</span><span class="nx">err</span><span class="p">)</span>
-<a id="__codelineno-4-26" name="__codelineno-4-26" href="#__codelineno-4-26"></a><span class="w">    </span><span class="p">}</span>
-<a id="__codelineno-4-27" name="__codelineno-4-27" href="#__codelineno-4-27"></a>
-<a id="__codelineno-4-28" name="__codelineno-4-28" href="#__codelineno-4-28"></a><span class="w">    </span><span class="nx">e</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">playbook</span><span class="p">.</span><span class="nx">New</span><span class="p">(</span><span class="nx">inv</span><span class="p">)</span>
-<a id="__codelineno-4-29" name="__codelineno-4-29" href="#__codelineno-4-29"></a><span class="w">    </span><span class="nx">rr</span><span class="p">,</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">e</span><span class="p">.</span><span class="nx">RunPlaybook</span><span class="p">(</span><span class="nx">context</span><span class="p">.</span><span class="nx">Background</span><span class="p">(),</span><span class="w"> </span><span class="nx">pb</span><span class="p">)</span>
-<a id="__codelineno-4-30" name="__codelineno-4-30" href="#__codelineno-4-30"></a><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="kc">nil</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-4-31" name="__codelineno-4-31" href="#__codelineno-4-31"></a><span class="w">        </span><span class="nx">log</span><span class="p">.</span><span class="nx">Fatal</span><span class="p">(</span><span class="nx">err</span><span class="p">)</span>
-<a id="__codelineno-4-32" name="__codelineno-4-32" href="#__codelineno-4-32"></a><span class="w">    </span><span class="p">}</span>
-<a id="__codelineno-4-33" name="__codelineno-4-33" href="#__codelineno-4-33"></a><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="nx">rr</span><span class="p">.</span><span class="nx">Failed</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-4-34" name="__codelineno-4-34" href="#__codelineno-4-34"></a><span class="w">        </span><span class="nx">log</span><span class="p">.</span><span class="nx">Fatalf</span><span class="p">(</span><span class="s">"run failed: %+v"</span><span class="p">,</span><span class="w"> </span><span class="nx">rr</span><span class="p">.</span><span class="nx">Summary</span><span class="p">())</span>
-<a id="__codelineno-4-35" name="__codelineno-4-35" href="#__codelineno-4-35"></a><span class="w">    </span><span class="p">}</span>
-<a id="__codelineno-4-36" name="__codelineno-4-36" href="#__codelineno-4-36"></a><span class="w">    </span><span class="nx">fmt</span><span class="p">.</span><span class="nx">Println</span><span class="p">(</span><span class="nx">rr</span><span class="p">.</span><span class="nx">Summary</span><span class="p">())</span>
-<a id="__codelineno-4-37" name="__codelineno-4-37" href="#__codelineno-4-37"></a><span class="p">}</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="kn">package</span><span class="w"> </span><span class="nx">main</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="kn">import</span><span class="w"> </span><span class="p">(</span>
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="w">    </span><span class="s">"context"</span>
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="w">    </span><span class="s">"fmt"</span>
+<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a><span class="w">    </span><span class="s">"log"</span>
+<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a>
+<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a><span class="w">    </span><span class="s">"github.com/go-ansible/inventory"</span>
+<a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a><span class="w">    </span><span class="s">"github.com/go-ansible/playbook"</span>
+<a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a><span class="p">)</span>
+<a id="__codelineno-5-11" name="__codelineno-5-11" href="#__codelineno-5-11"></a>
+<a id="__codelineno-5-12" name="__codelineno-5-12" href="#__codelineno-5-12"></a><span class="kd">func</span><span class="w"> </span><span class="nx">main</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-5-13" name="__codelineno-5-13" href="#__codelineno-5-13"></a><span class="w">    </span><span class="nx">inv</span><span class="p">,</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">inventory</span><span class="p">.</span><span class="nx">ParseYAML</span><span class="p">([]</span><span class="kt">byte</span><span class="p">(</span><span class="s">`</span>
+<a id="__codelineno-5-14" name="__codelineno-5-14" href="#__codelineno-5-14"></a><span class="s">all:</span>
+<a id="__codelineno-5-15" name="__codelineno-5-15" href="#__codelineno-5-15"></a><span class="s">  hosts:</span>
+<a id="__codelineno-5-16" name="__codelineno-5-16" href="#__codelineno-5-16"></a><span class="s">    localhost:</span>
+<a id="__codelineno-5-17" name="__codelineno-5-17" href="#__codelineno-5-17"></a><span class="s">      ansible_connection: local</span>
+<a id="__codelineno-5-18" name="__codelineno-5-18" href="#__codelineno-5-18"></a><span class="s">`</span><span class="p">))</span>
+<a id="__codelineno-5-19" name="__codelineno-5-19" href="#__codelineno-5-19"></a><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="kc">nil</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-5-20" name="__codelineno-5-20" href="#__codelineno-5-20"></a><span class="w">        </span><span class="nx">log</span><span class="p">.</span><span class="nx">Fatal</span><span class="p">(</span><span class="nx">err</span><span class="p">)</span>
+<a id="__codelineno-5-21" name="__codelineno-5-21" href="#__codelineno-5-21"></a><span class="w">    </span><span class="p">}</span>
+<a id="__codelineno-5-22" name="__codelineno-5-22" href="#__codelineno-5-22"></a>
+<a id="__codelineno-5-23" name="__codelineno-5-23" href="#__codelineno-5-23"></a><span class="w">    </span><span class="nx">pb</span><span class="p">,</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">playbook</span><span class="p">.</span><span class="nx">ParseFile</span><span class="p">(</span><span class="s">"site.yml"</span><span class="p">)</span>
+<a id="__codelineno-5-24" name="__codelineno-5-24" href="#__codelineno-5-24"></a><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="kc">nil</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-5-25" name="__codelineno-5-25" href="#__codelineno-5-25"></a><span class="w">        </span><span class="nx">log</span><span class="p">.</span><span class="nx">Fatal</span><span class="p">(</span><span class="nx">err</span><span class="p">)</span>
+<a id="__codelineno-5-26" name="__codelineno-5-26" href="#__codelineno-5-26"></a><span class="w">    </span><span class="p">}</span>
+<a id="__codelineno-5-27" name="__codelineno-5-27" href="#__codelineno-5-27"></a>
+<a id="__codelineno-5-28" name="__codelineno-5-28" href="#__codelineno-5-28"></a><span class="w">    </span><span class="nx">e</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">playbook</span><span class="p">.</span><span class="nx">New</span><span class="p">(</span><span class="nx">inv</span><span class="p">)</span>
+<a id="__codelineno-5-29" name="__codelineno-5-29" href="#__codelineno-5-29"></a><span class="w">    </span><span class="nx">rr</span><span class="p">,</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">e</span><span class="p">.</span><span class="nx">RunPlaybook</span><span class="p">(</span><span class="nx">context</span><span class="p">.</span><span class="nx">Background</span><span class="p">(),</span><span class="w"> </span><span class="nx">pb</span><span class="p">)</span>
+<a id="__codelineno-5-30" name="__codelineno-5-30" href="#__codelineno-5-30"></a><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="kc">nil</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-5-31" name="__codelineno-5-31" href="#__codelineno-5-31"></a><span class="w">        </span><span class="nx">log</span><span class="p">.</span><span class="nx">Fatal</span><span class="p">(</span><span class="nx">err</span><span class="p">)</span>
+<a id="__codelineno-5-32" name="__codelineno-5-32" href="#__codelineno-5-32"></a><span class="w">    </span><span class="p">}</span>
+<a id="__codelineno-5-33" name="__codelineno-5-33" href="#__codelineno-5-33"></a><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="nx">rr</span><span class="p">.</span><span class="nx">Failed</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-5-34" name="__codelineno-5-34" href="#__codelineno-5-34"></a><span class="w">        </span><span class="nx">log</span><span class="p">.</span><span class="nx">Fatalf</span><span class="p">(</span><span class="s">"run failed: %+v"</span><span class="p">,</span><span class="w"> </span><span class="nx">rr</span><span class="p">.</span><span class="nx">Summary</span><span class="p">())</span>
+<a id="__codelineno-5-35" name="__codelineno-5-35" href="#__codelineno-5-35"></a><span class="w">    </span><span class="p">}</span>
+<a id="__codelineno-5-36" name="__codelineno-5-36" href="#__codelineno-5-36"></a><span class="w">    </span><span class="nx">fmt</span><span class="p">.</span><span class="nx">Println</span><span class="p">(</span><span class="nx">rr</span><span class="p">.</span><span class="nx">Summary</span><span class="p">())</span>
+<a id="__codelineno-5-37" name="__codelineno-5-37" href="#__codelineno-5-37"></a><span class="p">}</span>
 </code></pre></div>
 <h2 id="what-is-not-implemented">What is not implemented<a class="headerlink" href="#what-is-not-implemented" title="Permanent link">&para;</a></h2>
 <p><code>include_tasks</code>/<code>import_tasks</code>/<code>include_role</code>/<code>import_role</code> resolve

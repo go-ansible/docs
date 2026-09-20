@@ -838,7 +838,7 @@ underneath, no subprocess boundary at all.</p>
 </tr>
 <tr>
 <td><code>ansible-playbook</code></td>
-<td>Runs a playbook via <a href="../playbook/"><code>playbook.Engine</code></a>; <code>-f</code>/<code>--forks</code> sets the concurrency cap, and <code>vars_prompt:</code> prompts at a real terminal (masked input for <code>private</code> vars, falling back to defaults when not a TTY)</td>
+<td>Runs a playbook via <a href="../playbook/"><code>playbook.Engine</code></a>; <code>-f</code>/<code>--forks</code> sets the concurrency cap, and <code>vars_prompt:</code> prompts at a real terminal (masked input for <code>private</code> vars, falling back to defaults when not a TTY); <code>--check</code>/<code>-C</code> predicts changes without making them and <code>--diff</code>/<code>-D</code> shows them as unified diffs</td>
 </tr>
 <tr>
 <td><code>ansible-vault</code></td>
