@@ -286,7 +286,83 @@ signature anywhere in [`modules`](modules.md).
 **Everything else is skipped**, and a test asserts that an unported
 writing module does *not* claim support — it failed, correctly, on the
 change that added the four editing modules, until their tests existed.
-`--diff` is not implemented at all.
+
+## Diff mode
+
+`Engine.DiffMode` — `ansible-playbook --diff` / `-D` — shows what each
+task changed, as a unified diff printed before the line saying what
+happened. It composes with check mode: `--diff --check` shows the diff of
+a change deliberately not made.
+
+```
+TASK [edit existing file]
+--- before: /etc/app.conf (content)
++++ after: /etc/app.conf (content)
+@@ -1,2 +1,3 @@
+ alpha
+ beta
++gamma
+
+changed: [h1]
+```
+
+Like `--check`, the flag reaches a module through its own arguments,
+under real Ansible's wire name `_ansible_diff`. A module that does not
+report a diff simply prints nothing extra, so turning the flag on can
+never fail a run. `copy`, `template`, `lineinfile`, `blockinfile` and
+`replace` report one today.
+
+### Why the renderer is a port, not a reimplementation
+
+Go has no unified diff in its standard library, and writing "a" unified
+diff is not enough: the output has to be the one real Ansible prints.
+Real Ansible calls Python's `difflib`, so `difflib` is what was ported —
+`SequenceMatcher` with its autojunk rule, `get_opcodes`,
+`get_grouped_opcodes`, `_format_range_unified` — together with
+`CallbackBase._get_diff`'s header lines, skip messages and trailing blank
+line.
+
+A plain longest-common-subsequence walk was written first and is *wrong*:
+`SequenceMatcher` places an inserted duplicate of an existing line
+**before** that line where an LCS walk places it after. Both are valid
+diffs of the same length; only one matches. Three more details that a
+reimplementation gets wrong, each caught by measurement rather than by
+reading:
+
+- A one-line hunk range prints no length — `@@ -1 +0,0 @@`, not
+  `@@ -1,1 +0,0 @@`.
+- Lines keep their terminators, so a file whose last line lacks a newline
+  differs from one where it does; real Ansible appends
+  `\ No newline at end of file` to that line before diffing.
+- A replace emits every removal and **then** every addition, never
+  interleaved.
+
+Verified against 373 cases whose expected output was produced by calling
+real ansible-core 2.21.4's own `_get_diff` — two shapes measured from a
+live run, eleven hand-picked edge cases, 300 randomised pairs, and 60
+large ones crossing `difflib`'s 200-element autojunk threshold. The
+randomised half earned its place by finding the `SequenceMatcher`
+divergence on its twentieth case; each of the three details above was
+confirmed load-bearing by breaking it, failing 19, 217 and all cases.
+
+Running the same playbook through this port and through real
+ansible-core produces identical transcripts, both with and without
+`--check`, apart from the banner asterisk padding this port does not
+emit.
+
+### One disclosed divergence
+
+Real Ansible has no single convention for the `---`/`+++` headers — each
+module names its sides its own way, and each is reproduced: `(content)`
+suffixes for `lineinfile` and `blockinfile`, bare paths for `replace` and
+for `copy` with `content:`, and the **source** path for `copy` with
+`src:`.
+
+`template` is the exception. Real Ansible renders to a temporary file and
+names *that* as the after side — `~/.ansible/tmp/ansible-local-.../x.j2`,
+a path that differs between two runs on the same machine. This port
+renders in memory and has no such file, so it names the destination
+instead.
 
 Real ansible-core 2.21 also **requires a conditional to evaluate to a
 boolean** — a `when:` yielding a dict or list is an error there
