@@ -694,6 +694,45 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#tags" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tags
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#rolling-updates-and-reporting" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Rolling updates and reporting
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Rolling updates and reporting">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#known-gaps" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Known gaps
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#example" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -911,6 +950,45 @@
     <span class="md-ellipsis">
       
         One disclosed divergence
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#tags" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tags
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#rolling-updates-and-reporting" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Rolling updates and reporting
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Rolling updates and reporting">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#known-gaps" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Known gaps
       
     </span>
   </a>
@@ -1318,6 +1396,67 @@ names <em>that</em> as the after side — <code>~/.ansible/tmp/ansible-local-...
 a path that differs between two runs on the same machine. This port
 renders in memory and has no such file, so it names the destination
 instead.</p>
+<h2 id="tags">Tags<a class="headerlink" href="#tags" title="Permanent link">&para;</a></h2>
+<p>Tag selection is a port of real Ansible's <code>evaluate_tags</code>
+(<code>ansible/playbook/taggable.py</code>), which is more than an intersection
+test:</p>
+<ul>
+<li>A task with no tags carries the implicit tag <code>untagged</code> — that is what
+  lets <code>--tags untagged</code> and <code>--skip-tags untagged</code> select it at all.</li>
+<li><code>all</code>, <code>tagged</code>, <code>untagged</code>, <code>always</code> and <code>never</code> are special names on
+  <strong>both</strong> sides.</li>
+<li>The run side is evaluated <strong>before</strong> the skip side, not the reverse.</li>
+<li>An empty run list means <code>all</code>, which is what excludes <code>never</code>.</li>
+</ul>
+<p>That last substitution is what real Ansible does in its <strong>CLI</strong> rather
+than its config (<code>ansible/cli/__init__.py</code>, whose own comment explains
+why: making <code>["all"]</code> the config default would turn <code>--tags foo</code> into
+<code>["all", "foo"]</code>). It is applied in the engine here instead, so every
+entry point gets it — <strong>a task tagged <code>never</code> running by default is a
+safety failure</strong>, and guarding a destructive task is the only thing
+<code>never</code> is for.</p>
+<p>A task excluded by tags produces <strong>no output at all</strong> — no banner, no
+<code>skipping:</code> line, and nothing in the recap. That is the difference
+between <em>selection</em> and <em>skipping</em>: tags decide which tasks are in the
+play, whereas <code>when:</code> skips a task that is. This port reported the first
+as the second, which also made the recap's own <code>skipped</code> count wrong.</p>
+<p>Tag <em>inheritance</em> — play tags and block tags reaching the tasks inside —
+was already correct, and is covered by its own measured table.</p>
+<h2 id="rolling-updates-and-reporting">Rolling updates and reporting<a class="headerlink" href="#rolling-updates-and-reporting" title="Permanent link">&para;</a></h2>
+<p><code>serial:</code> batching was already correct; what was missing was that real
+Ansible <strong>re-banners the play and the task for each batch</strong>, which is
+what makes the boundaries of a rolling update visible while it runs.</p>
+<p>Other reporting details, each measured rather than assumed:</p>
+<ul>
+<li><code>run_once:</code> always runs on the play's <strong>first</strong> host. This port used
+  whichever host won a race, so a <code>run_once</code> task that registered a
+  variable recorded a different <code>inventory_hostname</code> from run to run.</li>
+<li>A delegated task reports where it ran — <code>ok: [h1 -&gt; h5]</code> — on its ok,
+  changed and fatal lines, but <strong>not</strong> on <code>skipping:</code>, because a skipped
+  task never connected anywhere.</li>
+<li>A task being retried prints
+  <code>FAILED - RETRYING: [h1]: name (2 retries left).</code> after each failed
+  attempt, in <code>COLOR_DEBUG</code>'s dark gray, <em>after</em> its task banner.
+  Without it a loop with a <code>delay:</code> is indistinguishable from a hang.</li>
+<li>A play whose pattern matched nothing says <code>skipping: no hosts matched</code>.</li>
+<li>The recap ends with a blank line, and an <strong>ignored failure that
+  changed something counts under <code>changed</code></strong>.</li>
+</ul>
+<h3 id="known-gaps">Known gaps<a class="headerlink" href="#known-gaps" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Real ansible-core 2.21 prints a structured <code>[ERROR]</code> block naming the
+  playbook file, line, column and a source excerpt. This port has no
+  source-position tracking, so it prints only the <code>fatal:</code> line.</li>
+<li>Real also emits <code>[WARNING]: Could not match supplied host pattern</code> on
+  <strong>stderr</strong>; <code>DefaultCallback</code> holds a single output stream.</li>
+<li>For a command whose executable does not exist, real reports
+  <code>changed=false</code> (it execs directly and gets <code>ENOENT</code>) where this port
+  reports <code>changed=true</code> with <code>rc=127</code>, because the command reaches the
+  target through a shell. <code>command</code> does <em>not</em> interpret shell
+  metacharacters here — that part matches. Distinguishing the two needs
+  an exec-versus-shell distinction at the transport, and keying off
+  <code>rc == 127</code> would misfire on a program that legitimately exits 127.</li>
+</ul>
 <p>Real ansible-core 2.21 also <strong>requires a conditional to evaluate to a
 boolean</strong> — a <code>when:</code> yielding a dict or list is an error there
 (<code>ALLOW_BROKEN_CONDITIONALS</code> relaxes it), where this engine applies
