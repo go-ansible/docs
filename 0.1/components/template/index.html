@@ -549,6 +549,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#string-literals-are-raw" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        String literals are raw
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#measured-against-real-ansible" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -812,6 +823,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#string-literals-are-raw" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        String literals are raw
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#measured-against-real-ansible" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -991,6 +1013,51 @@ which go-ansible does not model yet. <code>errors=warn</code> reports through th
 caller-supplied <code>Engine.OnWarning</code> hook, since this package has no
 display layer of its own; with no hook installed it degrades to
 <code>errors=ignore</code>.</p>
+<h2 id="string-literals-are-raw">String literals are raw<a class="headerlink" href="#string-literals-are-raw" title="Permanent link">&para;</a></h2>
+<p>A backslash in a Jinja string literal is an ordinary character, and
+<code>\'</code> or <code>\"</code> keeps <strong>both</strong> the backslash and the quote while not
+ending the literal. The value is the source text between the quotes,
+byte for byte.</p>
+<p>That is real ansible-core 2.21's behaviour, and a deliberate divergence
+from plain Jinja2, where <code>'C:\Users'</code> is an error — <em>truncated
+\UXXXXXXXX escape</em> — and <code>"x\ny"</code> is three characters. Both were run
+to check, because they disagree and only one of them is the target:</p>
+<table>
+<thead>
+<tr>
+<th>expression</th>
+<th>ansible-core 2.21</th>
+<th>Jinja2 3.1.6</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>'C:\Users'</code></td>
+<td><code>C:\Users</code></td>
+<td>error</td>
+</tr>
+<tr>
+<td><code>"x\ny" \| length</code></td>
+<td>4</td>
+<td>3</td>
+</tr>
+<tr>
+<td><code>"a\"b" \| length</code></td>
+<td>4</td>
+<td>3</td>
+</tr>
+</tbody>
+</table>
+<p>It matters most for regexes, where doubling a backslash is a habit
+carried from Python: <code>regex_replace("\d", "#")</code> matches a digit, and
+<code>regex_replace("\\d", "#")</code> matches a literal backslash followed by a
+<code>d</code> — so it does not match, in this port and in real Ansible alike.</p>
+<p>Under the hood a literal containing a backslash is lifted out to a
+generated variable before gonja parses the expression, because gonja
+re-quotes the lexed value and then un-escapes what it just escaped: it
+either fails outright or turns a literal backslash-n into a newline.
+Only literals with a backslash are touched, so nothing that parsed
+correctly before changes.</p>
 <h2 id="measured-against-real-ansible">Measured against real Ansible<a class="headerlink" href="#measured-against-real-ansible" title="Permanent link">&para;</a></h2>
 <p>The filter and lookup surface has been run side by side with <strong>real
 ansible-core 2.21.4</strong>: one playbook through both engines, each writing
