@@ -568,11 +568,29 @@ the trailing space real Ansible leaves there.
   an exec-versus-shell distinction at the transport, and keying off
   `rc == 127` would misfire on a program that legitimately exits 127.
 
-Real ansible-core 2.21 also **requires a conditional to evaluate to a
-boolean** — a `when:` yielding a dict or list is an error there
-(`ALLOW_BROKEN_CONDITIONALS` relaxes it), where this engine applies
-ordinary truthiness. That is a deliberate upstream tightening rather than
-a defect here, recorded so the difference is known.
+## Conditionals
+
+A conditional must evaluate to a **boolean**. A `when:` yielding a
+string, number, list, dict or null is an error, as it is in real
+ansible-core 2.21.
+
+The rule is worth keeping for the reason it was introduced: a
+non-boolean conditional is usually a template used where one is not
+supported, and it then reads as **always true** — so the task runs every
+time, silently. That is an action difference, not a reporting one.
+
+`Engine.AllowBrokenConditionals`, and the `ANSIBLE_ALLOW_BROKEN_CONDITIONALS`
+environment variable, relax it to ordinary truthiness. Real Ansible has
+the same switch, defaults it off the same way, and plans to remove it in
+2.23 — a playbook that needs it is one real ansible-core also refuses,
+so it is there to unblock a migration rather than to be left on.
+
+A conditional wrapped in templating delimiters — `when: "{{ flag }}"` —
+is accepted, with the same deprecated status it has upstream. This port
+used to FAIL such a task: every conditional is evaluated by wrapping it
+in `{{ }}`, so one already wrapped became `{{ {{ flag }} }}`. Only a
+conditional that is entirely one expression is unwrapped; `{{ a }} and
+{{ b }}` is left as written.
 
 ## Example
 
