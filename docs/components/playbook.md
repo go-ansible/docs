@@ -508,9 +508,29 @@ use `--check`.
 
 They are refused rather than ignored on purpose. Silently accepting
 `connection: local` would run the task somewhere other than the
-playbook says. Play-level `environment:` was accepted and ignored until
-this was measured — the command ran without the variable and nothing
-said so — and is refused now too.
+playbook says.
+
+## environment
+
+`environment:` sets variables in the environment of the command a task
+runs, at play and task level. A play's entries reach every task; a
+task's own are **merged over** them, key by key, so a task adds to its
+play rather than replacing it and wins only where both set the same
+name. Values are templated, so `TMPL: "hello-{{ who }}"` works.
+
+It was accepted at play level and then **ignored** until this was
+measured — the command ran without the variable and nothing said so —
+and refused at task level for one release, on the grounds that running
+something other than the playbook says is worse than declining.
+
+The variables are applied as a shell `export` preceding the command,
+rather than as `FOO=bar cmd` assignments: a command may itself be
+`cd somewhere && real-command`, where assignments written in front
+would apply to the `cd` alone.
+
+A YAML `true` becomes the string `True`, capitalised, because that is
+what Python's `str()` produces and what a script testing
+`[ "$FLAG" = "True" ]` expects.
 
 ## Loops
 
