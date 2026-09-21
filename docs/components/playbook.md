@@ -489,6 +489,50 @@ cache. It is accepted so a command line written for real
 ansible-playbook still runs, and says so rather than implying a cache
 exists.
 
+## no_log, and the keywords this port refuses
+
+`no_log: true` is honoured: the outcome of a task is still reported,
+its contents are not, and a **failing** task — the case where a result
+is dumped in full, and so the worst moment to leak — reports only real
+Ansible's own censored result. A looped task's item is censored too,
+since the item is frequently the secret itself.
+
+Real Ansible exposes 42 task keywords; this port honours most, and
+**refuses the rest by name**. A key the parser does not recognise is
+taken for the module, so `no_log: true` beside `debug:` used to fail
+with *"ambiguous module"* — a message that reads like the playbook is
+malformed when it is this port that is incomplete. Now it says which
+keyword, and how to get the same effect where there is a way:
+`connection:` → set `ansible_connection` on the host, `check_mode:` →
+use `--check`.
+
+They are refused rather than ignored on purpose. Silently accepting
+`connection: local` would run the task somewhere other than the
+playbook says. Play-level `environment:` was accepted and ignored until
+this was measured — the command ran without the variable and nothing
+said so — and is refused now too.
+
+## Loops
+
+A `when:` on a looping task is evaluated **per item**, with `item`
+bound. It used to be evaluated once before the loop, where `item` does
+not exist, which was wrong in both directions:
+
+| `when:` | real ansible-core | this port before |
+|---|---|---|
+| `item != 2` | runs 1 and 3 | ran all three |
+| `item == 1` | runs 1 | skipped the whole task |
+
+A playbook that said to skip an item acted on it anyway — for a loop
+over packages, users or hosts, that is doing the thing it was told not
+to.
+
+A looped task counts **once per host** in the recap however many items
+it ran: three changed items report `changed=1`, not 3. Iterations fold
+before counting — changed if any changed, skipped only if every one
+was. Each line carries its item, `=> (item=x)`, and a skipped one keeps
+the trailing space real Ansible leaves there.
+
 ### Known gaps
 
 - Real ansible-core 2.21 prints a structured `[ERROR]` block naming the
