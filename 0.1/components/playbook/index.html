@@ -816,6 +816,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#conditionals" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Conditionals
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#example" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1163,6 +1174,17 @@
         
       </ul>
     </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#conditionals" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Conditionals
+      
+    </span>
+  </a>
   
 </li>
       
@@ -1748,11 +1770,25 @@ the trailing space real Ansible leaves there.</p>
   an exec-versus-shell distinction at the transport, and keying off
   <code>rc == 127</code> would misfire on a program that legitimately exits 127.</li>
 </ul>
-<p>Real ansible-core 2.21 also <strong>requires a conditional to evaluate to a
-boolean</strong> — a <code>when:</code> yielding a dict or list is an error there
-(<code>ALLOW_BROKEN_CONDITIONALS</code> relaxes it), where this engine applies
-ordinary truthiness. That is a deliberate upstream tightening rather than
-a defect here, recorded so the difference is known.</p>
+<h2 id="conditionals">Conditionals<a class="headerlink" href="#conditionals" title="Permanent link">&para;</a></h2>
+<p>A conditional must evaluate to a <strong>boolean</strong>. A <code>when:</code> yielding a
+string, number, list, dict or null is an error, as it is in real
+ansible-core 2.21.</p>
+<p>The rule is worth keeping for the reason it was introduced: a
+non-boolean conditional is usually a template used where one is not
+supported, and it then reads as <strong>always true</strong> — so the task runs every
+time, silently. That is an action difference, not a reporting one.</p>
+<p><code>Engine.AllowBrokenConditionals</code>, and the <code>ANSIBLE_ALLOW_BROKEN_CONDITIONALS</code>
+environment variable, relax it to ordinary truthiness. Real Ansible has
+the same switch, defaults it off the same way, and plans to remove it in
+2.23 — a playbook that needs it is one real ansible-core also refuses,
+so it is there to unblock a migration rather than to be left on.</p>
+<p>A conditional wrapped in templating delimiters — <code>when: "{{ flag }}"</code> —
+is accepted, with the same deprecated status it has upstream. This port
+used to FAIL such a task: every conditional is evaluated by wrapping it
+in <code>{{ }}</code>, so one already wrapped became <code>{{ {{ flag }} }}</code>. Only a
+conditional that is entirely one expression is unwrapped; <code>{{ a }} and
+{{ b }}</code> is left as written.</p>
 <h2 id="example">Example<a class="headerlink" href="#example" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="kn">package</span><span class="w"> </span><span class="nx">main</span>
 <a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>
