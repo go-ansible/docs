@@ -138,6 +138,36 @@ caller-supplied `Engine.OnWarning` hook, since this package has no
 display layer of its own; with no hook installed it degrades to
 `errors=ignore`.
 
+## String literals are raw
+
+A backslash in a Jinja string literal is an ordinary character, and
+`\'` or `\"` keeps **both** the backslash and the quote while not
+ending the literal. The value is the source text between the quotes,
+byte for byte.
+
+That is real ansible-core 2.21's behaviour, and a deliberate divergence
+from plain Jinja2, where `'C:\Users'` is an error — *truncated
+\UXXXXXXXX escape* — and `"x\ny"` is three characters. Both were run
+to check, because they disagree and only one of them is the target:
+
+| expression | ansible-core 2.21 | Jinja2 3.1.6 |
+|---|---|---|
+| `'C:\Users'` | `C:\Users` | error |
+| `"x\ny" \| length` | 4 | 3 |
+| `"a\"b" \| length` | 4 | 3 |
+
+It matters most for regexes, where doubling a backslash is a habit
+carried from Python: `regex_replace("\d", "#")` matches a digit, and
+`regex_replace("\\d", "#")` matches a literal backslash followed by a
+`d` — so it does not match, in this port and in real Ansible alike.
+
+Under the hood a literal containing a backslash is lifted out to a
+generated variable before gonja parses the expression, because gonja
+re-quotes the lexed value and then un-escapes what it just escaped: it
+either fails outright or turns a literal backslash-n into a newline.
+Only literals with a backslash are touched, so nothing that parsed
+correctly before changes.
+
 ## Measured against real Ansible
 
 The filter and lookup surface has been run side by side with **real
