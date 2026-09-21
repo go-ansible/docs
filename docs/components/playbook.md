@@ -457,6 +457,38 @@ Other reporting details, each measured rather than assumed:
 - The recap ends with a blank line, and an **ignored failure that
   changed something counts under `changed`**.
 
+## Inspecting a playbook without running it
+
+`--list-tasks`, `--list-tags`, `--list-hosts` and `--syntax-check` print
+what a playbook would do and run nothing. The listings apply the run's
+own tag filter, through the engine's exported `TagsSelect`, and name
+tasks through its exported `DisplayName` — a listing that disagreed with
+the run it describes would be worse than none, so neither rule is
+written twice.
+
+A block's contents are listed; its `rescue:` and `always:` are not, even
+though they will run. Role tasks are listed and bannered alike as
+`r1 : role-task`. Host *order* in `--list-hosts` is not matched: real
+ansible-core's own order is non-deterministic — three runs of one
+playbook gave three different orders — so only the set is.
+
+## Resuming and forcing
+
+`--start-at-task` skips until a task whose name matches, then runs from
+there. The match is exact or a shell glob, case-sensitive, and the
+started state carries across plays *and* across playbook files, so
+`a.yml b.yml --start-at-task x` runs all of `b.yml` when `x` is in
+`a.yml`.
+
+`--force-handlers` runs notified handlers on hosts that already failed —
+without it a failed host runs nothing further, which can leave a service
+stopped because the handler that would have restarted it never ran.
+
+`--flush-cache` is accepted and does nothing: this port keeps no fact
+cache. It is accepted so a command line written for real
+ansible-playbook still runs, and says so rather than implying a cache
+exists.
+
 ### Known gaps
 
 - Real ansible-core 2.21 prints a structured `[ERROR]` block naming the
