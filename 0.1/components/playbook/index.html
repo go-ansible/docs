@@ -741,7 +741,29 @@
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Rolling updates and reporting">
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#inspecting-a-playbook-without-running-it" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Inspecting a playbook without running it
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#resuming-and-forcing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Resuming and forcing
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Resuming and forcing">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -1037,7 +1059,29 @@
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Rolling updates and reporting">
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#inspecting-a-playbook-without-running-it" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Inspecting a playbook without running it
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#resuming-and-forcing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Resuming and forcing
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Resuming and forcing">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -1531,6 +1575,31 @@ what makes the boundaries of a rolling update visible while it runs.</p>
 <li>The recap ends with a blank line, and an <strong>ignored failure that
   changed something counts under <code>changed</code></strong>.</li>
 </ul>
+<h2 id="inspecting-a-playbook-without-running-it">Inspecting a playbook without running it<a class="headerlink" href="#inspecting-a-playbook-without-running-it" title="Permanent link">&para;</a></h2>
+<p><code>--list-tasks</code>, <code>--list-tags</code>, <code>--list-hosts</code> and <code>--syntax-check</code> print
+what a playbook would do and run nothing. The listings apply the run's
+own tag filter, through the engine's exported <code>TagsSelect</code>, and name
+tasks through its exported <code>DisplayName</code> — a listing that disagreed with
+the run it describes would be worse than none, so neither rule is
+written twice.</p>
+<p>A block's contents are listed; its <code>rescue:</code> and <code>always:</code> are not, even
+though they will run. Role tasks are listed and bannered alike as
+<code>r1 : role-task</code>. Host <em>order</em> in <code>--list-hosts</code> is not matched: real
+ansible-core's own order is non-deterministic — three runs of one
+playbook gave three different orders — so only the set is.</p>
+<h2 id="resuming-and-forcing">Resuming and forcing<a class="headerlink" href="#resuming-and-forcing" title="Permanent link">&para;</a></h2>
+<p><code>--start-at-task</code> skips until a task whose name matches, then runs from
+there. The match is exact or a shell glob, case-sensitive, and the
+started state carries across plays <em>and</em> across playbook files, so
+<code>a.yml b.yml --start-at-task x</code> runs all of <code>b.yml</code> when <code>x</code> is in
+<code>a.yml</code>.</p>
+<p><code>--force-handlers</code> runs notified handlers on hosts that already failed —
+without it a failed host runs nothing further, which can leave a service
+stopped because the handler that would have restarted it never ran.</p>
+<p><code>--flush-cache</code> is accepted and does nothing: this port keeps no fact
+cache. It is accepted so a command line written for real
+ansible-playbook still runs, and says so rather than implying a cache
+exists.</p>
 <h3 id="known-gaps">Known gaps<a class="headerlink" href="#known-gaps" title="Permanent link">&para;</a></h3>
 <ul>
 <li>Real ansible-core 2.21 prints a structured <code>[ERROR]</code> block naming the
