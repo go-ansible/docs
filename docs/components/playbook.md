@@ -394,6 +394,47 @@ as the second, which also made the recap's own `skipped` count wrong.
 Tag *inheritance* — play tags and block tags reaching the tasks inside —
 was already correct, and is covered by its own measured table.
 
+## Host selection
+
+`hosts:` and `--limit` share one pattern language, and its terms are
+applied by **kind** rather than left to right, which is what real
+Ansible's `order_patterns` does: every plain term first, then every `&`
+intersection, then every `!` exclusion. A pattern with no plain term at
+all gets an implicit `all` to subtract from.
+
+That ordering is not a detail. Applying terms in written order makes
+`hosts: "!db-primary"` select **exactly the host it names** — a play
+written to avoid one machine would run on that machine and nowhere
+else. It also let a plain term written after an exclusion resurrect an
+excluded host, so `web:!h1:h1` selected all five hosts where real
+selects four.
+
+`--limit` (`-l`) takes the same language and **intersects** with a
+play's own `hosts:` rather than replacing it: a play already narrower
+than the limit keeps its own narrower set, and the limit can only ever
+remove hosts. A limit that leaves nothing to target is a hard error,
+checked once before any play runs and against `all` — which is why a
+play whose own `hosts:` matches nothing is not an error while a
+`--limit` matching nothing is.
+
+### serial
+
+`serial:` accepts a count, a percentage, or a list of either, matching
+real Ansible's own list-typed attribute — `serial: 2` and `serial: [2]`
+are the same play. The list is consumed in order and its **last entry
+repeats** until every host has run, so `[1, 2]` over five hosts gives
+batches of 1, 2 and 2. A percentage is of the play's **total** host
+count, and one that works out to zero becomes one.
+
+The percentage is computed in floating point and truncated, exactly as
+Python's `int((pct / 100.0) * total)` does, because the two disagree:
+`0.29 * 100` is `28.999999999999996`, so 29% of 100 hosts batches as
+28/28/28/16, not 29/29/29/13.
+
+Only the plain-integer form worked before; a percentage or a list parsed
+as zero and the play ran **every host at once, in silence** — the exact
+opposite of what `serial` is for.
+
 ## Rolling updates and reporting
 
 `serial:` batching was already correct; what was missing was that real
