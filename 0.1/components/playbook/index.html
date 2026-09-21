@@ -705,6 +705,34 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#host-selection" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Host selection
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Host selection">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#serial" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        serial
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#rolling-updates-and-reporting" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -969,6 +997,34 @@
       
     </span>
   </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#host-selection" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Host selection
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Host selection">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#serial" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        serial
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -1422,6 +1478,39 @@ play, whereas <code>when:</code> skips a task that is. This port reported the fi
 as the second, which also made the recap's own <code>skipped</code> count wrong.</p>
 <p>Tag <em>inheritance</em> — play tags and block tags reaching the tasks inside —
 was already correct, and is covered by its own measured table.</p>
+<h2 id="host-selection">Host selection<a class="headerlink" href="#host-selection" title="Permanent link">&para;</a></h2>
+<p><code>hosts:</code> and <code>--limit</code> share one pattern language, and its terms are
+applied by <strong>kind</strong> rather than left to right, which is what real
+Ansible's <code>order_patterns</code> does: every plain term first, then every <code>&amp;</code>
+intersection, then every <code>!</code> exclusion. A pattern with no plain term at
+all gets an implicit <code>all</code> to subtract from.</p>
+<p>That ordering is not a detail. Applying terms in written order makes
+<code>hosts: "!db-primary"</code> select <strong>exactly the host it names</strong> — a play
+written to avoid one machine would run on that machine and nowhere
+else. It also let a plain term written after an exclusion resurrect an
+excluded host, so <code>web:!h1:h1</code> selected all five hosts where real
+selects four.</p>
+<p><code>--limit</code> (<code>-l</code>) takes the same language and <strong>intersects</strong> with a
+play's own <code>hosts:</code> rather than replacing it: a play already narrower
+than the limit keeps its own narrower set, and the limit can only ever
+remove hosts. A limit that leaves nothing to target is a hard error,
+checked once before any play runs and against <code>all</code> — which is why a
+play whose own <code>hosts:</code> matches nothing is not an error while a
+<code>--limit</code> matching nothing is.</p>
+<h3 id="serial">serial<a class="headerlink" href="#serial" title="Permanent link">&para;</a></h3>
+<p><code>serial:</code> accepts a count, a percentage, or a list of either, matching
+real Ansible's own list-typed attribute — <code>serial: 2</code> and <code>serial: [2]</code>
+are the same play. The list is consumed in order and its <strong>last entry
+repeats</strong> until every host has run, so <code>[1, 2]</code> over five hosts gives
+batches of 1, 2 and 2. A percentage is of the play's <strong>total</strong> host
+count, and one that works out to zero becomes one.</p>
+<p>The percentage is computed in floating point and truncated, exactly as
+Python's <code>int((pct / 100.0) * total)</code> does, because the two disagree:
+<code>0.29 * 100</code> is <code>28.999999999999996</code>, so 29% of 100 hosts batches as
+28/28/28/16, not 29/29/29/13.</p>
+<p>Only the plain-integer form worked before; a percentage or a list parsed
+as zero and the play ran <strong>every host at once, in silence</strong> — the exact
+opposite of what <code>serial</code> is for.</p>
 <h2 id="rolling-updates-and-reporting">Rolling updates and reporting<a class="headerlink" href="#rolling-updates-and-reporting" title="Permanent link">&para;</a></h2>
 <p><code>serial:</code> batching was already correct; what was missing was that real
 Ansible <strong>re-banners the play and the task for each batch</strong>, which is
