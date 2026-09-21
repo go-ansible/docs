@@ -763,7 +763,29 @@
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Resuming and forcing">
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#no_log-and-the-keywords-this-port-refuses" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        no_log, and the keywords this port refuses
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#loops" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Loops
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Loops">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -1081,7 +1103,29 @@
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Resuming and forcing">
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#no_log-and-the-keywords-this-port-refuses" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        no_log, and the keywords this port refuses
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#loops" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Loops
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Loops">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -1600,6 +1644,58 @@ stopped because the handler that would have restarted it never ran.</p>
 cache. It is accepted so a command line written for real
 ansible-playbook still runs, and says so rather than implying a cache
 exists.</p>
+<h2 id="no_log-and-the-keywords-this-port-refuses">no_log, and the keywords this port refuses<a class="headerlink" href="#no_log-and-the-keywords-this-port-refuses" title="Permanent link">&para;</a></h2>
+<p><code>no_log: true</code> is honoured: the outcome of a task is still reported,
+its contents are not, and a <strong>failing</strong> task — the case where a result
+is dumped in full, and so the worst moment to leak — reports only real
+Ansible's own censored result. A looped task's item is censored too,
+since the item is frequently the secret itself.</p>
+<p>Real Ansible exposes 42 task keywords; this port honours most, and
+<strong>refuses the rest by name</strong>. A key the parser does not recognise is
+taken for the module, so <code>no_log: true</code> beside <code>debug:</code> used to fail
+with <em>"ambiguous module"</em> — a message that reads like the playbook is
+malformed when it is this port that is incomplete. Now it says which
+keyword, and how to get the same effect where there is a way:
+<code>connection:</code> → set <code>ansible_connection</code> on the host, <code>check_mode:</code> →
+use <code>--check</code>.</p>
+<p>They are refused rather than ignored on purpose. Silently accepting
+<code>connection: local</code> would run the task somewhere other than the
+playbook says. Play-level <code>environment:</code> was accepted and ignored until
+this was measured — the command ran without the variable and nothing
+said so — and is refused now too.</p>
+<h2 id="loops">Loops<a class="headerlink" href="#loops" title="Permanent link">&para;</a></h2>
+<p>A <code>when:</code> on a looping task is evaluated <strong>per item</strong>, with <code>item</code>
+bound. It used to be evaluated once before the loop, where <code>item</code> does
+not exist, which was wrong in both directions:</p>
+<table>
+<thead>
+<tr>
+<th><code>when:</code></th>
+<th>real ansible-core</th>
+<th>this port before</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>item != 2</code></td>
+<td>runs 1 and 3</td>
+<td>ran all three</td>
+</tr>
+<tr>
+<td><code>item == 1</code></td>
+<td>runs 1</td>
+<td>skipped the whole task</td>
+</tr>
+</tbody>
+</table>
+<p>A playbook that said to skip an item acted on it anyway — for a loop
+over packages, users or hosts, that is doing the thing it was told not
+to.</p>
+<p>A looped task counts <strong>once per host</strong> in the recap however many items
+it ran: three changed items report <code>changed=1</code>, not 3. Iterations fold
+before counting — changed if any changed, skipped only if every one
+was. Each line carries its item, <code>=&gt; (item=x)</code>, and a skipped one keeps
+the trailing space real Ansible leaves there.</p>
 <h3 id="known-gaps">Known gaps<a class="headerlink" href="#known-gaps" title="Permanent link">&para;</a></h3>
 <ul>
 <li>Real ansible-core 2.21 prints a structured <code>[ERROR]</code> block naming the
