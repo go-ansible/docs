@@ -796,7 +796,29 @@
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Loops">
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#stopping-a-rolling-update" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Stopping a rolling update
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#connection-settings-on-a-play" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Connection settings on a play
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Connection settings on a play">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -1158,7 +1180,29 @@
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Loops">
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#stopping-a-rolling-update" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Stopping a rolling update
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#connection-settings-on-a-play" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Connection settings on a play
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Connection settings on a play">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -1755,6 +1799,32 @@ it ran: three changed items report <code>changed=1</code>, not 3. Iterations fol
 before counting — changed if any changed, skipped only if every one
 was. Each line carries its item, <code>=&gt; (item=x)</code>, and a skipped one keeps
 the trailing space real Ansible leaves there.</p>
+<h2 id="stopping-a-rolling-update">Stopping a rolling update<a class="headerlink" href="#stopping-a-rolling-update" title="Permanent link">&para;</a></h2>
+<p><code>any_errors_fatal:</code> stops the whole play the moment any host fails, and
+<code>max_fail_percentage:</code> stops it once more than that share of the batch
+has failed. Both are checked after every task, as real Ansible checks
+them, and both stop the <strong>play</strong> rather than the current batch — a
+rolling update that gives up must not roll on.</p>
+<p><code>max_fail_percentage</code> compares <code>failed / batch_size</code> <strong>strictly
+greater</strong> than the percentage, so one host of five failing (20%)
+continues at <code>20</code> and stops at <code>19</code>. A task's own <code>any_errors_fatal:</code>
+overrides the play's, and <code>run_once:</code> implies it: real Ansible treats a
+failing <code>run_once</code> task as fatal for everyone, since the one host stood
+in for all of them.</p>
+<p>Both <strong>parsed and were ignored</strong> until this was measured, which is the
+worst shape for a safety brake: a play saying <em>if any host fails, stop</em>
+carried on deploying to the rest of the fleet, silently.</p>
+<h2 id="connection-settings-on-a-play">Connection settings on a play<a class="headerlink" href="#connection-settings-on-a-play" title="Permanent link">&para;</a></h2>
+<p><code>connection:</code>, <code>remote_user:</code> and <code>port:</code> apply to every host in the
+play. A <strong>host variable wins over them</strong> — a host declaring
+<code>ansible_connection=ssh</code> keeps ssh even under a play that says <code>local</code>
+— which is the precedence real Ansible applies.</p>
+<p><code>connection: local</code> was ignored too, so a play meant to run on the
+control node was connected to over SSH and every task came back
+<code>UNREACHABLE</code>.</p>
+<p>The same three keywords on a <em>task</em> are still refused by name: a
+per-task connection needs its own connection, the way <code>delegate_to</code>
+already builds one.</p>
 <h3 id="known-gaps">Known gaps<a class="headerlink" href="#known-gaps" title="Permanent link">&para;</a></h3>
 <ul>
 <li>Real ansible-core 2.21 prints a structured <code>[ERROR]</code> block naming the
