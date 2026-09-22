@@ -788,6 +788,39 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#module_defaults" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        module_defaults
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#check_mode-on-a-play-or-a-task" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        check_mode on a play or a task
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#order" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        order
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#loops" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1172,6 +1205,39 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#module_defaults" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        module_defaults
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#check_mode-on-a-play-or-a-task" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        check_mode on a play or a task
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#order" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        order
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#loops" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1386,6 +1452,18 @@ verbosity (it only fires above <code>-v</code>), and this port has no verbosity 
 to gate it on; and handler runs are indistinguishable from ordinary task
 runs here, so there is nothing to raise real Ansible's separate
 <code>v2_playbook_on_handler_task_start</code> from.</p>
+<p>The PLAY RECAP line itself is byte-for-byte real Ansible's, in both
+colour modes, and neither half was obvious. Uncoloured, the host name
+sits in a 26-column field. Coloured, <strong>only the host name is coloured</strong>
+— and each count column separately, but only when that count is <em>not
+zero</em>, which is why a real recap shows a plain <code>unreachable=0</code> beside a
+coloured <code>failed=1</code>. The host's own field is 37 columns of the
+<em>already-coloured</em> string, so its 11 escape characters absorb the
+difference and it lands on the same 26 visible columns. The colours
+(ok green, changed yellow, unreachable <strong>bright</strong> red, failed red,
+skipped cyan, rescued green, ignored bright purple) were captured from
+a real coloured run rather than read off the configuration's colour
+names.</p>
 <p><code>Engine.OnResult</code> remains as the one-hook shorthand for a caller that only
 wants results and no play or recap events.</p>
 <h2 id="measured-against-real-ansible">Measured against real Ansible<a class="headerlink" href="#measured-against-real-ansible" title="Permanent link">&para;</a></h2>
@@ -1744,8 +1822,11 @@ taken for the module, so <code>no_log: true</code> beside <code>debug:</code> us
 with <em>"ambiguous module"</em> — a message that reads like the playbook is
 malformed when it is this port that is incomplete. Now it says which
 keyword, and how to get the same effect where there is a way:
-<code>connection:</code> → set <code>ansible_connection</code> on the host, <code>check_mode:</code> →
-use <code>--check</code>.</p>
+task-level <code>connection:</code> → set it on the play, or <code>ansible_connection</code>
+on the host; <code>throttle:</code> → use <code>serial:</code>.</p>
+<p>The list shrinks as the port catches up: <code>environment:</code>,
+<code>any_errors_fatal:</code>, <code>check_mode:</code>, <code>no_log:</code> and <code>module_defaults:</code>
+were all on it and are now honoured.</p>
 <p>They are refused rather than ignored on purpose. Silently accepting
 <code>connection: local</code> would run the task somewhere other than the
 playbook says.</p>
@@ -1766,6 +1847,49 @@ would apply to the <code>cd</code> alone.</p>
 <p>A YAML <code>true</code> becomes the string <code>True</code>, capitalised, because that is
 what Python's <code>str()</code> produces and what a script testing
 <code>[ "$FLAG" = "True" ]</code> expects.</p>
+<h2 id="module_defaults">module_defaults<a class="headerlink" href="#module_defaults" title="Permanent link">&para;</a></h2>
+<p><code>module_defaults:</code> gives a module its arguments once, for every task in
+scope, at play, block or task level:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">hosts</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">web</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="w">  </span><span class="nt">module_defaults</span><span class="p">:</span>
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="w">    </span><span class="nt">file</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">mode</span><span class="p">:</span><span class="w"> </span><span class="s">"0640"</span><span class="p p-Indicator">}</span>
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="w">  </span><span class="nt">tasks</span><span class="p">:</span>
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">file</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">path</span><span class="p">:</span><span class="w"> </span><span class="nv">/etc/app.conf</span><span class="p p-Indicator">,</span><span class="nt"> state</span><span class="p">:</span><span class="w"> </span><span class="nv">touch</span><span class="p p-Indicator">}</span><span class="w">   </span><span class="c1"># created 0640</span>
+</code></pre></div>
+<p>The defaults sit <strong>under</strong> a task's own arguments, which keep winning.
+Values are templated like any argument, and a fully-qualified key
+matches a task written with the bare name — a play-level
+<code>ansible.builtin.copy</code> default applies to a task that says <code>copy:</code>.</p>
+<p>One semantic is easy to assume backwards, so it was measured rather
+than reasoned about: a nearer level <strong>replaces</strong> an outer level's whole
+entry for a module rather than merging into it key by key. A play-level
+<code>copy: {mode, content}</code> under a task-level <code>copy: {mode}</code> loses the
+content, and the task fails <em>"src (or content) is required"</em> — in real
+Ansible too. This port does the same thing.</p>
+<p>This keyword parsed and did nothing until it was measured against real
+ansible-core: a play asking for <code>mode: "0640"</code> got <code>0600</code>, the module's
+own default. A playbook that sets a permission was quietly getting
+another one.</p>
+<p>A <code>group/...</code> key names an action group, which this port has no concept
+of, and is refused by name rather than dropped.</p>
+<h2 id="check_mode-on-a-play-or-a-task">check_mode on a play or a task<a class="headerlink" href="#check_mode-on-a-play-or-a-task" title="Permanent link">&para;</a></h2>
+<p><code>check_mode: true</code> puts a play or a task into a dry run without
+<code>--check</code>, and <code>check_mode: false</code> takes a task <strong>out</strong> of one — which
+is the more useful direction: it is how a playbook reads the state it
+needs in order to predict the rest.</p>
+<p>Precedence was measured rather than guessed: task over play over the
+<code>--check</code> flag.</p>
+<p>A play saying <code>check_mode: true</code> used to write the file anyway. That is
+the worst shape this class of defect takes — the keyword whose entire
+purpose is to not touch anything was the one being ignored.</p>
+<h2 id="order">order<a class="headerlink" href="#order" title="Permanent link">&para;</a></h2>
+<p><code>order:</code> sets the order hosts run in within a play: <code>inventory</code> (the
+default), <code>reverse_inventory</code>, <code>sorted</code>, <code>reverse_sorted</code> and <code>shuffle</code>.
+It was accepted and ignored.</p>
+<p>The order is only observable when one host runs at a time, so at
+<code>--forks 1</code> this port now runs its hosts inline rather than through a
+goroutine each — with five forks, five hosts interleave in whatever
+order they finish, there as here.</p>
 <h2 id="loops">Loops<a class="headerlink" href="#loops" title="Permanent link">&para;</a></h2>
 <p>A <code>when:</code> on a looping task is evaluated <strong>per item</strong>, with <code>item</code>
 bound. It used to be evaluated once before the loop, where <code>item</code> does
@@ -1860,43 +1984,43 @@ in <code>{{ }}</code>, so one already wrapped became <code>{{ {{ flag }} }}</cod
 conditional that is entirely one expression is unwrapped; <code>{{ a }} and
 {{ b }}</code> is left as written.</p>
 <h2 id="example">Example<a class="headerlink" href="#example" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="kn">package</span><span class="w"> </span><span class="nx">main</span>
-<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>
-<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="kn">import</span><span class="w"> </span><span class="p">(</span>
-<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="w">    </span><span class="s">"context"</span>
-<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="w">    </span><span class="s">"fmt"</span>
-<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a><span class="w">    </span><span class="s">"log"</span>
-<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a>
-<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a><span class="w">    </span><span class="s">"github.com/go-ansible/inventory"</span>
-<a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a><span class="w">    </span><span class="s">"github.com/go-ansible/playbook"</span>
-<a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a><span class="p">)</span>
-<a id="__codelineno-5-11" name="__codelineno-5-11" href="#__codelineno-5-11"></a>
-<a id="__codelineno-5-12" name="__codelineno-5-12" href="#__codelineno-5-12"></a><span class="kd">func</span><span class="w"> </span><span class="nx">main</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-5-13" name="__codelineno-5-13" href="#__codelineno-5-13"></a><span class="w">    </span><span class="nx">inv</span><span class="p">,</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">inventory</span><span class="p">.</span><span class="nx">ParseYAML</span><span class="p">([]</span><span class="kt">byte</span><span class="p">(</span><span class="s">`</span>
-<a id="__codelineno-5-14" name="__codelineno-5-14" href="#__codelineno-5-14"></a><span class="s">all:</span>
-<a id="__codelineno-5-15" name="__codelineno-5-15" href="#__codelineno-5-15"></a><span class="s">  hosts:</span>
-<a id="__codelineno-5-16" name="__codelineno-5-16" href="#__codelineno-5-16"></a><span class="s">    localhost:</span>
-<a id="__codelineno-5-17" name="__codelineno-5-17" href="#__codelineno-5-17"></a><span class="s">      ansible_connection: local</span>
-<a id="__codelineno-5-18" name="__codelineno-5-18" href="#__codelineno-5-18"></a><span class="s">`</span><span class="p">))</span>
-<a id="__codelineno-5-19" name="__codelineno-5-19" href="#__codelineno-5-19"></a><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="kc">nil</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-5-20" name="__codelineno-5-20" href="#__codelineno-5-20"></a><span class="w">        </span><span class="nx">log</span><span class="p">.</span><span class="nx">Fatal</span><span class="p">(</span><span class="nx">err</span><span class="p">)</span>
-<a id="__codelineno-5-21" name="__codelineno-5-21" href="#__codelineno-5-21"></a><span class="w">    </span><span class="p">}</span>
-<a id="__codelineno-5-22" name="__codelineno-5-22" href="#__codelineno-5-22"></a>
-<a id="__codelineno-5-23" name="__codelineno-5-23" href="#__codelineno-5-23"></a><span class="w">    </span><span class="nx">pb</span><span class="p">,</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">playbook</span><span class="p">.</span><span class="nx">ParseFile</span><span class="p">(</span><span class="s">"site.yml"</span><span class="p">)</span>
-<a id="__codelineno-5-24" name="__codelineno-5-24" href="#__codelineno-5-24"></a><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="kc">nil</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-5-25" name="__codelineno-5-25" href="#__codelineno-5-25"></a><span class="w">        </span><span class="nx">log</span><span class="p">.</span><span class="nx">Fatal</span><span class="p">(</span><span class="nx">err</span><span class="p">)</span>
-<a id="__codelineno-5-26" name="__codelineno-5-26" href="#__codelineno-5-26"></a><span class="w">    </span><span class="p">}</span>
-<a id="__codelineno-5-27" name="__codelineno-5-27" href="#__codelineno-5-27"></a>
-<a id="__codelineno-5-28" name="__codelineno-5-28" href="#__codelineno-5-28"></a><span class="w">    </span><span class="nx">e</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">playbook</span><span class="p">.</span><span class="nx">New</span><span class="p">(</span><span class="nx">inv</span><span class="p">)</span>
-<a id="__codelineno-5-29" name="__codelineno-5-29" href="#__codelineno-5-29"></a><span class="w">    </span><span class="nx">rr</span><span class="p">,</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">e</span><span class="p">.</span><span class="nx">RunPlaybook</span><span class="p">(</span><span class="nx">context</span><span class="p">.</span><span class="nx">Background</span><span class="p">(),</span><span class="w"> </span><span class="nx">pb</span><span class="p">)</span>
-<a id="__codelineno-5-30" name="__codelineno-5-30" href="#__codelineno-5-30"></a><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="kc">nil</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-5-31" name="__codelineno-5-31" href="#__codelineno-5-31"></a><span class="w">        </span><span class="nx">log</span><span class="p">.</span><span class="nx">Fatal</span><span class="p">(</span><span class="nx">err</span><span class="p">)</span>
-<a id="__codelineno-5-32" name="__codelineno-5-32" href="#__codelineno-5-32"></a><span class="w">    </span><span class="p">}</span>
-<a id="__codelineno-5-33" name="__codelineno-5-33" href="#__codelineno-5-33"></a><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="nx">rr</span><span class="p">.</span><span class="nx">Failed</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-5-34" name="__codelineno-5-34" href="#__codelineno-5-34"></a><span class="w">        </span><span class="nx">log</span><span class="p">.</span><span class="nx">Fatalf</span><span class="p">(</span><span class="s">"run failed: %+v"</span><span class="p">,</span><span class="w"> </span><span class="nx">rr</span><span class="p">.</span><span class="nx">Summary</span><span class="p">())</span>
-<a id="__codelineno-5-35" name="__codelineno-5-35" href="#__codelineno-5-35"></a><span class="w">    </span><span class="p">}</span>
-<a id="__codelineno-5-36" name="__codelineno-5-36" href="#__codelineno-5-36"></a><span class="w">    </span><span class="nx">fmt</span><span class="p">.</span><span class="nx">Println</span><span class="p">(</span><span class="nx">rr</span><span class="p">.</span><span class="nx">Summary</span><span class="p">())</span>
-<a id="__codelineno-5-37" name="__codelineno-5-37" href="#__codelineno-5-37"></a><span class="p">}</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="kn">package</span><span class="w"> </span><span class="nx">main</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="kn">import</span><span class="w"> </span><span class="p">(</span>
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="w">    </span><span class="s">"context"</span>
+<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a><span class="w">    </span><span class="s">"fmt"</span>
+<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a><span class="w">    </span><span class="s">"log"</span>
+<a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a>
+<a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a><span class="w">    </span><span class="s">"github.com/go-ansible/inventory"</span>
+<a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a><span class="w">    </span><span class="s">"github.com/go-ansible/playbook"</span>
+<a id="__codelineno-6-10" name="__codelineno-6-10" href="#__codelineno-6-10"></a><span class="p">)</span>
+<a id="__codelineno-6-11" name="__codelineno-6-11" href="#__codelineno-6-11"></a>
+<a id="__codelineno-6-12" name="__codelineno-6-12" href="#__codelineno-6-12"></a><span class="kd">func</span><span class="w"> </span><span class="nx">main</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-6-13" name="__codelineno-6-13" href="#__codelineno-6-13"></a><span class="w">    </span><span class="nx">inv</span><span class="p">,</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">inventory</span><span class="p">.</span><span class="nx">ParseYAML</span><span class="p">([]</span><span class="kt">byte</span><span class="p">(</span><span class="s">`</span>
+<a id="__codelineno-6-14" name="__codelineno-6-14" href="#__codelineno-6-14"></a><span class="s">all:</span>
+<a id="__codelineno-6-15" name="__codelineno-6-15" href="#__codelineno-6-15"></a><span class="s">  hosts:</span>
+<a id="__codelineno-6-16" name="__codelineno-6-16" href="#__codelineno-6-16"></a><span class="s">    localhost:</span>
+<a id="__codelineno-6-17" name="__codelineno-6-17" href="#__codelineno-6-17"></a><span class="s">      ansible_connection: local</span>
+<a id="__codelineno-6-18" name="__codelineno-6-18" href="#__codelineno-6-18"></a><span class="s">`</span><span class="p">))</span>
+<a id="__codelineno-6-19" name="__codelineno-6-19" href="#__codelineno-6-19"></a><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="kc">nil</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-6-20" name="__codelineno-6-20" href="#__codelineno-6-20"></a><span class="w">        </span><span class="nx">log</span><span class="p">.</span><span class="nx">Fatal</span><span class="p">(</span><span class="nx">err</span><span class="p">)</span>
+<a id="__codelineno-6-21" name="__codelineno-6-21" href="#__codelineno-6-21"></a><span class="w">    </span><span class="p">}</span>
+<a id="__codelineno-6-22" name="__codelineno-6-22" href="#__codelineno-6-22"></a>
+<a id="__codelineno-6-23" name="__codelineno-6-23" href="#__codelineno-6-23"></a><span class="w">    </span><span class="nx">pb</span><span class="p">,</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">playbook</span><span class="p">.</span><span class="nx">ParseFile</span><span class="p">(</span><span class="s">"site.yml"</span><span class="p">)</span>
+<a id="__codelineno-6-24" name="__codelineno-6-24" href="#__codelineno-6-24"></a><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="kc">nil</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-6-25" name="__codelineno-6-25" href="#__codelineno-6-25"></a><span class="w">        </span><span class="nx">log</span><span class="p">.</span><span class="nx">Fatal</span><span class="p">(</span><span class="nx">err</span><span class="p">)</span>
+<a id="__codelineno-6-26" name="__codelineno-6-26" href="#__codelineno-6-26"></a><span class="w">    </span><span class="p">}</span>
+<a id="__codelineno-6-27" name="__codelineno-6-27" href="#__codelineno-6-27"></a>
+<a id="__codelineno-6-28" name="__codelineno-6-28" href="#__codelineno-6-28"></a><span class="w">    </span><span class="nx">e</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">playbook</span><span class="p">.</span><span class="nx">New</span><span class="p">(</span><span class="nx">inv</span><span class="p">)</span>
+<a id="__codelineno-6-29" name="__codelineno-6-29" href="#__codelineno-6-29"></a><span class="w">    </span><span class="nx">rr</span><span class="p">,</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">e</span><span class="p">.</span><span class="nx">RunPlaybook</span><span class="p">(</span><span class="nx">context</span><span class="p">.</span><span class="nx">Background</span><span class="p">(),</span><span class="w"> </span><span class="nx">pb</span><span class="p">)</span>
+<a id="__codelineno-6-30" name="__codelineno-6-30" href="#__codelineno-6-30"></a><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="kc">nil</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-6-31" name="__codelineno-6-31" href="#__codelineno-6-31"></a><span class="w">        </span><span class="nx">log</span><span class="p">.</span><span class="nx">Fatal</span><span class="p">(</span><span class="nx">err</span><span class="p">)</span>
+<a id="__codelineno-6-32" name="__codelineno-6-32" href="#__codelineno-6-32"></a><span class="w">    </span><span class="p">}</span>
+<a id="__codelineno-6-33" name="__codelineno-6-33" href="#__codelineno-6-33"></a><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="nx">rr</span><span class="p">.</span><span class="nx">Failed</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-6-34" name="__codelineno-6-34" href="#__codelineno-6-34"></a><span class="w">        </span><span class="nx">log</span><span class="p">.</span><span class="nx">Fatalf</span><span class="p">(</span><span class="s">"run failed: %+v"</span><span class="p">,</span><span class="w"> </span><span class="nx">rr</span><span class="p">.</span><span class="nx">Summary</span><span class="p">())</span>
+<a id="__codelineno-6-35" name="__codelineno-6-35" href="#__codelineno-6-35"></a><span class="w">    </span><span class="p">}</span>
+<a id="__codelineno-6-36" name="__codelineno-6-36" href="#__codelineno-6-36"></a><span class="w">    </span><span class="nx">fmt</span><span class="p">.</span><span class="nx">Println</span><span class="p">(</span><span class="nx">rr</span><span class="p">.</span><span class="nx">Summary</span><span class="p">())</span>
+<a id="__codelineno-6-37" name="__codelineno-6-37" href="#__codelineno-6-37"></a><span class="p">}</span>
 </code></pre></div>
 <h2 id="what-is-not-implemented">What is not implemented<a class="headerlink" href="#what-is-not-implemented" title="Permanent link">&para;</a></h2>
 <p><code>include_tasks</code>/<code>import_tasks</code>/<code>include_role</code>/<code>import_role</code> resolve
