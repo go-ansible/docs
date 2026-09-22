@@ -553,6 +553,40 @@ before counting — changed if any changed, skipped only if every one
 was. Each line carries its item, `=> (item=x)`, and a skipped one keeps
 the trailing space real Ansible leaves there.
 
+## Stopping a rolling update
+
+`any_errors_fatal:` stops the whole play the moment any host fails, and
+`max_fail_percentage:` stops it once more than that share of the batch
+has failed. Both are checked after every task, as real Ansible checks
+them, and both stop the **play** rather than the current batch — a
+rolling update that gives up must not roll on.
+
+`max_fail_percentage` compares `failed / batch_size` **strictly
+greater** than the percentage, so one host of five failing (20%)
+continues at `20` and stops at `19`. A task's own `any_errors_fatal:`
+overrides the play's, and `run_once:` implies it: real Ansible treats a
+failing `run_once` task as fatal for everyone, since the one host stood
+in for all of them.
+
+Both **parsed and were ignored** until this was measured, which is the
+worst shape for a safety brake: a play saying *if any host fails, stop*
+carried on deploying to the rest of the fleet, silently.
+
+## Connection settings on a play
+
+`connection:`, `remote_user:` and `port:` apply to every host in the
+play. A **host variable wins over them** — a host declaring
+`ansible_connection=ssh` keeps ssh even under a play that says `local`
+— which is the precedence real Ansible applies.
+
+`connection: local` was ignored too, so a play meant to run on the
+control node was connected to over SSH and every task came back
+`UNREACHABLE`.
+
+The same three keywords on a *task* are still refused by name: a
+per-task connection needs its own connection, the way `delegate_to`
+already builds one.
+
 ### Known gaps
 
 - Real ansible-core 2.21 prints a structured `[ERROR]` block naming the
