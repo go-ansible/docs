@@ -110,6 +110,19 @@ to gate it on; and handler runs are indistinguishable from ordinary task
 runs here, so there is nothing to raise real Ansible's separate
 `v2_playbook_on_handler_task_start` from.
 
+The PLAY RECAP line itself is byte-for-byte real Ansible's, in both
+colour modes, and neither half was obvious. Uncoloured, the host name
+sits in a 26-column field. Coloured, **only the host name is coloured**
+— and each count column separately, but only when that count is *not
+zero*, which is why a real recap shows a plain `unreachable=0` beside a
+coloured `failed=1`. The host's own field is 37 columns of the
+*already-coloured* string, so its 11 escape characters absorb the
+difference and it lands on the same 26 visible columns. The colours
+(ok green, changed yellow, unreachable **bright** red, failed red,
+skipped cyan, rescued green, ignored bright purple) were captured from
+a real coloured run rather than read off the configuration's colour
+names.
+
 `Engine.OnResult` remains as the one-hook shorthand for a caller that only
 wants results and no play or recap events.
 
@@ -503,8 +516,12 @@ taken for the module, so `no_log: true` beside `debug:` used to fail
 with *"ambiguous module"* — a message that reads like the playbook is
 malformed when it is this port that is incomplete. Now it says which
 keyword, and how to get the same effect where there is a way:
-`connection:` → set `ansible_connection` on the host, `check_mode:` →
-use `--check`.
+task-level `connection:` → set it on the play, or `ansible_connection`
+on the host; `throttle:` → use `serial:`.
+
+The list shrinks as the port catches up: `environment:`,
+`any_errors_fatal:`, `check_mode:`, `no_log:` and `module_defaults:`
+were all on it and are now honoured.
 
 They are refused rather than ignored on purpose. Silently accepting
 `connection: local` would run the task somewhere other than the
@@ -531,6 +548,64 @@ would apply to the `cd` alone.
 A YAML `true` becomes the string `True`, capitalised, because that is
 what Python's `str()` produces and what a script testing
 `[ "$FLAG" = "True" ]` expects.
+
+## module_defaults
+
+`module_defaults:` gives a module its arguments once, for every task in
+scope, at play, block or task level:
+
+```yaml
+- hosts: web
+  module_defaults:
+    file: {mode: "0640"}
+  tasks:
+    - file: {path: /etc/app.conf, state: touch}   # created 0640
+```
+
+The defaults sit **under** a task's own arguments, which keep winning.
+Values are templated like any argument, and a fully-qualified key
+matches a task written with the bare name — a play-level
+`ansible.builtin.copy` default applies to a task that says `copy:`.
+
+One semantic is easy to assume backwards, so it was measured rather
+than reasoned about: a nearer level **replaces** an outer level's whole
+entry for a module rather than merging into it key by key. A play-level
+`copy: {mode, content}` under a task-level `copy: {mode}` loses the
+content, and the task fails *"src (or content) is required"* — in real
+Ansible too. This port does the same thing.
+
+This keyword parsed and did nothing until it was measured against real
+ansible-core: a play asking for `mode: "0640"` got `0600`, the module's
+own default. A playbook that sets a permission was quietly getting
+another one.
+
+A `group/...` key names an action group, which this port has no concept
+of, and is refused by name rather than dropped.
+
+## check_mode on a play or a task
+
+`check_mode: true` puts a play or a task into a dry run without
+`--check`, and `check_mode: false` takes a task **out** of one — which
+is the more useful direction: it is how a playbook reads the state it
+needs in order to predict the rest.
+
+Precedence was measured rather than guessed: task over play over the
+`--check` flag.
+
+A play saying `check_mode: true` used to write the file anyway. That is
+the worst shape this class of defect takes — the keyword whose entire
+purpose is to not touch anything was the one being ignored.
+
+## order
+
+`order:` sets the order hosts run in within a play: `inventory` (the
+default), `reverse_inventory`, `sorted`, `reverse_sorted` and `shuffle`.
+It was accepted and ignored.
+
+The order is only observable when one host runs at a time, so at
+`--forks 1` this port now runs its hosts inline rather than through a
+goroutine each — with five forks, five hosts interleave in whatever
+order they finish, there as here.
 
 ## Loops
 
