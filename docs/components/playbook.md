@@ -551,6 +551,78 @@ A YAML `true` becomes the string `True`, capitalised, because that is
 what Python's `str()` produces and what a script testing
 `[ "$FLAG" = "True" ]` expects.
 
+## What a rescue can see
+
+`ansible_failed_task` and `ansible_failed_result` are set the moment a
+block starts **rescuing**, which is how a rescue says what it caught:
+
+```yaml
+rescue:
+  - debug:
+      msg: "{{ ansible_failed_task.name }} failed: {{ ansible_failed_result.msg }}"
+```
+
+Neither existed until this was measured, so the idiom the Ansible
+docs give for a rescue block failed on an undefined variable.
+
+They are *not* set by a failure `ignore_errors` swallowed, nor by one
+with no rescue to catch it. Real stores them as nonpersistent facts,
+so they stay readable in `always:` and after the block ends — not
+scoped to the rescue.
+
+`ansible_failed_task` is real's whole task attribute dump, all 43
+keys. The ones this port models carry its own value; the keywords it
+refuses can only ever be at real's default, so reporting that default
+is accurate rather than invented. An **unset** attribute reports
+`null`, as it does there, not a Go zero — and `register` is not the
+name but real's own map-to-sentinel shape.
+
+## Handlers: names and listen topics
+
+A `notify:` resolves through two separate matches:
+
+- the **first** handler with that name, and only that one — a second
+  handler sharing the name never runs;
+- then **every** handler whose `listen:` carries the name, in
+  definition order, deduplicated by handler name.
+
+Both can fire at once: a handler named `restart` plus two others
+listening to `restart` all run. Handlers run in the order they are
+**defined**, not the order they were notified, and a handler notified
+twice still runs once.
+
+`listen:` used to be a parse error, so a role using the ordinary
+"notify a topic, several handlers answer" pattern would not load.
+
+The duplicate-name rule was measured rather than read: real's own
+source says *"last handler loaded with the same name wins"*, and
+running it shows the **first** one winning — the reversal that comment
+describes is over handler *blocks*, and a play's handlers are one
+block.
+
+## action, local_action and args
+
+Three ways to name a module, or its arguments, somewhere other than
+the module's own key. All three are honoured:
+
+```yaml
+- action: command id -un                 # first word is the module
+- action: {module: copy, content: hi, dest: /tmp/x}
+- local_action: command id -un           # = action + delegate_to: localhost
+- command: echo hello
+  args: {chdir: /tmp}
+```
+
+A string value's **first word** names the module and the rest is
+`_raw_params` — which differs from the module-key form, where the
+whole string is `_raw_params`. `args:` sits **under** the module key's
+own arguments: it supplies what the module key does not set and loses
+to it where both do.
+
+Real emits a `[DEPRECATION WARNING]` for the **mapping** form of
+`action`/`local_action` (removed in 2.23). This port has no
+deprecation-warning mechanism at all, named here rather than faked.
+
 ## become
 
 Privilege escalation resolves the same way `connection:` does, and the
