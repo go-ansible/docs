@@ -623,6 +623,63 @@ already in key order. (Before this, a Go map's randomised iteration
 made `loop: "{{ d | dict2items }}"` print in a different order on
 about one run in eight.)
 
+## How a failure reads
+
+A failure names the module and the argument it could not resolve, as
+real's does:
+
+```
+Task failed: Finalization of task args for 'ansible.builtin.copy' failed:
+Error while resolving value for 'content': 'nope' is undefined
+```
+
+Getting the argument named means rendering a task's arguments one
+top-level key at a time — rendering the whole map in one call can only
+report the innermost error with no idea which key produced it. Keys
+render in sorted order, so the one named is the same on every run.
+
+`ignore_errors` covers **any** of these, not just a module failure. It
+used to cover only the module's own, so a templating or conditional
+failure was counted `failed` even where the playbook said to ignore
+it.
+
+A `changed_when:` or `failed_when:` that will not **evaluate** is a
+task failure, with real's own wording and a `changed_when_result` key.
+Both errors used to be discarded, so a broken expression left the task
+reporting whatever the module said — green, on a condition that never
+ran.
+
+`assert`'s `that:` holds **conditions**, not values, and is evaluated
+with the same rules as `when:`. So `that: "{{ x }}"` is the
+bare-template form and works, while `that: "{{ n }} == 2"` is a syntax
+error — the delimiters sit inside a larger expression. It used to be
+rendered as an ordinary argument, which turned an undefined name into
+an args-finalization failure.
+
+### Loops
+
+A failing **iteration** reads differently from a failing task:
+
+```
+failed: [h1] (item=a) => {...}     an item
+fatal: [h1]: FAILED! => {...}      a task
+```
+
+Lowercase, no `FAILED!` marker, and the label before the arrow rather
+than after it. `...ignoring` comes once after the last item, not after
+each failing one. A loop whose **arguments** would not finalize closes
+with real's `One or more items failed` summary and counts the task
+once; a loop whose items merely failed in the module does not — both
+measured.
+
+### What is not reproduced
+
+Real prints a structured block before each failure line, giving every
+cause in the chain a source position and a three-line excerpt of the
+playbook. Reproducing it needs per-node source positions, which this
+port's parser does not record. The final message is the same; the
+block above it is absent.
+
 ## What a rescue can see
 
 `ansible_failed_task` and `ansible_failed_result` are set the moment a
@@ -750,9 +807,11 @@ in both YAML versions, and that is how a playbook asks for the word.
 A `!vault` value is resolved *before* it is decrypted, so a secret
 whose plaintext is `no` stays the string `no`.
 
-One YAML 1.1 rule is **not** implemented, named here rather than left
-to be discovered: sexagesimal integers. `1:30` is `90` in real
-Ansible and the string `"1:30"` here.
+Base-60 scalars are read too: `1:30` is the number `90` and
+`1:30:30` is `5430`, as they are there. The int and float resolvers
+differ in their first group — an int may not start with `0`, so
+`0:59` stays a string, while a float may, so `0:30.5` is `30.5` — and
+no group may exceed 59, which leaves `1:60` a string.
 
 ## Variables on a block and on an include
 
