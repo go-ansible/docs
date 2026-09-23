@@ -788,6 +788,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#become" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        become
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#yes-and-no-are-booleans" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1242,6 +1253,17 @@
     <span class="md-ellipsis">
       
         environment
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#become" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        become
       
     </span>
   </a>
@@ -1937,6 +1959,28 @@ would apply to the <code>cd</code> alone.</p>
 <p>A YAML <code>true</code> becomes the string <code>True</code>, capitalised, because that is
 what Python's <code>str()</code> produces and what a script testing
 <code>[ "$FLAG" = "True" ]</code> expects.</p>
+<h2 id="become">become<a class="headerlink" href="#become" title="Permanent link">&para;</a></h2>
+<p>Privilege escalation resolves the same way <code>connection:</code> does, and the
+middle term is the one worth stating plainly:</p>
+<blockquote>
+<p><strong>host var &gt; task keyword &gt; play keyword</strong></p>
+</blockquote>
+<p>So <code>ansible_become: false</code> on a host beats <code>become: true</code> on a task —
+the host wins, and nothing escalates. Both directions of that were
+wrong here until it was measured: a host that said <em>not</em> to escalate
+was escalated on anyway, and a host that asked for escalation was
+ignored, so the task ran unprivileged and silently did something
+other than what was asked. <code>ansible_become_user</code> and
+<code>ansible_become_method</code> rank the same way.</p>
+<p><code>become_user:</code> is templated, so <code>become_user: "{{ deploy_user }}"</code>
+works; it used to reach <code>sudo</code> as the literal braces.</p>
+<p>One difference is disclosed rather than hidden. Real Ansible becomes
+an unprivileged user by copying its temp files to the target and
+<code>chmod</code>-ing them, so a failed escalation there reports <em>"Failed to set
+permissions on the temporary files…"</em>; this port invokes the become
+program directly and reports what it said. The <strong>user resolved</strong> is
+identical — that is what the measurement checks — but the wording of a
+failure is not.</p>
 <h2 id="yes-and-no-are-booleans">yes and no are booleans<a class="headerlink" href="#yes-and-no-are-booleans" title="Permanent link">&para;</a></h2>
 <p>Real Ansible parses with PyYAML, a <strong>YAML 1.1</strong> implementation.
 <code>gopkg.in/yaml.v3</code>, which this port uses, implements YAML 1.2. The two
