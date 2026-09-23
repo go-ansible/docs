@@ -551,6 +551,78 @@ A YAML `true` becomes the string `True`, capitalised, because that is
 what Python's `str()` produces and what a script testing
 `[ "$FLAG" = "True" ]` expects.
 
+## An undefined variable is an error
+
+Real Ansible fails on an undefined variable — in a module argument, in
+a string with one interpolated into it, in a `when:`. This port
+rendered it as null, so a **misspelled variable name silently did the
+wrong thing**:
+
+```yaml
+debug:   {msg: "{{ pakcage_name }}"}   # printed null, reported ok
+command: "echo {{ pakcage_name }}"     # ran `echo `, reported changed
+```
+
+Both now stop the play, as they do there. `default()` still guards,
+which is what a real playbook uses:
+
+```yaml
+msg: "{{ maybe_missing | default('fallback') }}"
+```
+
+The innermost message matches real's wording — `'x' is undefined` —
+but not its whole chain: real names the module and the argument
+(*"Finalization of task args for 'ansible.builtin.debug' failed:
+Error while resolving value for 'msg'"*), which this port does not
+reproduce.
+
+## with_* loops
+
+`with_<name>` is the `<name>` **lookup plugin**, which is exactly how
+real implements it: `with_dict` *is* the `dict` lookup, run with
+`wantlist` forced on.
+
+Supported through their plugins: `with_items`, `with_list`,
+`with_flattened`, `with_dict`, `with_nested`, `with_together`,
+`with_indexed_items`, `with_sequence`, `with_subelements`, plus
+`with_env`, `with_file` and `with_pipe`. A `with_` key is recognised
+by asking the plugin set whether such a lookup exists, so a module
+whose name merely starts with `with_` is still a module — and a new
+lookup gets its `with_` form for nothing.
+
+The value supplies the lookup's **terms**: a list spreads into several
+(`with_nested: [[1,2],[a,b]]` is two terms), anything else is one
+(`with_dict: "{{ d }}"`).
+
+Three of these read the opposite of how they sound, so they were
+measured rather than assumed: `list` does **not** flatten while
+`items` flattens one level; `together` pads short lists with `null`
+(`zip_longest`, not `zip`); and `sequence` yields **strings**.
+
+### Loop labels
+
+Each iteration prints `(item=...)` using Python's `str()` — a dict
+shows as `{'k': 'v'}`, `None` rather than `<nil>`. `loop_control.label`
+replaces what is shown, which is the point of it:
+
+```yaml
+loop_control:
+  label: "user {{ item.name }}"    # not the whole record
+```
+
+The label changes only the printing: `register:` and the result dict
+still carry the real item.
+
+### One disclosed divergence
+
+`dict2items`, the `dict` lookup and a printed dict all iterate in
+**key order**, where real preserves the mapping's document order. This
+port decodes YAML mappings into Go maps, which have no order at all —
+sorting is deterministic and matches real whenever the document was
+already in key order. (Before this, a Go map's randomised iteration
+made `loop: "{{ d | dict2items }}"` print in a different order on
+about one run in eight.)
+
 ## What a rescue can see
 
 `ansible_failed_task` and `ansible_failed_result` are set the moment a
