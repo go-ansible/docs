@@ -121,7 +121,9 @@ difference and it lands on the same 26 visible columns. The colours
 (ok green, changed yellow, unreachable **bright** red, failed red,
 skipped cyan, rescued green, ignored bright purple) were captured from
 a real coloured run rather than read off the configuration's colour
-names.
+names. The same distinction runs through the result lines: an
+`UNREACHABLE!` fatal is bright red where an ordinary `FAILED!` one is
+plain red.
 
 `Engine.OnResult` remains as the one-hook shorthand for a caller that only
 wants results and no play or recap events.
@@ -520,8 +522,8 @@ task-level `connection:` → set it on the play, or `ansible_connection`
 on the host; `throttle:` → use `serial:`.
 
 The list shrinks as the port catches up: `environment:`,
-`any_errors_fatal:`, `check_mode:`, `no_log:` and `module_defaults:`
-were all on it and are now honoured.
+`any_errors_fatal:`, `check_mode:`, `no_log:`, `module_defaults:` and
+`ignore_unreachable:` were all on it and are now honoured.
 
 They are refused rather than ignored on purpose. Silently accepting
 `connection: local` would run the task somewhere other than the
@@ -548,6 +550,55 @@ would apply to the `cd` alone.
 A YAML `true` becomes the string `True`, capitalised, because that is
 what Python's `str()` produces and what a script testing
 `[ "$FLAG" = "True" ]` expects.
+
+## Unreachable hosts, and connecting per task
+
+Real Ansible establishes a connection when a task needs one, not once
+before the play. Five things follow from that, and this port now does
+the same:
+
+`ignore_unreachable:` keeps a host in the play when it cannot be
+reached — the result still prints `UNREACHABLE!`, the recap counts it
+ok+ignored rather than unreachable, and the run can still exit 0. It is
+decided **per task**, at play or task level, which is what makes an
+ignored-unreachable `ping` followed by an ordinary `command` report
+UNREACHABLE *twice* and drop the host only on the second:
+
+```
+TASK [dead]        fatal: [hx]: UNREACHABLE! => {...}
+                   ...ignoring                       ← ignore_unreachable
+TASK [some debug]  ok: [hx]                          ← needs no connection
+TASK [needs one]   fatal: [hx]: UNREACHABLE! => {...}← host dropped here
+```
+
+The tasks that run anyway are the ones real Ansible never opens a
+connection for: `add_host`, `assert`, `debug`, `fail`, `group_by`,
+`include_vars`, `meta`, `pause`, `set_fact`, `set_stats`,
+`validate_argument_spec`. That list is the reference's own — its action
+plugins that call neither `_execute_module` nor
+`_low_level_execute_command` — and each was then run against an
+unreachable host to confirm it.
+
+A connect failure surfaces under the first task that needs a
+connection, rather than under a step of its own. That is usually
+**`Gathering Facts`**, real's banner for the implicit gather step,
+which this port called `(gather_facts)` — a divergence on the second
+line of every transcript of a play that gathers facts, i.e. the
+default.
+
+`ansible-playbook` exits **4** when a host was unreachable and **2**
+when one merely failed, and unreachable **wins** rather than
+combining: one failed host plus one unreachable host exits 4, not 6.
+This port returned 2 for both, so a caller telling them apart — a retry
+loop, a deployment gate — could not.
+
+## meta
+
+`meta:` is not a module. Real Ansible's strategy executes it directly:
+it prints a TASK header with **nothing underneath**, and counts toward
+nothing in the recap. `meta: flush_handlers` banners *before* its
+handlers run. `noop`, `flush_handlers` and `clear_facts` are supported;
+any other action is refused by name.
 
 ## module_defaults
 
