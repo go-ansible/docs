@@ -551,6 +551,61 @@ A YAML `true` becomes the string `True`, capitalised, because that is
 what Python's `str()` produces and what a script testing
 `[ "$FLAG" = "True" ]` expects.
 
+## yes and no are booleans
+
+Real Ansible parses with PyYAML, a **YAML 1.1** implementation.
+`gopkg.in/yaml.v3`, which this port uses, implements YAML 1.2. The two
+disagree about a set of words that appear constantly in real
+playbooks:
+
+| written | PyYAML (real) | YAML 1.2 |
+| --- | --- | --- |
+| `yes` `Yes` `YES` `on` `On` `ON` | `True` | the string |
+| `no` `No` `NO` `off` `Off` `OFF` | `False` | the string |
+| `true` `True` `TRUE` / `false` … | boolean | boolean |
+| `y` `n` | the string | the string |
+
+So `vars: {flag: yes}` with `when: flag` *failed* here — *"Conditional
+result was derived from value of type str"* — on a playbook real
+Ansible runs without complaint, and `force: yes` reached a module as a
+string. Those words are now read as booleans.
+
+The set is PyYAML's own implicit resolver, read out of
+`yaml.resolver.Resolver` at run time rather than copied from the
+spec — which is how bare `y`/`n` got their row above: the YAML 1.1
+spec lists them, PyYAML does not resolve them.
+
+Only **plain** scalars are converted. `"yes"` and `'yes'` stay strings
+in both YAML versions, and that is how a playbook asks for the word.
+A `!vault` value is resolved *before* it is decrypted, so a secret
+whose plaintext is `no` stays the string `no`.
+
+One YAML 1.1 rule is **not** implemented, named here rather than left
+to be discovered: sexagesimal integers. `1:30` is `90` in real
+Ansible and the string `"1:30"` here.
+
+## Variables on a block and on an include
+
+`vars:` on a `block:` reaches every task inside it and goes out of
+scope with it, sitting between the play's variables and the task's
+own. The same applies to an `include_tasks`/`import_tasks`, which is
+how an included file is parameterised:
+
+```yaml
+- name: set it up
+  include_tasks: setup.yml
+  vars:
+    port: 8080
+```
+
+Both were accepted and **dropped** until this was measured — the
+variable arrived undefined, silently.
+
+A **dynamic** include also announces itself, as it does there: a TASK
+banner and an `included: <absolute path> for <host>` line, counted as
+ok in the recap. A static import announces nothing. `include_tasks:`
+takes either a bare path or the mapping form `{file: path}`.
+
 ## Unreachable hosts, and connecting per task
 
 Real Ansible establishes a connection when a task needs one, not once
