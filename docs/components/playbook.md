@@ -551,6 +551,32 @@ A YAML `true` becomes the string `True`, capitalised, because that is
 what Python's `str()` produces and what a script testing
 `[ "$FLAG" = "True" ]` expects.
 
+## become
+
+Privilege escalation resolves the same way `connection:` does, and the
+middle term is the one worth stating plainly:
+
+> **host var > task keyword > play keyword**
+
+So `ansible_become: false` on a host beats `become: true` on a task —
+the host wins, and nothing escalates. Both directions of that were
+wrong here until it was measured: a host that said *not* to escalate
+was escalated on anyway, and a host that asked for escalation was
+ignored, so the task ran unprivileged and silently did something
+other than what was asked. `ansible_become_user` and
+`ansible_become_method` rank the same way.
+
+`become_user:` is templated, so `become_user: "{{ deploy_user }}"`
+works; it used to reach `sudo` as the literal braces.
+
+One difference is disclosed rather than hidden. Real Ansible becomes
+an unprivileged user by copying its temp files to the target and
+`chmod`-ing them, so a failed escalation there reports *"Failed to set
+permissions on the temporary files…"*; this port invokes the become
+program directly and reports what it said. The **user resolved** is
+identical — that is what the measurement checks — but the wording of a
+failure is not.
+
 ## yes and no are booleans
 
 Real Ansible parses with PyYAML, a **YAML 1.1** implementation.
