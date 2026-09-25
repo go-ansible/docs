@@ -14,7 +14,7 @@ underneath, no subprocess boundary at all.
 | `ansible-playbook` | Runs a playbook via [`playbook.Engine`](playbook.md); `-f`/`--forks` sets the concurrency cap, and `vars_prompt:` prompts at a real terminal (masked input for `private` vars, falling back to defaults when not a TTY); `--check`/`-C` predicts changes without making them and `--diff`/`-D` shows them as unified diffs |
 | `ansible-inventory` | Dumps the parsed inventory: `--list` (JSON), `--host` (one host's merged vars), `--graph` (tree), with `--export`, `--vars`, `--limit` and `--output` — see [below](#ansible-inventory) |
 | `ansible-vault` | Encrypt/decrypt/view/edit/rekey — wraps [`vault`](vault.md) |
-| `ansible-galaxy` | Installs a role from a git URL via [`go-git`](https://github.com/go-git/go-git) — **no galaxy.ansible.com HTTP API**, out of scope |
+| `ansible-galaxy` | `install` a role from a git URL via [`go-git`](https://github.com/go-git/go-git), plus `list` and `remove` of installed roles — **no galaxy.ansible.com HTTP API**, out of scope |
 | `ansible-pull` | Clones/pulls a git repo and runs a playbook from it against the local machine (pull-mode counterpart to `ansible-playbook`) |
 | `ansible-doc` | Prints each module's own Go doc comment via a build-time codegen tool — real content, not real Ansible's structured `DOCUMENTATION` YAML |
 | `ansible-config` | `list`/`dump`/`view` — reads real `ANSIBLE_*` environment variables and, for the settings this port supports, an actual `ansible.cfg` `[defaults]` section (host var > env var > `ansible.cfg` > compiled default; `$ANSIBLE_CONFIG` > `./ansible.cfg` > `~/.ansible.cfg` > `/etc/ansible/ansible.cfg`, first found wins outright) |
@@ -139,6 +139,25 @@ One difference from real: `--host localhost` omits `ansible_python_interpreter`,
 which real reports for the implicit localhost. It is a path to a Python this
 port never runs, so stating one would be a claim about the target that is not
 true here.
+
+## ansible-galaxy list and remove
+
+Neither needs the Galaxy API — they read and delete directories — so both are
+implemented, and match real across the eight invocations they were measured
+on. Three rules are worth knowing because they are not what you would guess:
+
+- a directory is a role only when it holds `meta/main.yml`; a plain directory
+  is skipped, and so is one carrying only a `meta/.galaxy_install_info`;
+- the version shown comes from `meta/.galaxy_install_info`, which the
+  installer writes — a role declaring `galaxy_info.version` in `meta/main.yml`
+  still lists as `(unknown version)`;
+- `--roles-path` does **not** replace the default search path
+  (`~/.ansible/roles`, `/usr/share/ansible/roles`, `/etc/ansible/roles`), it
+  goes in front of it, which is why `list -p somewhere` still warns about the
+  defaults that do not exist.
+
+Roles are listed in the order the filesystem returns them, not sorted, because
+that is what real does.
 
 ## What is not implemented
 
