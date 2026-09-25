@@ -683,6 +683,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#ansible-galaxy-list-and-remove" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ansible-galaxy list and remove
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#what-is-not-implemented" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -834,6 +845,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#ansible-galaxy-list-and-remove" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ansible-galaxy list and remove
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#what-is-not-implemented" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -894,7 +916,7 @@ underneath, no subprocess boundary at all.</p>
 </tr>
 <tr>
 <td><code>ansible-galaxy</code></td>
-<td>Installs a role from a git URL via <a href="https://github.com/go-git/go-git"><code>go-git</code></a> — <strong>no galaxy.ansible.com HTTP API</strong>, out of scope</td>
+<td><code>install</code> a role from a git URL via <a href="https://github.com/go-git/go-git"><code>go-git</code></a>, plus <code>list</code> and <code>remove</code> of installed roles — <strong>no galaxy.ansible.com HTTP API</strong>, out of scope</td>
 </tr>
 <tr>
 <td><code>ansible-pull</code></td>
@@ -1033,6 +1055,23 @@ than silently receiving JSON.</p>
 which real reports for the implicit localhost. It is a path to a Python this
 port never runs, so stating one would be a claim about the target that is not
 true here.</p>
+<h2 id="ansible-galaxy-list-and-remove">ansible-galaxy list and remove<a class="headerlink" href="#ansible-galaxy-list-and-remove" title="Permanent link">&para;</a></h2>
+<p>Neither needs the Galaxy API — they read and delete directories — so both are
+implemented, and match real across the eight invocations they were measured
+on. Three rules are worth knowing because they are not what you would guess:</p>
+<ul>
+<li>a directory is a role only when it holds <code>meta/main.yml</code>; a plain directory
+  is skipped, and so is one carrying only a <code>meta/.galaxy_install_info</code>;</li>
+<li>the version shown comes from <code>meta/.galaxy_install_info</code>, which the
+  installer writes — a role declaring <code>galaxy_info.version</code> in <code>meta/main.yml</code>
+  still lists as <code>(unknown version)</code>;</li>
+<li><code>--roles-path</code> does <strong>not</strong> replace the default search path
+  (<code>~/.ansible/roles</code>, <code>/usr/share/ansible/roles</code>, <code>/etc/ansible/roles</code>), it
+  goes in front of it, which is why <code>list -p somewhere</code> still warns about the
+  defaults that do not exist.</li>
+</ul>
+<p>Roles are listed in the order the filesystem returns them, not sorted, because
+that is what real does.</p>
 <h2 id="what-is-not-implemented">What is not implemented<a class="headerlink" href="#what-is-not-implemented" title="Permanent link">&para;</a></h2>
 <p><code>ansible-galaxy</code> here only clones a role from a git URL — no
 galaxy.ansible.com API client, no collection installs (a standalone <code>galaxy</code>
