@@ -515,6 +515,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#ordering" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Ordering
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#host-pattern-matching" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -845,6 +856,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#ordering" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Ordering
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#host-pattern-matching" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -944,6 +966,20 @@ inventory, matching real Ansible.</p>
 ordered <code>all</code> first and the most specific group last — the order Ansible
 merges group vars in, so that a child group's value for a key overrides its
 parent's.</p>
+<h2 id="ordering">Ordering<a class="headerlink" href="#ordering" title="Permanent link">&para;</a></h2>
+<p>A Go map has no order, so the inventory keeps the orders that are observable
+in real's output separately: the order hosts were first seen (<code>HostIndex</code>,
+which is what <code>order: inventory</code> means and what <code>Match</code> sorts by), the order
+groups were created, and the order each group gained its children
+(<code>Group.ChildNames</code>).</p>
+<p>They are not cosmetic. <code>ansible-inventory --list</code> reports a group's children
+in <strong>document order</strong> — <code>"prod": {"children": ["web", "db"]}</code> for a
+<code>[prod:children]</code> section written web-then-db — and <code>"all"</code> lists <code>ungrouped</code>
+first because it exists from the start. <code>ChildNames</code> returns a copy, so a
+caller sorting the result cannot reorder the inventory itself.</p>
+<p><code>all</code> is a parent of <code>ungrouped</code> from the moment <code>New</code> returns, not only once
+an inventory has been parsed: an inventory that parsed nothing still has that
+pair in real.</p>
 <h2 id="host-pattern-matching">Host-pattern matching<a class="headerlink" href="#host-pattern-matching" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">inv</span><span class="w"> </span><span class="o">*</span><span class="nx">Inventory</span><span class="p">)</span><span class="w"> </span><span class="nx">Match</span><span class="p">(</span><span class="nx">pattern</span><span class="w"> </span><span class="kt">string</span><span class="p">)</span><span class="w"> </span><span class="p">([]</span><span class="o">*</span><span class="nx">Host</span><span class="p">,</span><span class="w"> </span><span class="kt">error</span><span class="p">)</span>
 </code></pre></div>

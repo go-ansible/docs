@@ -672,6 +672,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#ansible-inventory" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ansible-inventory
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#what-is-not-implemented" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -812,6 +823,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#ansible-inventory" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ansible-inventory
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#what-is-not-implemented" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -863,6 +885,10 @@ underneath, no subprocess boundary at all.</p>
 <td>Runs a playbook via <a href="../playbook/"><code>playbook.Engine</code></a>; <code>-f</code>/<code>--forks</code> sets the concurrency cap, and <code>vars_prompt:</code> prompts at a real terminal (masked input for <code>private</code> vars, falling back to defaults when not a TTY); <code>--check</code>/<code>-C</code> predicts changes without making them and <code>--diff</code>/<code>-D</code> shows them as unified diffs</td>
 </tr>
 <tr>
+<td><code>ansible-inventory</code></td>
+<td>Dumps the parsed inventory: <code>--list</code> (JSON), <code>--host</code> (one host's merged vars), <code>--graph</code> (tree), with <code>--export</code>, <code>--vars</code>, <code>--limit</code> and <code>--output</code> — see <a href="#ansible-inventory">below</a></td>
+</tr>
+<tr>
 <td><code>ansible-vault</code></td>
 <td>Encrypt/decrypt/view/edit/rekey — wraps <a href="../vault/"><code>vault</code></a></td>
 </tr>
@@ -902,7 +928,7 @@ real <code>ansible</code>.</p>
 <h2 id="container-image">Container image<a class="headerlink" href="#container-image" title="Permanent link">&para;</a></h2>
 <p><code>cli</code> also publishes a multi-arch <code>FROM scratch</code> OCI image,
 <a href="https://github.com/go-ansible/cli/pkgs/container/cli"><code>ghcr.io/go-ansible/cli</code></a>,
-bundling all 8 binaries, on every version tag — all six 64-bit architectures
+bundling every binary, on every version tag — all six 64-bit architectures
 (amd64/arm64/riscv64/loong64/ppc64le/s390x). The build stage cross-compiles
 from the runner's own native architecture instead of running under QEMU for
 every target, which is what makes loong64 possible at all: the official
@@ -976,6 +1002,37 @@ directory that must hold a source, not the source that must hold hosts.</p>
 one-line cause where real prints a nine-line block naming the plugin it tried,
 a source position and an excerpt, which needs per-node positions this port's
 parsers do not record.</p>
+<h2 id="ansible-inventory">ansible-inventory<a class="headerlink" href="#ansible-inventory" title="Permanent link">&para;</a></h2>
+<p><code>--list</code>, <code>--host</code> and <code>--graph</code>, with <code>--export</code>, <code>--vars</code>, <code>--limit</code> and
+<code>--output</code>. The output shapes follow real's, which are more particular than
+they look:</p>
+<ul>
+<li>a group is emitted only if it has <strong>hosts, children, or (with <code>--export</code>)
+  vars</strong> — which is why an empty <code>ungrouped</code> never appears although it always
+  exists;</li>
+<li>a host with <strong>no variables at all</strong> is left out of <code>_meta.hostvars</code> rather
+  than carried as an empty object;</li>
+<li>without <code>--export</code>, a host carries its <strong>merged</strong> vars and groups show none;
+  with it, a host carries only its <strong>own</strong> and groups keep theirs;</li>
+<li><code>--limit</code> filters hosts but <strong>not structure</strong>: a child stays listed even when
+  the limit emptied it, while the emptied group loses its own entry;</li>
+<li><code>--graph</code> prints children first, then hosts, then vars;</li>
+<li><strong>no action at all exits 5</strong>, not 1 or 2;</li>
+<li>orders are <strong>document order, not alphabetical</strong> — <code>"all": {"children":
+  ["ungrouped", "prod"]}</code>, <code>"prod": {"children": ["web", "db"]}</code> for a
+  <code>[prod:children]</code> section written web-then-db.</li>
+</ul>
+<p>Unlike <code>ansible-playbook</code>, it prints <strong>two</strong> warnings for an unusable
+inventory rather than three: the "provided hosts list is empty" one comes from
+real's own <code>get_host_list</code>, which this binary never calls because it resolves
+no host list of its own.</p>
+<p><code>--yaml</code> and <code>--toml</code> are real output formats that are <strong>not implemented</strong>.
+They are refused explicitly, so a command line asking for one fails rather
+than silently receiving JSON.</p>
+<p>One difference from real: <code>--host localhost</code> omits <code>ansible_python_interpreter</code>,
+which real reports for the implicit localhost. It is a path to a Python this
+port never runs, so stating one would be a claim about the target that is not
+true here.</p>
 <h2 id="what-is-not-implemented">What is not implemented<a class="headerlink" href="#what-is-not-implemented" title="Permanent link">&para;</a></h2>
 <p><code>ansible-galaxy</code> here only clones a role from a git URL — no
 galaxy.ansible.com API client, no collection installs (a standalone <code>galaxy</code>
