@@ -35,6 +35,7 @@ type Engine struct {
 	SkipTags  []string
 	OnResult  func(Result)
 	Callbacks []Callback
+	Warn      Warner
 }
 
 // Callback is a reporting plugin — see "Callback plugins" below.
@@ -1077,6 +1078,33 @@ all:
 	fmt.Println(rr.Summary())
 }
 ```
+
+## Warnings
+
+```go
+type Warner func(msg string)
+func NewWarner(w io.Writer) Warner
+```
+
+`Engine.Warn` reports non-fatal diagnostics about a run's **inputs** — today,
+a host pattern that matched nothing. It is deliberately separate from
+[`Callback`](#callback-plugins): a callback reports the *progress* of a run and
+writes to the run's own output stream, while real Ansible writes warnings to
+**stderr**, so that a caller piping playbook output somewhere still sees
+them. Real makes the same split, between its callback plugins and the one
+`Display` they share.
+
+`NewWarner` writes `[WARNING]: <msg>` and says each distinct message **once**,
+which is real's behaviour rather than a convenience: `display.warning` keeps
+the set of warnings already issued, so three plays matching an empty
+inventory produce one line, not three. It is also what makes `--limit`
+correct here — the limit is evaluated once per play where real evaluates it
+once for the run, and the duplicate lines are suppressed instead of printed.
+
+`New` installs a stderr Warner. A caller that already has one — `cli` builds
+the Warner it uses for its own inventory warnings — should assign that one, so
+the whole process shares a single deduplication set. A nil `Warn` is silent
+rather than a panic.
 
 ## What is not implemented
 

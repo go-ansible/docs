@@ -83,6 +83,21 @@ e.g. `webservers:!web3:&datacenter1` reads as "every host in `webservers`
 that is also in `datacenter1`, except `web3`." Results are sorted by name for
 deterministic output.
 
+`MatchReport` returns the same hosts and, additionally, each **term** of the
+pattern that matched nothing:
+
+```go
+func (inv *Inventory) MatchReport(pattern string) ([]*Host, []string, error)
+```
+
+Real Ansible warns once per such term — `Could not match supplied host
+pattern, ignoring: zzz` — which is what tells a mistyped pattern apart from
+one that legitimately selects nothing. A term is reported when it produced no
+hosts **and** matched no group **and** is not `all`; the group half matters,
+because a term naming an *empty group* matches nothing yet is not a typo, and
+real says nothing for it. Terms come back without their `!`/`&` operator and
+in real's evaluation order, so `all:!zzz` reports `zzz`.
+
 ## What this does not do
 
 `inventory` only builds and queries the graph — it does not itself decide
