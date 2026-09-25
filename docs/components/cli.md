@@ -12,6 +12,7 @@ underneath, no subprocess boundary at all.
 |---|---|
 | `ansible` | Ad-hoc module execution against a pattern (`ansible all -m ping`) |
 | `ansible-playbook` | Runs a playbook via [`playbook.Engine`](playbook.md); `-f`/`--forks` sets the concurrency cap, and `vars_prompt:` prompts at a real terminal (masked input for `private` vars, falling back to defaults when not a TTY); `--check`/`-C` predicts changes without making them and `--diff`/`-D` shows them as unified diffs |
+| `ansible-inventory` | Dumps the parsed inventory: `--list` (JSON), `--host` (one host's merged vars), `--graph` (tree), with `--export`, `--vars`, `--limit` and `--output` — see [below](#ansible-inventory) |
 | `ansible-vault` | Encrypt/decrypt/view/edit/rekey — wraps [`vault`](vault.md) |
 | `ansible-galaxy` | Installs a role from a git URL via [`go-git`](https://github.com/go-git/go-git) — **no galaxy.ansible.com HTTP API**, out of scope |
 | `ansible-pull` | Clones/pulls a git repo and runs a playbook from it against the local machine (pull-mode counterpart to `ansible-playbook`) |
@@ -39,7 +40,7 @@ real `ansible`.
 
 `cli` also publishes a multi-arch `FROM scratch` OCI image,
 [`ghcr.io/go-ansible/cli`](https://github.com/go-ansible/cli/pkgs/container/cli),
-bundling all 8 binaries, on every version tag — all six 64-bit architectures
+bundling every binary, on every version tag — all six 64-bit architectures
 (amd64/arm64/riscv64/loong64/ppc64le/s390x). The build stage cross-compiles
 from the runner's own native architecture instead of running under QEMU for
 every target, which is what makes loong64 possible at all: the official
@@ -103,6 +104,41 @@ One difference from real remains here. A source that fails to parse gets a
 one-line cause where real prints a nine-line block naming the plugin it tried,
 a source position and an excerpt, which needs per-node positions this port's
 parsers do not record.
+
+## ansible-inventory
+
+`--list`, `--host` and `--graph`, with `--export`, `--vars`, `--limit` and
+`--output`. The output shapes follow real's, which are more particular than
+they look:
+
+- a group is emitted only if it has **hosts, children, or (with `--export`)
+  vars** — which is why an empty `ungrouped` never appears although it always
+  exists;
+- a host with **no variables at all** is left out of `_meta.hostvars` rather
+  than carried as an empty object;
+- without `--export`, a host carries its **merged** vars and groups show none;
+  with it, a host carries only its **own** and groups keep theirs;
+- `--limit` filters hosts but **not structure**: a child stays listed even when
+  the limit emptied it, while the emptied group loses its own entry;
+- `--graph` prints children first, then hosts, then vars;
+- **no action at all exits 5**, not 1 or 2;
+- orders are **document order, not alphabetical** — `"all": {"children":
+  ["ungrouped", "prod"]}`, `"prod": {"children": ["web", "db"]}` for a
+  `[prod:children]` section written web-then-db.
+
+Unlike `ansible-playbook`, it prints **two** warnings for an unusable
+inventory rather than three: the "provided hosts list is empty" one comes from
+real's own `get_host_list`, which this binary never calls because it resolves
+no host list of its own.
+
+`--yaml` and `--toml` are real output formats that are **not implemented**.
+They are refused explicitly, so a command line asking for one fails rather
+than silently receiving JSON.
+
+One difference from real: `--host localhost` omits `ansible_python_interpreter`,
+which real reports for the implicit localhost. It is a path to a Python this
+port never runs, so stating one would be a claim about the target that is not
+true here.
 
 ## What is not implemented
 
