@@ -77,6 +77,24 @@ ordered `all` first and the most specific group last — the order Ansible
 merges group vars in, so that a child group's value for a key overrides its
 parent's.
 
+## Ordering
+
+A Go map has no order, so the inventory keeps the orders that are observable
+in real's output separately: the order hosts were first seen (`HostIndex`,
+which is what `order: inventory` means and what `Match` sorts by), the order
+groups were created, and the order each group gained its children
+(`Group.ChildNames`).
+
+They are not cosmetic. `ansible-inventory --list` reports a group's children
+in **document order** — `"prod": {"children": ["web", "db"]}` for a
+`[prod:children]` section written web-then-db — and `"all"` lists `ungrouped`
+first because it exists from the start. `ChildNames` returns a copy, so a
+caller sorting the result cannot reorder the inventory itself.
+
+`all` is a parent of `ungrouped` from the moment `New` returns, not only once
+an inventory has been parsed: an inventory that parsed nothing still has that
+pair in real.
+
 ## Host-pattern matching
 
 ```go
