@@ -47,6 +47,13 @@ merged in name order, and then `group_vars/<name>.yml` (or a
 `group_vars/<name>/*.yml` directory) and the equivalent `host_vars/` siblings
 are merged in, **group vars before host vars**, matching Ansible's precedence.
 
+`Load` returns `ErrNoSources` for a path that exists but holds no inventory
+source — a directory whose entries are all subdirectories, `group_vars`/
+`host_vars`, or dotfiles. Real refuses to parse such a directory rather than
+treating it as an empty inventory, and a caller reporting to a user needs to
+tell it apart from a parse failure: real names the directory but gives no
+cause for it, never having reached a parser.
+
 ## Dynamic inventory scripts
 
 `Load` detects an executable `path` (`IsScript`, checking the file mode's

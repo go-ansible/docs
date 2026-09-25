@@ -93,12 +93,16 @@ real's own: a limit that leaves the whole inventory with nothing to target is
 hosts to target.` and exit 1 — but only when the inventory was not empty to
 begin with.
 
-Two differences from real remain here. A source that fails to parse gets a
+A **directory** is an unusable source when it holds no inventory file at all —
+every entry a subdirectory, `group_vars`/`host_vars`, or a dotfile. It is
+named like a missing file, with no cause line, because real never reached a
+parser for it. A directory holding an *empty* file still parses: it is the
+directory that must hold a source, not the source that must hold hosts.
+
+One difference from real remains here. A source that fails to parse gets a
 one-line cause where real prints a nine-line block naming the plugin it tried,
 a source position and an excerpt, which needs per-node positions this port's
-parsers do not record. And an entirely **empty directory** passed to `-i`
-loads as an empty inventory rather than warning `Unable to parse`; a directory
-containing an empty *file* parses on both sides.
+parsers do not record.
 
 ## What is not implemented
 
