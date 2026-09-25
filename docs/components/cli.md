@@ -18,7 +18,7 @@ underneath, no subprocess boundary at all.
 | `ansible-pull` | Clones/pulls a git repo and runs a playbook from it against the local machine (pull-mode counterpart to `ansible-playbook`) |
 | `ansible-doc` | Prints each module's own Go doc comment via a build-time codegen tool — real content, not real Ansible's structured `DOCUMENTATION` YAML |
 | `ansible-config` | `list`/`dump`/`view` — reads real `ANSIBLE_*` environment variables and, for the settings this port supports, an actual `ansible.cfg` `[defaults]` section (host var > env var > `ansible.cfg` > compiled default; `$ANSIBLE_CONFIG` > `./ansible.cfg` > `~/.ansible.cfg` > `/etc/ansible/ansible.cfg`, first found wins outright) |
-| `ansible-console` | Interactive REPL: `cd PATTERN`, `list`, `become`/`nobecome`, runs any registered module by name or a bare shell command |
+| `ansible-console` | Interactive REPL with real's prompt and banner: `cd`, `list`, `become`/`nobecome`, `forks`, `remote_user`, `verbosity`, and any registered module by name or a bare shell command — see [below](#ansible-console) |
 
 ## Building
 
@@ -158,6 +158,34 @@ on. Three rules are worth knowing because they are not what you would guess:
 
 Roles are listed in the order the filesystem returns them, not sorted, because
 that is what real does.
+
+## ansible-console
+
+The prompt is real's, and carries four things — the user the console would
+connect as, the current pattern, how many hosts it matches, and the fork
+count. It ends in `#` rather than `$` while become is on, the way a root
+shell prompt does:
+
+```
+david@all (3)[f:5]$
+david@all (3)[f:5]#     under become
+```
+
+A banner is printed at startup and `Ansible-console was exited.` when the
+session ends, including when the input simply runs out — which is what a
+piped script does.
+
+Two behaviours are worth knowing because the obvious guess is wrong, and both
+are real's:
+
+- a bare `become` is **refused** with a request for a value rather than
+  toggling, since the prompt already shows the state. Anything not plainly
+  affirmative turns it off, so a typo cannot leave a session escalated;
+- a bare `cd` goes to `*`, not to `all`.
+
+Two differences from real remain: its `help` lists every module alongside the
+built-in commands, and a failing command prints the structured `[ERROR]` block
+this port cannot reproduce without per-node source positions.
 
 ## What is not implemented
 
