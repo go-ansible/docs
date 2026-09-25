@@ -56,6 +56,50 @@ in a scratch image. `debug`/`copy`/`template`/`set_fact` and friends work; a
 playbook that also targets a real host over SSH is unaffected either way,
 since the shell requirement is the *target's*, not this image's.
 
+## Diagnostics, and an inventory that cannot be read
+
+Diagnostics use real Ansible's prefixes on **stderr**: `[ERROR]: ` for
+something that stops the run, `[WARNING]: ` for something that does not.
+
+An unusable inventory is the second kind. Real never dies because of the
+inventory — an absent, unreadable or unparseable source warns and the run
+continues with only the implicit localhost, **exiting 0** — and so does no
+`-i` at all, which is why `ansible localhost -m ping` works there with no
+inventory. This port behaves the same way; it used to exit 1 and to require
+`-i`, which broke the script around a drop-in replacement.
+
+Four independent warnings, each with its own condition:
+
+| warning | fires when |
+|---|---|
+| `Failed to parse inventory: <cause>` | the source exists and parsing failed |
+| `Unable to parse <abspath> as an inventory source` | the source is unusable |
+| `No inventory was parsed, only implicit localhost is available` | no source parsed at all |
+| `provided hosts list is empty, only localhost is available. …` | the inventory has no hosts |
+
+They are not one warning in four places. An **empty `.ini` parses**, so it
+gets the last one only; a **missing** one gets the middle two but no cause
+line, because real's plugins report a parse failure only once they have
+actually tried to parse. The path is reported absolute even when `-i` was
+given a relative one. The last warning is suppressed when the host pattern is
+one the implicit localhost answers to, so ad-hoc `ansible -i /nope.ini
+localhost -m ping` prints two warnings where the same command with a pattern
+of `h1` prints three.
+
+A host pattern that matches nothing is likewise a warning and not a failure,
+for a play's `hosts:` and for ad-hoc alike. `--limit` is the exception, and
+real's own: a limit that leaves the whole inventory with nothing to target is
+`[ERROR]: Specified inventory, host pattern and/or --limit leaves us with no
+hosts to target.` and exit 1 — but only when the inventory was not empty to
+begin with.
+
+Two differences from real remain here. A source that fails to parse gets a
+one-line cause where real prints a nine-line block naming the plugin it tried,
+a source position and an excerpt, which needs per-node positions this port's
+parsers do not record. And an entirely **empty directory** passed to `-i`
+loads as an empty inventory rather than warning `Unable to parse`; a directory
+containing an empty *file* parses on both sides.
+
 ## What is not implemented
 
 `ansible-galaxy` here only clones a role from a git URL — no
