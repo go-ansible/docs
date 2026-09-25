@@ -15,7 +15,7 @@ underneath, no subprocess boundary at all.
 | `ansible-inventory` | Dumps the parsed inventory: `--list` (JSON), `--host` (one host's merged vars), `--graph` (tree), with `--export`, `--vars`, `--limit` and `--output` — see [below](#ansible-inventory) |
 | `ansible-vault` | Encrypt/decrypt/view/edit/rekey — wraps [`vault`](vault.md) |
 | `ansible-galaxy` | `install` a role from a git URL via [`go-git`](https://github.com/go-git/go-git), plus `list` and `remove` of installed roles — **no galaxy.ansible.com HTTP API**, out of scope |
-| `ansible-pull` | Clones/pulls a git repo and runs a playbook from it against the local machine (pull-mode counterpart to `ansible-playbook`) |
+| `ansible-pull` | Clones/pulls a git repo and runs a playbook from it against **this machine only** — see [below](#ansible-pull) |
 | `ansible-doc` | Prints each module's own Go doc comment via a build-time codegen tool — real content, not real Ansible's structured `DOCUMENTATION` YAML |
 | `ansible-config` | `list`/`dump`/`view` — reads real `ANSIBLE_*` environment variables and, for the settings this port supports, an actual `ansible.cfg` `[defaults]` section (host var > env var > `ansible.cfg` > compiled default; `$ANSIBLE_CONFIG` > `./ansible.cfg` > `~/.ansible.cfg` > `/etc/ansible/ansible.cfg`, first found wins outright) |
 | `ansible-console` | Interactive REPL with real's prompt and banner: `cd`, `list`, `become`/`nobecome`, `forks`, `remote_user`, `verbosity`, and any registered module by name or a bare shell command — see [below](#ansible-console) |
@@ -186,6 +186,29 @@ are real's:
 Two differences from real remain: its `help` lists every module alongside the
 built-in commands, and a failing command prints the structured `[ERROR]` block
 this port cannot reproduce without per-node source positions.
+
+## ansible-pull
+
+Two behaviours are worth stating because a pull agent runs unattended:
+
+- **The run is limited to this machine**, however wide the playbook's own
+  `hosts:` is. Real does the same, and it matters: without the limit, a
+  repository whose inventory names other hosts would have them configured by
+  whichever machine happened to pull it.
+- **A relative `--inventory` names a file in the CHECKOUT**, not in the
+  directory `ansible-pull` was run from — real runs the playbook with the
+  checkout as its working directory, which is what makes `-i hosts` find the
+  inventory a repository carries. An absolute path is used as given.
+
+The clone is reported first, in the shape of real's own git-module task:
+`CHANGED` with a null `before` on a first clone, `SUCCESS` with both revisions
+and `remote_url_changed` on a later run.
+
+One difference from real remains. Real runs the clone as a **separate ansible
+invocation**, which resolves `--inventory` against the working directory and
+so prints one more `Could not match supplied host pattern` warning than this
+single-process design does. Emitting it here would mean warning about an
+inventory this port never loads.
 
 ## What is not implemented
 
