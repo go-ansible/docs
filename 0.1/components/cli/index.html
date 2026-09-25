@@ -661,6 +661,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#diagnostics-and-an-inventory-that-cannot-be-read" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Diagnostics, and an inventory that cannot be read
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#what-is-not-implemented" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -790,6 +801,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#diagnostics-and-an-inventory-that-cannot-be-read" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Diagnostics, and an inventory that cannot be read
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#what-is-not-implemented" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -895,6 +917,62 @@ execs a shell on a <code>local</code> connection) need <code>/bin/sh</code>, whi
 in a scratch image. <code>debug</code>/<code>copy</code>/<code>template</code>/<code>set_fact</code> and friends work; a
 playbook that also targets a real host over SSH is unaffected either way,
 since the shell requirement is the <em>target's</em>, not this image's.</p>
+<h2 id="diagnostics-and-an-inventory-that-cannot-be-read">Diagnostics, and an inventory that cannot be read<a class="headerlink" href="#diagnostics-and-an-inventory-that-cannot-be-read" title="Permanent link">&para;</a></h2>
+<p>Diagnostics use real Ansible's prefixes on <strong>stderr</strong>: <code>[ERROR]:</code> for
+something that stops the run, <code>[WARNING]:</code> for something that does not.</p>
+<p>An unusable inventory is the second kind. Real never dies because of the
+inventory — an absent, unreadable or unparseable source warns and the run
+continues with only the implicit localhost, <strong>exiting 0</strong> — and so does no
+<code>-i</code> at all, which is why <code>ansible localhost -m ping</code> works there with no
+inventory. This port behaves the same way; it used to exit 1 and to require
+<code>-i</code>, which broke the script around a drop-in replacement.</p>
+<p>Four independent warnings, each with its own condition:</p>
+<table>
+<thead>
+<tr>
+<th>warning</th>
+<th>fires when</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Failed to parse inventory: &lt;cause&gt;</code></td>
+<td>the source exists and parsing failed</td>
+</tr>
+<tr>
+<td><code>Unable to parse &lt;abspath&gt; as an inventory source</code></td>
+<td>the source is unusable</td>
+</tr>
+<tr>
+<td><code>No inventory was parsed, only implicit localhost is available</code></td>
+<td>no source parsed at all</td>
+</tr>
+<tr>
+<td><code>provided hosts list is empty, only localhost is available. …</code></td>
+<td>the inventory has no hosts</td>
+</tr>
+</tbody>
+</table>
+<p>They are not one warning in four places. An <strong>empty <code>.ini</code> parses</strong>, so it
+gets the last one only; a <strong>missing</strong> one gets the middle two but no cause
+line, because real's plugins report a parse failure only once they have
+actually tried to parse. The path is reported absolute even when <code>-i</code> was
+given a relative one. The last warning is suppressed when the host pattern is
+one the implicit localhost answers to, so ad-hoc <code>ansible -i /nope.ini
+localhost -m ping</code> prints two warnings where the same command with a pattern
+of <code>h1</code> prints three.</p>
+<p>A host pattern that matches nothing is likewise a warning and not a failure,
+for a play's <code>hosts:</code> and for ad-hoc alike. <code>--limit</code> is the exception, and
+real's own: a limit that leaves the whole inventory with nothing to target is
+<code>[ERROR]: Specified inventory, host pattern and/or --limit leaves us with no
+hosts to target.</code> and exit 1 — but only when the inventory was not empty to
+begin with.</p>
+<p>Two differences from real remain here. A source that fails to parse gets a
+one-line cause where real prints a nine-line block naming the plugin it tried,
+a source position and an excerpt, which needs per-node positions this port's
+parsers do not record. And an entirely <strong>empty directory</strong> passed to <code>-i</code>
+loads as an empty inventory rather than warning <code>Unable to parse</code>; a directory
+containing an empty <em>file</em> parses on both sides.</p>
 <h2 id="what-is-not-implemented">What is not implemented<a class="headerlink" href="#what-is-not-implemented" title="Permanent link">&para;</a></h2>
 <p><code>ansible-galaxy</code> here only clones a role from a git URL — no
 galaxy.ansible.com API client, no collection installs (a standalone <code>galaxy</code>

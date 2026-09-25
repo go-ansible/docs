@@ -947,6 +947,17 @@ colon/comma-separated combinations with <code>!</code> exclusion and <code>&amp;
 e.g. <code>webservers:!web3:&amp;datacenter1</code> reads as "every host in <code>webservers</code>
 that is also in <code>datacenter1</code>, except <code>web3</code>." Results are sorted by name for
 deterministic output.</p>
+<p><code>MatchReport</code> returns the same hosts and, additionally, each <strong>term</strong> of the
+pattern that matched nothing:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">inv</span><span class="w"> </span><span class="o">*</span><span class="nx">Inventory</span><span class="p">)</span><span class="w"> </span><span class="nx">MatchReport</span><span class="p">(</span><span class="nx">pattern</span><span class="w"> </span><span class="kt">string</span><span class="p">)</span><span class="w"> </span><span class="p">([]</span><span class="o">*</span><span class="nx">Host</span><span class="p">,</span><span class="w"> </span><span class="p">[]</span><span class="kt">string</span><span class="p">,</span><span class="w"> </span><span class="kt">error</span><span class="p">)</span>
+</code></pre></div>
+<p>Real Ansible warns once per such term — <code>Could not match supplied host
+pattern, ignoring: zzz</code> — which is what tells a mistyped pattern apart from
+one that legitimately selects nothing. A term is reported when it produced no
+hosts <strong>and</strong> matched no group <strong>and</strong> is not <code>all</code>; the group half matters,
+because a term naming an <em>empty group</em> matches nothing yet is not a typo, and
+real says nothing for it. Terms come back without their <code>!</code>/<code>&amp;</code> operator and
+in real's evaluation order, so <code>all:!zzz</code> reports <code>zzz</code>.</p>
 <h2 id="what-this-does-not-do">What this does not do<a class="headerlink" href="#what-this-does-not-do" title="Permanent link">&para;</a></h2>
 <p><code>inventory</code> only builds and queries the graph — it does not itself decide
 variable precedence between a host's group vars, its own vars, and anything
