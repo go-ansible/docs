@@ -694,6 +694,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#ansible-console" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ansible-console
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#what-is-not-implemented" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -856,6 +867,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#ansible-console" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ansible-console
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#what-is-not-implemented" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -932,7 +954,7 @@ underneath, no subprocess boundary at all.</p>
 </tr>
 <tr>
 <td><code>ansible-console</code></td>
-<td>Interactive REPL: <code>cd PATTERN</code>, <code>list</code>, <code>become</code>/<code>nobecome</code>, runs any registered module by name or a bare shell command</td>
+<td>Interactive REPL with real's prompt and banner: <code>cd</code>, <code>list</code>, <code>become</code>/<code>nobecome</code>, <code>forks</code>, <code>remote_user</code>, <code>verbosity</code>, and any registered module by name or a bare shell command — see <a href="#ansible-console">below</a></td>
 </tr>
 </tbody>
 </table>
@@ -1072,6 +1094,28 @@ on. Three rules are worth knowing because they are not what you would guess:</p>
 </ul>
 <p>Roles are listed in the order the filesystem returns them, not sorted, because
 that is what real does.</p>
+<h2 id="ansible-console">ansible-console<a class="headerlink" href="#ansible-console" title="Permanent link">&para;</a></h2>
+<p>The prompt is real's, and carries four things — the user the console would
+connect as, the current pattern, how many hosts it matches, and the fork
+count. It ends in <code>#</code> rather than <code>$</code> while become is on, the way a root
+shell prompt does:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>david@all (3)[f:5]$
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>david@all (3)[f:5]#     under become
+</code></pre></div>
+<p>A banner is printed at startup and <code>Ansible-console was exited.</code> when the
+session ends, including when the input simply runs out — which is what a
+piped script does.</p>
+<p>Two behaviours are worth knowing because the obvious guess is wrong, and both
+are real's:</p>
+<ul>
+<li>a bare <code>become</code> is <strong>refused</strong> with a request for a value rather than
+  toggling, since the prompt already shows the state. Anything not plainly
+  affirmative turns it off, so a typo cannot leave a session escalated;</li>
+<li>a bare <code>cd</code> goes to <code>*</code>, not to <code>all</code>.</li>
+</ul>
+<p>Two differences from real remain: its <code>help</code> lists every module alongside the
+built-in commands, and a failing command prints the structured <code>[ERROR]</code> block
+this port cannot reproduce without per-node source positions.</p>
 <h2 id="what-is-not-implemented">What is not implemented<a class="headerlink" href="#what-is-not-implemented" title="Permanent link">&para;</a></h2>
 <p><code>ansible-galaxy</code> here only clones a role from a git URL — no
 galaxy.ansible.com API client, no collection installs (a standalone <code>galaxy</code>
