@@ -921,6 +921,12 @@ directly inside it (except <code>group_vars/</code> and <code>host_vars/</code>)
 merged in name order, and then <code>group_vars/&lt;name&gt;.yml</code> (or a
 <code>group_vars/&lt;name&gt;/*.yml</code> directory) and the equivalent <code>host_vars/</code> siblings
 are merged in, <strong>group vars before host vars</strong>, matching Ansible's precedence.</p>
+<p><code>Load</code> returns <code>ErrNoSources</code> for a path that exists but holds no inventory
+source — a directory whose entries are all subdirectories, <code>group_vars</code>/
+<code>host_vars</code>, or dotfiles. Real refuses to parse such a directory rather than
+treating it as an empty inventory, and a caller reporting to a user needs to
+tell it apart from a parse failure: real names the directory but gives no
+cause for it, never having reached a parser.</p>
 <h2 id="dynamic-inventory-scripts">Dynamic inventory scripts<a class="headerlink" href="#dynamic-inventory-scripts" title="Permanent link">&para;</a></h2>
 <p><code>Load</code> detects an executable <code>path</code> (<code>IsScript</code>, checking the file mode's
 executable bit) and runs it as a dynamic inventory script instead of parsing

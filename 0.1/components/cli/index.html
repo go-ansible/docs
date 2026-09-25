@@ -967,12 +967,15 @@ real's own: a limit that leaves the whole inventory with nothing to target is
 <code>[ERROR]: Specified inventory, host pattern and/or --limit leaves us with no
 hosts to target.</code> and exit 1 — but only when the inventory was not empty to
 begin with.</p>
-<p>Two differences from real remain here. A source that fails to parse gets a
+<p>A <strong>directory</strong> is an unusable source when it holds no inventory file at all —
+every entry a subdirectory, <code>group_vars</code>/<code>host_vars</code>, or a dotfile. It is
+named like a missing file, with no cause line, because real never reached a
+parser for it. A directory holding an <em>empty</em> file still parses: it is the
+directory that must hold a source, not the source that must hold hosts.</p>
+<p>One difference from real remains here. A source that fails to parse gets a
 one-line cause where real prints a nine-line block naming the plugin it tried,
 a source position and an excerpt, which needs per-node positions this port's
-parsers do not record. And an entirely <strong>empty directory</strong> passed to <code>-i</code>
-loads as an empty inventory rather than warning <code>Unable to parse</code>; a directory
-containing an empty <em>file</em> parses on both sides.</p>
+parsers do not record.</p>
 <h2 id="what-is-not-implemented">What is not implemented<a class="headerlink" href="#what-is-not-implemented" title="Permanent link">&para;</a></h2>
 <p><code>ansible-galaxy</code> here only clones a role from a git URL — no
 galaxy.ansible.com API client, no collection installs (a standalone <code>galaxy</code>
