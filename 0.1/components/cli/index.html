@@ -705,6 +705,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#ansible-pull" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ansible-pull
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#what-is-not-implemented" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -878,6 +889,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#ansible-pull" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ansible-pull
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#what-is-not-implemented" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -942,7 +964,7 @@ underneath, no subprocess boundary at all.</p>
 </tr>
 <tr>
 <td><code>ansible-pull</code></td>
-<td>Clones/pulls a git repo and runs a playbook from it against the local machine (pull-mode counterpart to <code>ansible-playbook</code>)</td>
+<td>Clones/pulls a git repo and runs a playbook from it against <strong>this machine only</strong> — see <a href="#ansible-pull">below</a></td>
 </tr>
 <tr>
 <td><code>ansible-doc</code></td>
@@ -1116,6 +1138,26 @@ are real's:</p>
 <p>Two differences from real remain: its <code>help</code> lists every module alongside the
 built-in commands, and a failing command prints the structured <code>[ERROR]</code> block
 this port cannot reproduce without per-node source positions.</p>
+<h2 id="ansible-pull">ansible-pull<a class="headerlink" href="#ansible-pull" title="Permanent link">&para;</a></h2>
+<p>Two behaviours are worth stating because a pull agent runs unattended:</p>
+<ul>
+<li><strong>The run is limited to this machine</strong>, however wide the playbook's own
+  <code>hosts:</code> is. Real does the same, and it matters: without the limit, a
+  repository whose inventory names other hosts would have them configured by
+  whichever machine happened to pull it.</li>
+<li><strong>A relative <code>--inventory</code> names a file in the CHECKOUT</strong>, not in the
+  directory <code>ansible-pull</code> was run from — real runs the playbook with the
+  checkout as its working directory, which is what makes <code>-i hosts</code> find the
+  inventory a repository carries. An absolute path is used as given.</li>
+</ul>
+<p>The clone is reported first, in the shape of real's own git-module task:
+<code>CHANGED</code> with a null <code>before</code> on a first clone, <code>SUCCESS</code> with both revisions
+and <code>remote_url_changed</code> on a later run.</p>
+<p>One difference from real remains. Real runs the clone as a <strong>separate ansible
+invocation</strong>, which resolves <code>--inventory</code> against the working directory and
+so prints one more <code>Could not match supplied host pattern</code> warning than this
+single-process design does. Emitting it here would mean warning about an
+inventory this port never loads.</p>
 <h2 id="what-is-not-implemented">What is not implemented<a class="headerlink" href="#what-is-not-implemented" title="Permanent link">&para;</a></h2>
 <p><code>ansible-galaxy</code> here only clones a role from a git URL — no
 galaxy.ansible.com API client, no collection installs (a standalone <code>galaxy</code>
