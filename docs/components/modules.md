@@ -67,6 +67,15 @@ is added. The trim is exactly Python's `rstrip("\r\n")` — every trailing
 carriage return and newline goes, trailing spaces and tabs survive, and
 leading newlines survive.
 
+`Run` also attaches real's **`exception`** key to every failing result,
+and to no successful one. Real emits it on every `fail_json` path, and
+where Python has no traceback to show — which, measured across eight
+failures in six modules, is every time — the value is the literal
+string `(traceback unavailable)`. The key is in the result and not in
+the printed output: real's own `_dump_results` pops `exception`,
+`warnings` and `deprecations` before printing, so `r.exception`
+templates and registers while no failure line shows it.
+
 ## Measured against real Ansible
 
 The module surface has been run side by side with **real ansible-core
@@ -78,8 +87,19 @@ idempotence matches, which is where a module port most easily drifts.
 Across `file` (directory/touch/absent), `copy`, `template`, `lineinfile`
 (both plain and `regexp`), `blockinfile`, `replace`, `stat`, `slurp`,
 `find`, `command`, `shell`, `set_fact` and `assert`, the compared values
-are **byte-identical to real Ansible on both passes**, and the two produced
-trees match exactly, permissions included.
+are byte-identical on both passes, and the two produced trees match
+exactly, permissions included.
+
+**That sentence used to say "byte-identical to real Ansible" without
+qualification, and a later, wider comparison disproved it.** The run
+above compared the values a playbook reads; it did not compare the
+registered result's full KEY SET. A census that did found `slurp`
+returning the file path in `msg` and omitting `source` entirely, `stat`
+returning an empty `msg` where real returns none at all, and `find`
+returning an empty `msg` where real always reports one of three
+sentences. All three are fixed, and the lesson is kept here rather than
+quietly edited away: a comparison is only as wide as the fields it
+looks at, and "identical" means nothing without naming them.
 
 Two defects were found and fixed that way, neither of which any unit test
 had caught:
