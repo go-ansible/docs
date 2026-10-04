@@ -988,8 +988,35 @@ five divergences in modules a value-only pass had called identical.</p>
 <td>3 keys</td>
 <td><strong>12</strong> keys: <code>rc</code>, <code>echo</code>, <code>delta</code>, <code>start</code>, <code>stop</code>, <code>user_input</code>, <code>stdout</code>(+<code>_lines</code>), <code>stderr</code>(+<code>_lines</code>)</td>
 </tr>
+<tr>
+<td><code>wait_for_connection</code></td>
+<td><code>msg: "connection is usable"</code></td>
+<td><code>changed</code>, <code>elapsed</code>, <code>failed</code> — no <code>msg</code></td>
+</tr>
+<tr>
+<td><code>async_status</code></td>
+<td>6 of 11 keys</td>
+<td>+ <code>results_file</code>, <code>stdout</code>(+<code>_lines</code>), <code>stderr</code>(+<code>_lines</code>)</td>
+</tr>
+<tr>
+<td><code>package_facts</code></td>
+<td>its own failure wording</td>
+<td>real's, verbatim</td>
+</tr>
+<tr>
+<td><code>service_facts</code></td>
+<td><strong>failed</strong></td>
+<td><strong>skipped</strong></td>
+</tr>
 </tbody>
 </table>
+<p><code>service_facts</code> is the one that was not about keys at all. Real does not
+fail when it finds no services — it sets <code>skipped=True</code> — and <strong>a failed
+task stops a play that a skipped one does not</strong>, so this port halted
+playbooks real lets through. Reaching a playbook took both halves: the
+module setting <code>Result.Skipped</code> and <code>playbook</code>'s own <code>resultToMap</code>
+serialising it, which it never had. <code>skipped</code> is emitted only when
+true, which is how real does it.</p>
 <p><code>pause</code> carries a distinction only a measurement shows: <strong><code>delta</code> is
 the int seconds while <code>stdout</code> carries the real elapsed to two
 decimals</strong> ("Paused for 1.02 seconds" against <code>delta: 1</code>). They are not
