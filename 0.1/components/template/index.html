@@ -989,9 +989,33 @@ of 5000) via <a href="https://github.com/go-encryptions/unixcrypt"><code>go-encr
 a small shared library extracted from <code>go-puppet/puppet</code>'s own <code>pw_hash()</code>
 implementation (Puppet's stdlib equivalent) so the crypt(3) algorithms are
 implemented once, not duplicated per consumer.</p>
-<p><strong>Tests</strong> — <code>changed</code>, <code>success</code>/<code>succeeded</code>, <code>failed</code>/<code>failure</code>, <code>skipped</code>
-(each reads a registered task result's flags, e.g. <code>is changed</code>), and
-<code>version</code> (Ansible's <code>version_compare</code>-equivalent <code>is version(...)</code> test).</p>
+<p><strong>Tests</strong> — 30 of them, in five groups.</p>
+<p><em>Result status</em>, each reading a registered task result's flags
+(<code>is changed</code>): <code>changed</code>/<code>change</code>, <code>success</code>/<code>succeeded</code>/<code>successful</code>,
+<code>failed</code>/<code>failure</code>, <code>skipped</code>/<code>skip</code>, <code>unreachable</code>/<code>reachable</code>,
+<code>timedout</code>, and <code>started</code>/<code>finished</code>. A <strong>non-async</strong> result answers
+true to both of those last two, which is real's own behaviour — it
+warns and returns True rather than false.</p>
+<p><em>Regex</em>: <code>match</code>, <code>search</code> and <code>regex</code>, with <code>ignorecase</code>, <code>multiline</code>
+and <code>match_type</code> (<code>search</code>/<code>match</code>/<code>fullmatch</code>; anything else is an
+error rather than a quiet fall back). <code>match</code> anchors at the <strong>start
+only</strong>, like Python's <code>re.match</code>, so <code>'abcdef' is match('abc')</code> is true
+and <code>'xabc' is match('abc')</code> is false.</p>
+<p><em>Truthiness</em>: <code>truthy</code> and <code>falsy</code>, with <code>convert_bool</code> to read
+<code>"yes"</code>/<code>"off"</code> and friends as booleans first.</p>
+<p><em>Set theory and lists</em>: <code>subset</code>/<code>issubset</code>, <code>superset</code>/<code>issuperset</code>,
+<code>contains</code>, <code>any</code>, <code>all</code>, <code>nan</code>/<code>isnan</code>.</p>
+<p><em>Versions</em>: <code>version</code> and <code>version_compare</code>, which are the same test
+under real's two names.</p>
+<p><strong>A known gap</strong>, measured: gonja cannot parse a <em>keyword</em> argument in a
+test call. <code>'ABC' is match('abc', true)</code> works; <code>'ABC' is match('abc',
+ignorecase=true)</code> is a parse error. Every option above is reachable
+positionally, and the test functions already read keyword arguments, so
+the other form starts working the day the parser allows it.</p>
+<p>Until v0.31.0 <code>match</code>, <code>search</code> and <code>regex</code> were simply absent — and
+because <code>select</code>/<code>reject</code> treat an unknown test as <em>false</em>,
+<code>reject('match', ...)</code> kept every element and <code>select('match', ...)</code>
+kept none, with no error either way.</p>
 <p><strong>Lookups</strong> — <code>lookup(name, ...)</code> plus <code>query(...)</code>/<code>q(...)</code> (the same
 thing with <code>wantlist</code> forced on), registered as Jinja <em>global functions</em>
 exactly as real Ansible registers them, not as filters. The two universal
