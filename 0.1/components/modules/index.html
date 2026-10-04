@@ -1008,8 +1008,28 @@ five divergences in modules a value-only pass had called identical.</p>
 <td><strong>failed</strong></td>
 <td><strong>skipped</strong></td>
 </tr>
+<tr>
+<td><code>setup</code></td>
+<td><code>msg: "gathered facts"</code></td>
+<td>no <code>msg</code> — another sentence real never emits</td>
+</tr>
+<tr>
+<td><code>uri</code></td>
+<td><strong>6</strong> keys, <code>content</code> always</td>
+<td><strong>15</strong> keys built from the response HEADERS; <code>content</code> only with <code>return_content</code></td>
+</tr>
 </tbody>
 </table>
+<p><code>uri</code> is the largest of them. Real builds most of its result <strong>from the
+response headers</strong> — lowercasing each name and turning hyphens into
+underscores — so <code>content_type</code>, <code>content_length</code>, <code>date</code>,
+<code>last_modified</code> and <code>server</code> are the server's own headers rather than a
+list this port could hardcode. It captured no headers at all, which is
+why its curl invocation changed. Three further rules each needed
+measuring: <code>msg</code> is the status line's reason phrase plus the body size
+("OK (12 bytes)", not "OK (200)"); <code>content</code> appears only with
+<code>return_content: true</code>; and <code>json</code> appears only when the body parses as
+one, real skipping the key rather than reporting null.</p>
 <p><code>service_facts</code> is the one that was not about keys at all. Real does not
 fail when it finds no services — it sets <code>skipped=True</code> — and <strong>a failed
 task stops a play that a skipped one does not</strong>, so this port halted
