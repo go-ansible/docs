@@ -1018,8 +1018,25 @@ five divergences in modules a value-only pass had called identical.</p>
 <td><strong>6</strong> keys, <code>content</code> always</td>
 <td><strong>15</strong> keys built from the response HEADERS; <code>content</code> only with <code>return_content</code></td>
 </tr>
+<tr>
+<td><code>git</code></td>
+<td><code>"&lt;dest&gt; cloned"</code></td>
+<td><code>before</code> / <code>after</code> — the commit it was at and is at — no <code>msg</code></td>
+</tr>
+<tr>
+<td><code>cron</code></td>
+<td><code>"&lt;name&gt; unchanged"</code></td>
+<td><code>envs</code> / <code>jobs</code> — the entries it manages — no <code>msg</code></td>
+</tr>
 </tbody>
 </table>
+<p>One is measured and <strong>deliberately not fixed</strong>: <code>get_url</code> reports twelve
+keys where real reports eighteen, and three of the missing ones (<code>src</code>,
+<code>checksum_dest</code>, <code>checksum_src</code>) only have honest values if the download
+goes through a <strong>staging file</strong> the way real's does — real downloads to a
+temp and moves it, this writes straight to <code>dest</code>. Inventing them would
+be worse than their absence, so it waits for the change to how the
+download runs.</p>
 <p><code>uri</code> is the largest of them. Real builds most of its result <strong>from the
 response headers</strong> — lowercasing each name and turning hyphens into
 underscores — so <code>content_type</code>, <code>content_length</code>, <code>date</code>,
