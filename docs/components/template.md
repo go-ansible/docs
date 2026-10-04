@@ -112,9 +112,40 @@ a small shared library extracted from `go-puppet/puppet`'s own `pw_hash()`
 implementation (Puppet's stdlib equivalent) so the crypt(3) algorithms are
 implemented once, not duplicated per consumer.
 
-**Tests** — `changed`, `success`/`succeeded`, `failed`/`failure`, `skipped`
-(each reads a registered task result's flags, e.g. `is changed`), and
-`version` (Ansible's `version_compare`-equivalent `is version(...)` test).
+**Tests** — 30 of them, in five groups.
+
+*Result status*, each reading a registered task result's flags
+(`is changed`): `changed`/`change`, `success`/`succeeded`/`successful`,
+`failed`/`failure`, `skipped`/`skip`, `unreachable`/`reachable`,
+`timedout`, and `started`/`finished`. A **non-async** result answers
+true to both of those last two, which is real's own behaviour — it
+warns and returns True rather than false.
+
+*Regex*: `match`, `search` and `regex`, with `ignorecase`, `multiline`
+and `match_type` (`search`/`match`/`fullmatch`; anything else is an
+error rather than a quiet fall back). `match` anchors at the **start
+only**, like Python's `re.match`, so `'abcdef' is match('abc')` is true
+and `'xabc' is match('abc')` is false.
+
+*Truthiness*: `truthy` and `falsy`, with `convert_bool` to read
+`"yes"`/`"off"` and friends as booleans first.
+
+*Set theory and lists*: `subset`/`issubset`, `superset`/`issuperset`,
+`contains`, `any`, `all`, `nan`/`isnan`.
+
+*Versions*: `version` and `version_compare`, which are the same test
+under real's two names.
+
+**A known gap**, measured: gonja cannot parse a *keyword* argument in a
+test call. `'ABC' is match('abc', true)` works; `'ABC' is match('abc',
+ignorecase=true)` is a parse error. Every option above is reachable
+positionally, and the test functions already read keyword arguments, so
+the other form starts working the day the parser allows it.
+
+Until v0.31.0 `match`, `search` and `regex` were simply absent — and
+because `select`/`reject` treat an unknown test as *false*,
+`reject('match', ...)` kept every element and `select('match', ...)`
+kept none, with no error either way.
 
 **Lookups** — `lookup(name, ...)` plus `query(...)`/`q(...)` (the same
 thing with `wantlist` forced on), registered as Jinja *global functions*
