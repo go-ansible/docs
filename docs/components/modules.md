@@ -76,6 +76,34 @@ the printed output: real's own `_dump_results` pops `exception`,
 `warnings` and `deprecations` before printing, so `r.exception`
 templates and registers while no failure line shows it.
 
+### The result-key census
+
+`Run`'s finalization is only half the story: each module's own key set
+is real's too, and comparing **values** rather than **key sets** hid
+five divergences in modules a value-only pass had called identical.
+
+| module | what it returned | what real returns |
+|---|---|---|
+| `template` | 3 keys, dest path in `msg` | the same **13** keys `copy` returns, no `msg` |
+| `unarchive` | 3 keys, dest path in `msg` | **13** keys incl. `handler`, `extract_results` |
+| `known_hosts` | an English sentence | its own **parameters**, echoed back |
+| `slurp` | path in `msg`, no `source` | `content`, `encoding`, `source`, no `msg` |
+| `stat` | an empty `msg` | no `msg` at all |
+
+Two of those needed a measurement rather than a judgement. Real's
+`template` reports **exactly** the key set real's `copy` reports, so
+the builder here is `copy`'s own rather than a second implementation.
+And `addPathInfo` **overwrites** `state`, so `known_hosts` reports the
+file's state and not its own `state:` parameter — real reports
+`state=file` for a task whose parameter said `present`.
+
+One divergence is deliberate and stays. Real's `unarchive` **fails** on
+macOS for `.tar` and `.tgz` with "Failed to find handler", because it
+probes for a GNU tar this platform does not have; this port uses bsdtar
+and succeeds. Levelling down to match would be a regression, not
+parity — the same reasoning that leaves `getent` working here while
+real requires a `getent` binary macOS does not ship.
+
 ## Measured against real Ansible
 
 The module surface has been run side by side with **real ansible-core
