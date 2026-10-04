@@ -50,6 +50,16 @@ Being pure Go buys three things Ansible's own Python implementation cannot:
   reads" — verified against a real installed `ansible-core`, not just internal
   review.
 
+## Security
+
+A port that runs shell commands on remote targets has two defect classes to
+answer for: a playbook value changing a command's *structure*, and a credential
+landing where `ps` can read it. [Security](security.md) states the control for
+each, what an audit of the module library found (one command injection, one
+credential in `argv`), the `ps`-visibility boundary as **measured** rather than
+reasoned about, and the one exposure that remains — named, with why it cannot be
+closed without cgo.
+
 ## Repositories
 
 | Repo | Role |
