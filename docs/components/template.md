@@ -136,7 +136,25 @@ and `'xabc' is match('abc')` is false.
 *Versions*: `version` and `version_compare`, which are the same test
 under real's two names.
 
-**A known gap**, measured: gonja cannot parse a *keyword* argument in a
+**The known parser gaps**, both measured and both gonja's rather than
+this package's — neither is reachable from the filter, test or lookup
+registries.
+
+*A method call on a parenthesised expression* does not parse:
+
+| expression | real | here |
+|---|---|---|
+| `d.keys()` | works | **works** |
+| `(d).keys()` | works | **fails** |
+| `(d \| default({})).keys()` | works | **fails** |
+| `d \| default({}) \| list` | works | works |
+| `d \| dict2items \| map(attribute='key')` | works | works |
+
+The **parenthesis** is what breaks it, not the filter — `(d).keys()`
+fails with no filter in sight. Use one of the two working forms above;
+`| list` gives a dict's keys and `dict2items` gives key/value pairs.
+
+*And* gonja cannot parse a *keyword* argument in a
 test call. `'ABC' is match('abc', true)` works; `'ABC' is match('abc',
 ignorecase=true)` is a parse error. Every option above is reachable
 positionally, and the test functions already read keyword arguments, so
