@@ -100,13 +100,22 @@ five divergences in modules a value-only pass had called identical.
 | `git` | `"<dest> cloned"` | `before` / `after` — the commit it was at and is at — no `msg` |
 | `cron` | `"<name> unchanged"` | `envs` / `jobs` — the entries it manages — no `msg` |
 
-One is measured and **deliberately not fixed**: `get_url` reports twelve
-keys where real reports eighteen, and three of the missing ones (`src`,
-`checksum_dest`, `checksum_src`) only have honest values if the download
-goes through a **staging file** the way real's does — real downloads to a
-temp and moves it, this writes straight to `dest`. Inventing them would
-be worse than their absence, so it waits for the change to how the
-download runs.
+| `get_url` | 12 keys, skipped blindly when `dest` existed | **18** on a download, **14** on a 304 |
+
+`get_url` was the one deliberately left for its own change, and it got
+it. The download now goes through a **staging file** and is moved into
+place, which is what makes `src` nameable and `checksum_dest`
+meaningful. Four things the measurement settled:
+
+- a **second run is a 304**, not a skip — real sends a conditional
+  request (`If-Modified-Since` from the destination's mtime) and reports
+  `changed=false` with `msg: "HTTP Error 304: Not Modified"`;
+- the 304 run reports fourteen keys against eighteen, differing by
+  exactly `src`/`checksum_src`/`checksum_dest`/`md5sum`;
+- `checksum_dest` is the **empty string** when the destination did not
+  exist, not an absent key;
+- `force` forces the **download**, not the verdict — with identical
+  content real reports `changed=false` and `status_code=200`.
 
 `uri` is the largest of them. Real builds most of its result **from the
 response headers** — lowercasing each name and turning hyphens into
