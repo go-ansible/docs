@@ -235,7 +235,9 @@ module's own Go doc comment, not hidden — `ansible-doc <module>` (via the
 real Python implementation calls a SaaS/cloud API directly instead shells out
 to that platform's own official CLI when one exists (`gh`/`glab`/`scw`/
 `aliyun`/`ilorest`/... — never a secret in argv, always an environment
-variable or a pre-existing authenticated session); a module real Ansible runs
+variable or a pre-existing authenticated session; see
+[Security](../security.md), which records where that rule was *broken* and
+what the audit that found it measured); a module real Ansible runs
 *from the controller* against the target's own SSH endpoint directly
 (`ansible.posix.synchronize`) fails loud rather than silently approximating,
 since this port's `Connection` abstraction has no way to expose a target's
