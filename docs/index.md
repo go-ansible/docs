@@ -55,10 +55,13 @@ Being pure Go buys three things Ansible's own Python implementation cannot:
 A port that runs shell commands on remote targets has two defect classes to
 answer for: a playbook value changing a command's *structure*, and a credential
 landing where `ps` can read it. [Security](security.md) states the control for
-each, what an audit of the module library found (one command injection, one
-credential in `argv`), the `ps`-visibility boundary as **measured** rather than
-reasoned about, and the one exposure that remains — named, with why it cannot be
-closed without cgo.
+each, and what an audit of the whole stack found: one command injection, one
+credential in `argv`, a `no_log` secret printed under `--diff`, a vault password
+honoured from an environment variable real has no equivalent of — and one that is
+not about secrets at all, a playbook real would refuse outright running its first
+four tasks for real before failing on the fifth. It also records the
+`ps`-visibility boundary as **measured** rather than reasoned about, and the one
+exposure that remains, named, with why it cannot be closed without cgo.
 
 ## Repositories
 
