@@ -672,6 +672,34 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#verbosity-and-the-status-it-exits-with" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Verbosity, and the status it exits with
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Verbosity, and the status it exits with">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#exit-statuses" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Exit statuses
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#ansible-inventory" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -879,6 +907,34 @@
       
     </span>
   </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#verbosity-and-the-status-it-exits-with" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Verbosity, and the status it exits with
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Verbosity, and the status it exits with">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#exit-statuses" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Exit statuses
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -1102,6 +1158,79 @@ directory that must hold a source, not the source that must hold hosts.</p>
 one-line cause where real prints a nine-line block naming the plugin it tried,
 a source position and an excerpt, which needs per-node positions this port's
 parsers do not record.</p>
+<h2 id="verbosity-and-the-status-it-exits-with">Verbosity, and the status it exits with<a class="headerlink" href="#verbosity-and-the-status-it-exits-with" title="Permanent link">&para;</a></h2>
+<p><code>-v</code> is the flag a reader reaches for first, and <code>ansible-playbook</code> had
+<strong>none</strong>: it exited 2 with <code>flag provided but not defined</code>. The forms
+real accepts are supported as of <code>cli</code> v0.129.0 — <code>-v</code>, <code>-vv</code> and longer
+runs, a repeated <code>-v -v</code>, and <code>--verbose</code> — and the count is <em>additive</em>,
+because real declares <code>-v/--verbose … action="count"</code> and argparse's
+short-option bundling makes <code>-vvv</code> three occurrences.</p>
+<p>At <code>-v</code> an ok or changed line carries the whole result, in the compact
+single-line form a <code>fatal:</code> line uses rather than the pretty block. A
+module that dumps at every verbosity (<code>debug</code>) keeps its pretty block;
+at <code>-v</code> real shows both side by side, and so does this.</p>
+<p><code>no_log</code> still wins at every level — see <a href="../../security/">Security</a>.</p>
+<p><strong>Accepted but adding nothing beyond <code>-v</code>:</strong> the higher levels. Real's
+<code>-vv</code> prefixes <code>task path: &lt;file&gt;:&lt;line&gt;</code>, which needs source positions
+<code>playbook</code>'s parser does not keep, and <code>-vvv</code> prints a version banner
+and connection tracing. The flag's own help text says so. Refusing <code>-vv</code>
+outright would break every habitual invocation, which is worse than
+accepting it with less output.</p>
+<h3 id="exit-statuses">Exit statuses<a class="headerlink" href="#exit-statuses" title="Permanent link">&para;</a></h3>
+<p>Real distinguishes cases this port used to collapse into one. Measured
+against ansible-core 2.21.4, case by case:</p>
+<table>
+<thead>
+<tr>
+<th>what happened</th>
+<th>real</th>
+<th>this port, before v0.128.0</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>success</td>
+<td>0</td>
+<td>0</td>
+</tr>
+<tr>
+<td>a task failed</td>
+<td>2</td>
+<td>2</td>
+</tr>
+<tr>
+<td>a host was unreachable</td>
+<td>4</td>
+<td>4</td>
+</tr>
+<tr>
+<td>a YAML or structural error</td>
+<td>4</td>
+<td>4</td>
+</tr>
+<tr>
+<td>a module name that cannot be resolved</td>
+<td>4</td>
+<td><strong>2</strong></td>
+</tr>
+<tr>
+<td>encrypted content, no or wrong vault password</td>
+<td>1</td>
+<td><strong>4</strong></td>
+</tr>
+<tr>
+<td>the playbook file is missing</td>
+<td>1</td>
+<td>1</td>
+</tr>
+</tbody>
+</table>
+<p>A vault failure is not a parse error: the file parsed fine, it just
+could not be read, and a caller needs to tell <em>"I cannot read this"</em>
+from <em>"this is not a playbook"</em>. The classification matches <code>vault</code>'s
+sentinels (<code>ErrNoPassword</code>, <code>ErrHMACMismatch</code>) rather than message text.</p>
+<p>An unresolvable module name exits 4 under <code>--syntax-check</code> and
+<code>--list-tasks</code> too, which is what real does.</p>
 <h2 id="ansible-inventory">ansible-inventory<a class="headerlink" href="#ansible-inventory" title="Permanent link">&para;</a></h2>
 <p><code>--list</code>, <code>--host</code> and <code>--graph</code>, with <code>--export</code>, <code>--vars</code>, <code>--limit</code> and
 <code>--output</code>. The output shapes follow real's, which are more particular than

@@ -633,6 +633,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#command-expands-variables-it-still-does-not-glob" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        command expands variables; it still does not glob
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#what-is-not-implemented" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -866,6 +877,17 @@
     <span class="md-ellipsis">
       
         Example
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#command-expands-variables-it-still-does-not-glob" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        command expands variables; it still does not glob
       
     </span>
   </a>
@@ -1171,6 +1193,30 @@ had caught:</p>
 <a id="__codelineno-1-23" name="__codelineno-1-23" href="#__codelineno-1-23"></a><span class="w">    </span><span class="nx">fmt</span><span class="p">.</span><span class="nx">Println</span><span class="p">(</span><span class="nx">result</span><span class="p">.</span><span class="nx">Changed</span><span class="p">,</span><span class="w"> </span><span class="nx">result</span><span class="p">.</span><span class="nx">Msg</span><span class="p">)</span>
 <a id="__codelineno-1-24" name="__codelineno-1-24" href="#__codelineno-1-24"></a><span class="p">}</span>
 </code></pre></div>
+<h2 id="command-expands-variables-it-still-does-not-glob"><code>command</code> expands variables; it still does not glob<a class="headerlink" href="#command-expands-variables-it-still-does-not-glob" title="Permanent link">&para;</a></h2>
+<p>Real's <code>command</code> runs no shell, yet <code>command: echo $HOME *</code> prints the
+home directory and a <strong>literal asterisk</strong>: <code>run_command</code> applies
+<code>expanduser(expandvars(x))</code> to each argv element, which <code>command.py</code>
+exposes as <code>expand_argument_vars</code> (default true since 2.16). This port
+expanded neither until <code>modules</code> v0.81.0.</p>
+<p>The interesting part is <em>where</em> it expands. Real's module runs on the
+target, so <code>$HOME</code> is the target's; a module here runs on the
+<strong>controller</strong>, and substituting the controller's home into a command
+meant for another machine is a wrong answer that looks right whenever
+both are the same user.</p>
+<p>So the expansion is delegated to the target's shell, and the port
+decides only which spans may be delegated. The only unquoted text it
+ever emits is</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>"${NAME-\$NAME}"
+</code></pre></div>
+<p>for a name matching <code>[A-Za-z_][A-Za-z0-9_]*</code>. Everything else stays
+quoted, so no glob, no <code>$(...)</code>, no backtick and no word split can reach
+the shell from an argument — and the <code>-</code> default is what leaves an
+<strong>unset</strong> name as the literal <code>$NAME</code>, which is real's documented
+behaviour and the opposite of a bare <code>"$NAME"</code>.</p>
+<p>Named rather than papered over: real's <code>expanduser</code> consults the
+password database when <code>HOME</code> is unset, where this falls back to a
+literal <code>~</code>.</p>
 <h2 id="what-is-not-implemented">What is not implemented<a class="headerlink" href="#what-is-not-implemented" title="Permanent link">&para;</a></h2>
 <p>Every architectural substitution and disclosed gap is documented in the
 module's own Go doc comment, not hidden — <code>ansible-doc &lt;module&gt;</code> (via the
