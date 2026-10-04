@@ -113,6 +113,52 @@ one-line cause where real prints a nine-line block naming the plugin it tried,
 a source position and an excerpt, which needs per-node positions this port's
 parsers do not record.
 
+## Verbosity, and the status it exits with
+
+`-v` is the flag a reader reaches for first, and `ansible-playbook` had
+**none**: it exited 2 with `flag provided but not defined`. The forms
+real accepts are supported as of `cli` v0.129.0 — `-v`, `-vv` and longer
+runs, a repeated `-v -v`, and `--verbose` — and the count is *additive*,
+because real declares `-v/--verbose … action="count"` and argparse's
+short-option bundling makes `-vvv` three occurrences.
+
+At `-v` an ok or changed line carries the whole result, in the compact
+single-line form a `fatal:` line uses rather than the pretty block. A
+module that dumps at every verbosity (`debug`) keeps its pretty block;
+at `-v` real shows both side by side, and so does this.
+
+`no_log` still wins at every level — see [Security](../security.md).
+
+**Accepted but adding nothing beyond `-v`:** the higher levels. Real's
+`-vv` prefixes `task path: <file>:<line>`, which needs source positions
+`playbook`'s parser does not keep, and `-vvv` prints a version banner
+and connection tracing. The flag's own help text says so. Refusing `-vv`
+outright would break every habitual invocation, which is worse than
+accepting it with less output.
+
+### Exit statuses
+
+Real distinguishes cases this port used to collapse into one. Measured
+against ansible-core 2.21.4, case by case:
+
+| what happened | real | this port, before v0.128.0 |
+|---|---|---|
+| success | 0 | 0 |
+| a task failed | 2 | 2 |
+| a host was unreachable | 4 | 4 |
+| a YAML or structural error | 4 | 4 |
+| a module name that cannot be resolved | 4 | **2** |
+| encrypted content, no or wrong vault password | 1 | **4** |
+| the playbook file is missing | 1 | 1 |
+
+A vault failure is not a parse error: the file parsed fine, it just
+could not be read, and a caller needs to tell *"I cannot read this"*
+from *"this is not a playbook"*. The classification matches `vault`'s
+sentinels (`ErrNoPassword`, `ErrHMACMismatch`) rather than message text.
+
+An unresolvable module name exits 4 under `--syntax-check` and
+`--list-tasks` too, which is what real does.
+
 ## ansible-inventory
 
 `--list`, `--host` and `--graph`, with `--export`, `--vars`, `--limit` and

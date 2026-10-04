@@ -227,6 +227,38 @@ func main() {
 }
 ```
 
+## `command` expands variables; it still does not glob
+
+Real's `command` runs no shell, yet `command: echo $HOME *` prints the
+home directory and a **literal asterisk**: `run_command` applies
+`expanduser(expandvars(x))` to each argv element, which `command.py`
+exposes as `expand_argument_vars` (default true since 2.16). This port
+expanded neither until `modules` v0.81.0.
+
+The interesting part is *where* it expands. Real's module runs on the
+target, so `$HOME` is the target's; a module here runs on the
+**controller**, and substituting the controller's home into a command
+meant for another machine is a wrong answer that looks right whenever
+both are the same user.
+
+So the expansion is delegated to the target's shell, and the port
+decides only which spans may be delegated. The only unquoted text it
+ever emits is
+
+```
+"${NAME-\$NAME}"
+```
+
+for a name matching `[A-Za-z_][A-Za-z0-9_]*`. Everything else stays
+quoted, so no glob, no `$(...)`, no backtick and no word split can reach
+the shell from an argument — and the `-` default is what leaves an
+**unset** name as the literal `$NAME`, which is real's documented
+behaviour and the opposite of a bare `"$NAME"`.
+
+Named rather than papered over: real's `expanduser` consults the
+password database when `HOME` is unset, where this falls back to a
+literal `~`.
+
 ## What is not implemented
 
 Every architectural substitution and disclosed gap is documented in the
