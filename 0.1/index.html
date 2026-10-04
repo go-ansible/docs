@@ -6,7 +6,7 @@
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
       
-        <meta name="description" content="A pure-Go (CGO=0), functional-parity port of Ansible: Vault-compatible encryption, inventory parsing, variable precedence, Jinja2-compatible templating, fact gathering, 561 modules, the playbook engine, and all 8 ansible-* CLI binaries.">
+        <meta name="description" content="A pure-Go (CGO=0), functional-parity port of Ansible: Vault-compatible encryption, inventory parsing, variable precedence, Jinja2-compatible templating, fact gathering, 566 modules, the playbook engine, and all 8 ansible-* CLI binaries.">
       
       
       
@@ -354,6 +354,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#security" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Security
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#repositories" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -606,7 +617,7 @@
   <span class="md-ellipsis">
     
   
-    modules — 561-module execution library
+    modules — 566-module execution library
   
 
     
@@ -679,6 +690,33 @@
           </ul>
         </nav>
       
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="security/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Security
+  
+
+    
+  </span>
+  
+  
+
+      </a>
     </li>
   
 
@@ -779,6 +817,17 @@
     <span class="md-ellipsis">
       
         Why pure Go
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#security" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Security
       
     </span>
   </a>
@@ -889,6 +938,14 @@ re-checked against the code rather than assumed.</p>
   reads" — verified against a real installed <code>ansible-core</code>, not just internal
   review.</li>
 </ul>
+<h2 id="security">Security<a class="headerlink" href="#security" title="Permanent link">&para;</a></h2>
+<p>A port that runs shell commands on remote targets has two defect classes to
+answer for: a playbook value changing a command's <em>structure</em>, and a credential
+landing where <code>ps</code> can read it. <a href="security/">Security</a> states the control for
+each, what an audit of the module library found (one command injection, one
+credential in <code>argv</code>), the <code>ps</code>-visibility boundary as <strong>measured</strong> rather than
+reasoned about, and the one exposure that remains — named, with why it cannot be
+closed without cgo.</p>
 <h2 id="repositories">Repositories<a class="headerlink" href="#repositories" title="Permanent link">&para;</a></h2>
 <table>
 <thead>

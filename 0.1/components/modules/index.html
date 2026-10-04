@@ -6,7 +6,7 @@
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
       
-        <meta name="description" content="A pure-Go (CGO=0), functional-parity port of Ansible: Vault-compatible encryption, inventory parsing, variable precedence, Jinja2-compatible templating, fact gathering, 561 modules, the playbook engine, and all 8 ansible-* CLI binaries.">
+        <meta name="description" content="A pure-Go (CGO=0), functional-parity port of Ansible: Vault-compatible encryption, inventory parsing, variable precedence, Jinja2-compatible templating, fact gathering, 566 modules, the playbook engine, and all 8 ansible-* CLI binaries.">
       
       
       
@@ -27,7 +27,7 @@
     
     
       
-        <title>modules — 561-module execution library - go-ansible docs</title>
+        <title>modules — 566-module execution library - go-ansible docs</title>
       
     
     
@@ -117,7 +117,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              modules — 561-module execution library
+              modules — 566-module execution library
             
           </span>
         </div>
@@ -539,7 +539,7 @@
   <span class="md-ellipsis">
     
   
-    modules — 561-module execution library
+    modules — 566-module execution library
   
 
     
@@ -557,7 +557,7 @@
   <span class="md-ellipsis">
     
   
-    modules — 561-module execution library
+    modules — 566-module execution library
   
 
     
@@ -711,6 +711,33 @@
           </ul>
         </nav>
       
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../security/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Security
+  
+
+    
+  </span>
+  
+  
+
+      </a>
     </li>
   
 
@@ -1151,7 +1178,9 @@ module's own Go doc comment, not hidden — <code>ansible-doc &lt;module&gt;</co
 real Python implementation calls a SaaS/cloud API directly instead shells out
 to that platform's own official CLI when one exists (<code>gh</code>/<code>glab</code>/<code>scw</code>/
 <code>aliyun</code>/<code>ilorest</code>/... — never a secret in argv, always an environment
-variable or a pre-existing authenticated session); a module real Ansible runs
+variable or a pre-existing authenticated session; see
+<a href="../../security/">Security</a>, which records where that rule was <em>broken</em> and
+what the audit that found it measured); a module real Ansible runs
 <em>from the controller</em> against the target's own SSH endpoint directly
 (<code>ansible.posix.synchronize</code>) fails loud rather than silently approximating,
 since this port's <code>Connection</code> abstraction has no way to expose a target's

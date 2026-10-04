@@ -10,11 +10,13 @@
       
       
       
-        <link rel="canonical" href="https://go-ansible.github.io/docs/0.1/contributing/">
+        <link rel="canonical" href="https://go-ansible.github.io/docs/0.1/security/">
       
       
-        <link rel="prev" href="../roadmap/">
+        <link rel="prev" href="../components/cli/">
       
+      
+        <link rel="next" href="../roadmap/">
       
       
         
@@ -25,7 +27,7 @@
     
     
       
-        <title>Contributing - go-ansible docs</title>
+        <title>Security - go-ansible docs</title>
       
     
     
@@ -76,7 +78,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#contributing" class="md-skip">
+        <a href="#security" class="md-skip">
           Skip to content
         </a>
       
@@ -115,7 +117,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Contributing
+              Security
             
           </span>
         </div>
@@ -607,10 +609,37 @@
       
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../security/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Security
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -626,6 +655,126 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#injection-quoting-is-the-control-not-care" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Injection: quoting is the control, not care
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Injection: quoting is the control, not care">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#what-the-audit-found" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What the audit found
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#exposure-where-a-credential-may-and-may-not-go" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Exposure: where a credential may and may not go
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Exposure: where a credential may and may not go">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#the-boundary-measured" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The boundary, measured
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#what-the-audit-found_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What the audit found
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#what-remains-named-rather-than-smoothed-over" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What remains, named rather than smoothed over
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#reporting" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Reporting
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#how-these-were-found" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How these were found
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -661,37 +810,10 @@
       
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Contributing
-  
-
-    
-  </span>
-  
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../contributing/" class="md-nav__link">
         
   
   
@@ -707,59 +829,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#standards" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Standards
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#working-on-the-docs" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Working on the docs
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#working-on-a-library" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Working on a library
-      
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -791,10 +860,77 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#standards" class="md-nav__link">
+  <a href="#injection-quoting-is-the-control-not-care" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Standards
+        Injection: quoting is the control, not care
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Injection: quoting is the control, not care">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#what-the-audit-found" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What the audit found
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#exposure-where-a-credential-may-and-may-not-go" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Exposure: where a credential may and may not go
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Exposure: where a credential may and may not go">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#the-boundary-measured" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The boundary, measured
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#what-the-audit-found_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What the audit found
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#what-remains-named-rather-than-smoothed-over" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What remains, named rather than smoothed over
       
     </span>
   </a>
@@ -802,10 +938,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#working-on-the-docs" class="md-nav__link">
+  <a href="#reporting" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Working on the docs
+        Reporting
       
     </span>
   </a>
@@ -813,10 +949,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#working-on-a-library" class="md-nav__link">
+  <a href="#how-these-were-found" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Working on a library
+        How these were found
       
     </span>
   </a>
@@ -840,47 +976,125 @@
 
 
 
-<h1 id="contributing">Contributing<a class="headerlink" href="#contributing" title="Permanent link">&para;</a></h1>
-<h2 id="standards">Standards<a class="headerlink" href="#standards" title="Permanent link">&para;</a></h2>
+<h1 id="security">Security<a class="headerlink" href="#security" title="Permanent link">&para;</a></h1>
+<p>This port executes shell commands on remote targets, so a value that reaches a
+command string is a value that reaches a shell. Two kinds of defect follow from
+that, and this page states what is done about each, what was found when it was
+audited, and what remains unsolved and why.</p>
 <ul>
-<li><strong>Pure Go, <code>CGO_ENABLED=0</code>.</strong> No dependency on a C library or an external
-  interpreter, anywhere in the module graph.</li>
-<li><strong>Compatibility is verified against the real thing.</strong> A change to <code>vault</code>'s
-  wire format, <code>inventory</code>'s parsing, <code>vars</code>'s precedence order, or
-  <code>template</code>'s rendering rules should be checked against <code>ansible-core</code>'s
-  actual behavior — the reference implementation, not this project's own
-  prior code, is the source of truth for what "correct" means.</li>
-<li><strong>CI is the gate.</strong> Every one of <code>vault</code>/<code>inventory</code>/<code>vars</code>/<code>template</code> runs
-  <code>go vet</code>, <code>go build</code>, and <code>go test</code> on Linux and macOS, plus native
-  amd64/arm64 and a QEMU-emulated riscv64/loong64/ppc64le/s390x matrix, on
-  every pull request. A change that doesn't pass CI doesn't merge.</li>
+<li><strong>Injection</strong> — a playbook-supplied value changing the <em>structure</em> of the
+  command rather than being an argument to it.</li>
+<li><strong>Exposure</strong> — a credential ending up somewhere another local user can read
+  it, most often a process's own <code>argv</code>, which <code>ps</code> prints to anyone.</li>
 </ul>
-<h2 id="working-on-the-docs">Working on the docs<a class="headerlink" href="#working-on-the-docs" title="Permanent link">&para;</a></h2>
-<p>This site is built with <a href="https://squidfunk.github.io/mkdocs-material/">MkDocs Material</a>
-and versioned with <a href="https://github.com/jimporter/mike">mike</a>. Locally:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>pip<span class="w"> </span>install<span class="w"> </span>-r<span class="w"> </span>requirements.txt
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>mkdocs<span class="w"> </span>serve
+<h2 id="injection-quoting-is-the-control-not-care">Injection: quoting is the control, not care<a class="headerlink" href="#injection-quoting-is-the-control-not-care" title="Permanent link">&para;</a></h2>
+<p>Every value interpolated into a command string goes through this package's
+<code>shellQuote</code> — single quotes with <code>'\''</code> for an embedded quote, which no shell
+metacharacter escapes. There are <strong>1 715</strong> such call sites across the module
+library. The rule is mechanical on purpose: <em>being careful</em> does not scale to
+608 files, and a missed site is indistinguishable from a deliberate one until
+somebody looks.</p>
+<h3 id="what-the-audit-found">What the audit found<a class="headerlink" href="#what-the-audit-found" title="Permanent link">&para;</a></h3>
+<p><code>async_status</code>'s <code>jid</code> arrives from a playbook argument
+(<code>async_status: {jid: ...}</code>) and was interpolated <strong>unquoted</strong> — including into
+an <code>rm -rf</code>. A <code>jid</code> of <code>x; touch /tmp/pwned ;</code> ran that <code>touch</code>. Both
+<code>AsyncCleanup</code> and <code>AsyncCheck</code> were affected. Fixed in
+<a href="https://github.com/go-ansible/modules/releases/tag/v0.80.0"><code>modules</code> v0.80.0</a>;
+a test in that package demonstrates the hole with a harmless payload inside
+<code>t.TempDir()</code> and fails if it reopens.</p>
+<p><code>validAsyncJID</code> — digits and a single dot, the shape this package itself
+generates — sits behind the quoting as defence in depth, not instead of it.</p>
+<p>Its first version returned an <strong>error</strong> for a malformed <code>jid</code>, and that broke
+parity: real Ansible accepts <code>jid: nope</code> and reports its ordinary not-found
+result (<code>msg: "could not find job"</code>, <code>started</code> and <code>finished</code> true). An existing
+test caught it. A malformed <code>jid</code> is now mapped to exactly that answer — real's
+own behaviour, and a value that never reaches a shell. <strong>A security fix that
+changes what a caller sees is not finished</strong>, because the next person's workaround
+is to turn it off.</p>
+<h2 id="exposure-where-a-credential-may-and-may-not-go">Exposure: where a credential may and may not go<a class="headerlink" href="#exposure-where-a-credential-may-and-may-not-go" title="Permanent link">&para;</a></h2>
+<p>A module that needs a secret at the target end puts it in the <strong>environment</strong>,
+through <a href="https://github.com/go-remoteexec/transport"><code>transport</code></a>'s
+<code>ExecWithEnv</code> — which is what real Ansible does, via <code>run_command</code>'s
+<code>environ_update</code>. It is an optional interface (<code>EnvExecer</code>) rather than a
+<code>Connection</code> method because SSH genuinely cannot set arbitrary variables:
+<code>sshd</code>'s <code>AcceptEnv</code> decides, and it defaults to almost nothing. Where the
+environment is unavailable the call reports which path it took rather than
+failing silently.</p>
+<h3 id="the-boundary-measured">The boundary, measured<a class="headerlink" href="#the-boundary-measured" title="Permanent link">&para;</a></h3>
+<p>An environment assignment written as a command prefix is <strong>not</strong> always visible.
+Which shape it is decides it, and both were measured rather than reasoned about:</p>
+<table>
+<thead>
+<tr>
+<th>command</th>
+<th>prefix visible in <code>ps</code>?</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>sh -c "VAR=x sleep 4"</code></td>
+<td><strong>no</strong> — the shell <code>exec</code>s into the command and nothing keeps that <code>argv</code></td>
+</tr>
+<tr>
+<td><code>sh -c "VAR=x sleep 4; true"</code></td>
+<td><strong>yes</strong> — a second statement means the shell must stay alive, holding it</td>
+</tr>
+</tbody>
+</table>
+<p>An earlier probe reported the opposite, because its canary was a fixed string
+that the shell which had <em>written the probe file</em> still carried in its own
+<code>argv</code>. The canary is generated at run time now, and the test that asserts the
+invisible case carries a <strong>mandatory positive control</strong> using the visible shape:
+if the control cannot fire, the test fails rather than passing for free.</p>
+<h3 id="what-the-audit-found_1">What the audit found<a class="headerlink" href="#what-the-audit-found_1" title="Permanent link">&para;</a></h3>
+<p>24 modules build a <code>CREDENTIAL=</code> assignment into a command string. 23 are the
+lone-command shape, which is safe. <strong><code>keyring</code> was not</strong>: it built</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>KEYRING_PASSWORD=&lt;secret&gt;; USER_PASSWORD=&lt;secret&gt;; &lt;dispatch&gt;
 </code></pre></div>
-<p>opens a live-reloading preview at <code>http://127.0.0.1:8000/</code>. <code>mkdocs build
---strict</code> is what CI runs — a broken internal link or an unknown config key
-fails the build rather than logging a warning nobody reads, so run it before
-opening a pull request.</p>
-<p>Pushes to <code>main</code> publish automatically via <code>.github/workflows/docs.yml</code>,
-which runs <code>mike deploy --push --update-aliases 0.1 latest</code> — no need to run
-<code>mike</code> by hand.</p>
-<h2 id="working-on-a-library">Working on a library<a class="headerlink" href="#working-on-a-library" title="Permanent link">&para;</a></h2>
-<p>Each component (<code>vault</code>, <code>inventory</code>, <code>vars</code>, <code>template</code>) is its own
-repository with its own <code>go.mod</code>, so it can be developed and tested in
-isolation:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/go-ansible/&lt;component&gt;
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="nb">cd</span><span class="w"> </span>&lt;component&gt;
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="nv">CGO_ENABLED</span><span class="o">=</span><span class="m">0</span><span class="w"> </span>go<span class="w"> </span><span class="nb">test</span><span class="w"> </span>./...
-</code></pre></div>
-<p>Pull requests are welcome. Since compatibility with <code>ansible-core</code>'s real
-behavior is the bar, a test that demonstrates the reference behavior — a
-transcript from <code>ansible-vault</code>, an inventory file plus <code>ansible-inventory
---list</code> output, and so on — is the most useful thing to include alongside a
-fix.</p>
+<p>— two statements, so the shell held both passwords for the command's whole
+lifetime. Fixed in <code>modules</code> v0.80.0 and
+<a href="https://github.com/go-ansible/modules/releases/tag/v0.80.1">v0.80.1</a>.</p>
+<p>Two things that fix taught, both kept here because they generalise:</p>
+<ul>
+<li><code>keyringDispatch</code> builds <strong>both</strong> platform branches into one shell string, so
+  a literal password in the macOS branch was on the command line <strong>even on
+  Linux</strong>, where that branch never runs. A dispatcher's unused arm is still
+  argv.</li>
+<li>v0.80.0 fixed two of the module's three call sites and its regression test
+  passed, because the test drove <code>state: present</code> only — and <code>state: absent</code> is
+  the only state that reaches the third. The test is now a table over every
+  state the module accepts, and each case carries a <strong>witness</strong>: the command its
+  own state must reach. Without one, a case that returns early passes by finding
+  no secret in no commands at all. What surfaced the gap was the detector that
+  found the original exposure still naming <code>keyring.go</code> after the fix merged.</li>
+</ul>
+<h2 id="what-remains-named-rather-than-smoothed-over">What remains, named rather than smoothed over<a class="headerlink" href="#what-remains-named-rather-than-smoothed-over" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong><code>security</code>'s own <code>argv</code> on macOS.</strong> <code>keyring</code> on macOS runs
+  <code>security add-generic-password … -w "$USER_PASSWORD"</code>, and the value is in
+  that short-lived process's <code>argv</code> while it runs. There is no stdin form —
+  measured: <code>printf %s pw | security add-generic-password … -w</code> with no value
+  stores nothing — and the Keychain API needs cgo, which this port does not use.
+  The Linux branch does not have this: <code>secret-tool</code> reads stdin.</li>
+<li><strong>Modules that shell out to a platform's own CLI</strong> pass credentials through an
+  environment variable or a pre-existing authenticated session, never <code>argv</code> —
+  and where a vendor tool offers only a file (DMTF's <code>redfishtool</code> and its <code>-c
+  cfgFile</code>), the file is used.</li>
+<li><strong><code>ansible.posix.synchronize</code></strong> fails loudly instead of approximating: real
+  Ansible runs it <em>from the controller</em> against the target's own SSH endpoint,
+  and this port's <code>Connection</code> abstraction deliberately gives a module no way to
+  read a target's host, port or credentials.</li>
+</ul>
+<h2 id="reporting">Reporting<a class="headerlink" href="#reporting" title="Permanent link">&para;</a></h2>
+<p>Open an issue on the repository the defect is in. There is no embargo process
+and no private channel; this is a parity port maintained in the open, and a
+proof-of-concept in an issue is more useful than a description.</p>
+<h2 id="how-these-were-found">How these were found<a class="headerlink" href="#how-these-were-found" title="Permanent link">&para;</a></h2>
+<p>A detector per class, run over the whole library, and <strong>each one shown capable
+of reporting a violation before its zero was believed</strong> — the statement-aware
+credential-prefix check was given the pre-fix <code>keyring</code> line and fired on it,
+and the <code>ps</code> test's control uses the shape known to be visible. A probe that
+reports "nothing found" is worth nothing until it has found something.</p>
 
 
 
