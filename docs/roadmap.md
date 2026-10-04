@@ -11,8 +11,9 @@ on every push and pull request:
   ancestry, host-pattern matching
 - [`vars`](components/vars.md) — the variable precedence ladder
 - [`template`](components/template.md) — Jinja2-compatible templating with
-  Ansible's filter and test library, plus 17 lookup plugins reachable as
-  the real `lookup()`/`query()`/`q()` Jinja globals
+  Ansible's filter library and 30 of its tests (the regex family,
+  truthiness, set theory, result status), plus 17 lookup plugins
+  reachable as the real `lookup()`/`query()`/`q()` Jinja globals
 - [`facts`](components/facts.md) — fact gathering, the `setup` module
   equivalent
 - [`modules`](components/modules.md) — the module execution protocol plus
