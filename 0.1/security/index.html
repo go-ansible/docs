@@ -739,6 +739,39 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#disclosure-no_log-has-to-cover-every-output-path" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Disclosure: no_log has to cover every output path
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#a-secret-belongs-in-a-file-not-a-variable" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        A secret belongs in a file, not a variable
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#partial-application-a-refused-run-that-ran-anyway" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Partial application: a refused run that ran anyway
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#what-remains-named-rather-than-smoothed-over" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -927,6 +960,39 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#disclosure-no_log-has-to-cover-every-output-path" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Disclosure: no_log has to cover every output path
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#a-secret-belongs-in-a-file-not-a-variable" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        A secret belongs in a file, not a variable
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#partial-application-a-refused-run-that-ran-anyway" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Partial application: a refused run that ran anyway
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#what-remains-named-rather-than-smoothed-over" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -986,6 +1052,14 @@ audited, and what remains unsolved and why.</p>
   command rather than being an argument to it.</li>
 <li><strong>Exposure</strong> — a credential ending up somewhere another local user can read
   it, most often a process's own <code>argv</code>, which <code>ps</code> prints to anyone.</li>
+</ul>
+<p>Two more came out of auditing the rest of the stack rather than the module
+library, and they are on this page because they have the same consequence:</p>
+<ul>
+<li><strong>Disclosure</strong> — a secret the playbook author explicitly asked to hide
+  (<code>no_log</code>) reaching the screen anyway, through an output path nobody checked.</li>
+<li><strong>Partial application</strong> — a run that was going to be refused doing part of its
+  work first. Not a secret at all; it changes machines, which is worse.</li>
 </ul>
 <h2 id="injection-quoting-is-the-control-not-care">Injection: quoting is the control, not care<a class="headerlink" href="#injection-quoting-is-the-control-not-care" title="Permanent link">&para;</a></h2>
 <p>Every value interpolated into a command string goes through this package's
@@ -1068,6 +1142,78 @@ lifetime. Fixed in <code>modules</code> v0.80.0 and
   no secret in no commands at all. What surfaced the gap was the detector that
   found the original exposure still naming <code>keyring.go</code> after the fix merged.</li>
 </ul>
+<h2 id="disclosure-no_log-has-to-cover-every-output-path">Disclosure: <code>no_log</code> has to cover every output path<a class="headerlink" href="#disclosure-no_log-has-to-cover-every-output-path" title="Permanent link">&para;</a></h2>
+<p><code>no_log: true</code> is the author saying <em>this task's result is a secret</em>. The
+default callback honours it in the printed result, the verbose dump and every
+item label — and <strong>did not</strong> honour it in the diff.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">copy</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">content</span><span class="p">:</span><span class="w"> </span><span class="s">"{{</span><span class="nv"> </span><span class="s">db_password</span><span class="nv"> </span><span class="s">}}"</span><span class="p p-Indicator">,</span><span class="nt"> dest</span><span class="p">:</span><span class="w"> </span><span class="nv">/etc/app.conf</span><span class="p p-Indicator">}</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w">  </span><span class="nt">no_log</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+</code></pre></div>
+<p>Under <code>--diff</code> — the one flag a reader adds when they want to see what
+changed — that printed the password in full. Fixed in
+<a href="https://github.com/go-ansible/playbook/releases/tag/v0.123.0"><code>playbook</code> v0.123.0</a>.</p>
+<p>Real's mechanism is worth stating, because it explains why real's own
+<code>v2_on_file_diff</code> has no <code>no_log</code> branch to copy: <code>as_result_dict()</code> <strong>replaces</strong>
+a <code>no_log</code> result with the keys in its <code>PRESERVE</code> set — <code>_ansible_no_log</code>,
+<code>attempts</code>, <code>changed</code>, <code>deprecations</code>, <code>exception</code>, <code>retries</code>, <code>warnings</code> — plus
+<code>censored</code>. <code>diff</code> is not among them, so there is nothing left to print. A
+struct-based port has to do by checking what real does by construction, which is
+exactly the kind of difference that leaves one path uncovered.</p>
+<p><strong>Why the existing test did not catch it:</strong> it covered ok, changed, skipped and
+failed — four output paths, and <code>--diff</code> is a fifth. Under the neuter it stays
+<strong>green</strong> while the new test fails, which is the proof it could never have seen
+that path. The same shape as the <code>keyring</code> gap above. Also measured, so the next
+reader need not wonder: real does <strong>not</strong> reveal a <code>no_log</code> result at <code>-vvv</code>.</p>
+<h2 id="a-secret-belongs-in-a-file-not-a-variable">A secret belongs in a file, not a variable<a class="headerlink" href="#a-secret-belongs-in-a-file-not-a-variable" title="Permanent link">&para;</a></h2>
+<p>This port honoured <code>ANSIBLE_VAULT_PASSWORD</code>, carrying the vault password
+<strong>itself</strong>. Real Ansible has no such variable — only
+<code>ANSIBLE_VAULT_PASSWORD_FILE</code>, which names a <em>path</em> — and that asymmetry is the
+whole point: an environment variable is inherited by every child process, which
+here means every local command a module runs. A file has an owner and a mode.</p>
+<p>It is <strong>refused</strong> now, with an error naming its replacement, rather than ignored:
+ignoring it would send a caller who relied on it to the password <em>prompt</em>, which
+in a CI job with no terminal reads EOF and reports something unrelated. The error
+does not repeat the secret.</p>
+<p>Real's own variable, and <code>[defaults] vault_password_file</code> in <code>ansible.cfg</code>, were
+<strong>not supported at all</strong> before this — so someone doing the correct thing got no
+password. Both work as of
+<a href="https://github.com/go-ansible/cli/releases/tag/v0.127.0"><code>cli</code> v0.127.0</a>.</p>
+<h2 id="partial-application-a-refused-run-that-ran-anyway">Partial application: a refused run that ran anyway<a class="headerlink" href="#partial-application-a-refused-run-that-ran-anyway" title="Permanent link">&para;</a></h2>
+<p>Not a secret, and the most consequential finding on this page. Real refuses a
+playbook naming a module it cannot resolve and <strong>touches no host</strong>. This port ran
+every task up to the bad one:</p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>exit</th>
+<th>first task's <code>touch</code> file</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>real</td>
+<td>4</td>
+<td><strong>not created</strong></td>
+</tr>
+<tr>
+<td>this port, before</td>
+<td>2</td>
+<td><strong>created</strong></td>
+</tr>
+</tbody>
+</table>
+<p>So a <strong>typo in task 5 applied tasks 1 through 4 for real</strong>, then failed. Fixed in
+<a href="https://github.com/go-ansible/playbook/releases/tag/v0.124.0"><code>playbook</code> v0.124.0</a>,
+which refuses before the first play: a plain task, inside <code>block</code>/<code>rescue</code>/
+<code>always</code>, in a handler, a bad collection prefix, and a role's tasks. A file pulled
+in at run time by <code>include_tasks</code> is still only checked where it runs — real
+refuses those too, and that gap is named rather than papered over. A templated
+module name is left alone, because real accepts it.</p>
+<p>The first probe for this reported the opposite, and how is worth keeping: it
+looked for the first task's output in real's stdout and <strong>found it</strong>, because
+real's error message quotes the offending source lines — including the
+neighbouring one. A file witness is what settled it.</p>
 <h2 id="what-remains-named-rather-than-smoothed-over">What remains, named rather than smoothed over<a class="headerlink" href="#what-remains-named-rather-than-smoothed-over" title="Permanent link">&para;</a></h2>
 <ul>
 <li><strong><code>security</code>'s own <code>argv</code> on macOS.</strong> <code>keyring</code> on macOS runs
@@ -1090,11 +1236,24 @@ lifetime. Fixed in <code>modules</code> v0.80.0 and
 and no private channel; this is a parity port maintained in the open, and a
 proof-of-concept in an issue is more useful than a description.</p>
 <h2 id="how-these-were-found">How these were found<a class="headerlink" href="#how-these-were-found" title="Permanent link">&para;</a></h2>
-<p>A detector per class, run over the whole library, and <strong>each one shown capable
-of reporting a violation before its zero was believed</strong> — the statement-aware
-credential-prefix check was given the pre-fix <code>keyring</code> line and fired on it,
-and the <code>ps</code> test's control uses the shape known to be visible. A probe that
+<p>A detector per class, run over the whole stack, and <strong>each one shown capable of
+reporting a violation before its zero was believed</strong> — the statement-aware
+credential-prefix check was given the pre-fix <code>keyring</code> line and fired on it;
+the <code>ps</code> test's control uses the shape known to be visible; the <code>no_log</code> test's
+control is the same task <em>without</em> <code>no_log</code>, and it is fatal, because the secret
+being absent is equally satisfied by a diff that never rendered. A probe that
 reports "nothing found" is worth nothing until it has found something.</p>
+<p>Three of the findings on this page were measured <strong>against the real binary
+running beside this one</strong>, which is the only way some of them could have been
+seen at all: that real strips <code>diff</code> from a <code>no_log</code> result, that real ignores
+<code>ANSIBLE_VAULT_PASSWORD</code> and reads <code>ANSIBLE_VAULT_PASSWORD_FILE</code>, and that real
+refuses an unresolvable module before touching a host. None of the three is
+documented behaviour anyone would think to look up.</p>
+<p>And two of the probes were <strong>wrong the first time</strong>, in the same way: they read
+something other than what they meant to. One matched a canary in the shell that
+had <em>written the probe file</em>; one matched a source line real's error message
+<em>quoted back</em>. Both were settled by a witness that an output stream cannot
+fabricate — a runtime-generated value, and a file on disk.</p>
 
 
 

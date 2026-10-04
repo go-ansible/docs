@@ -942,10 +942,13 @@ re-checked against the code rather than assumed.</p>
 <p>A port that runs shell commands on remote targets has two defect classes to
 answer for: a playbook value changing a command's <em>structure</em>, and a credential
 landing where <code>ps</code> can read it. <a href="security/">Security</a> states the control for
-each, what an audit of the module library found (one command injection, one
-credential in <code>argv</code>), the <code>ps</code>-visibility boundary as <strong>measured</strong> rather than
-reasoned about, and the one exposure that remains — named, with why it cannot be
-closed without cgo.</p>
+each, and what an audit of the whole stack found: one command injection, one
+credential in <code>argv</code>, a <code>no_log</code> secret printed under <code>--diff</code>, a vault password
+honoured from an environment variable real has no equivalent of — and one that is
+not about secrets at all, a playbook real would refuse outright running its first
+four tasks for real before failing on the fifth. It also records the
+<code>ps</code>-visibility boundary as <strong>measured</strong> rather than reasoned about, and the one
+exposure that remains, named, with why it cannot be closed without cgo.</p>
 <h2 id="repositories">Repositories<a class="headerlink" href="#repositories" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
