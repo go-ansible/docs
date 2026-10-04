@@ -363,8 +363,23 @@ confirmed load-bearing by breaking it, failing 19, 217 and all cases.
 
 Running the same playbook through this port and through real
 ansible-core produces identical transcripts, both with and without
-`--check`, apart from the banner asterisk padding this port does not
-emit.
+`--check` — and, since `playbook` v0.126.0, including the banner star
+padding. That caveat used to live in this paragraph: every banner came
+out as the bare message where real pads it to 80 columns, so **every**
+transcript differed on its most-seen line.
+
+What let it sit there is worth more than the fix. The banner expectations
+in this package's own tests were **hand-written** (`"\nPLAY [all]\n"`),
+not captured from a real run, so they agreed with the port rather than
+with real. One test now pins two of real's lines verbatim and asserts
+each is 80 characters before using them; the rest build their
+expectation from a helper, which cannot catch a wrong formula on its own.
+
+Real's rule, from `Display.banner`: the message, one space, then stars
+out to `max(79, tty_size - 1)` columns, never fewer than three. A run
+whose stdout is not a terminal gets exactly 79 — so a pipe, a redirect
+or a CI job sees 80-character lines, and `COLUMNS=200` does not change
+it, because real reads the ioctl rather than the environment.
 
 ### One disclosed divergence
 
