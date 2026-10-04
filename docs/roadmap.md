@@ -11,7 +11,8 @@ on every push and pull request:
   ancestry, host-pattern matching
 - [`vars`](components/vars.md) — the variable precedence ladder
 - [`template`](components/template.md) — Jinja2-compatible templating with
-  Ansible's filter and test library
+  Ansible's filter and test library, plus 17 lookup plugins reachable as
+  the real `lookup()`/`query()`/`q()` Jinja globals
 - [`facts`](components/facts.md) — fact gathering, the `setup` module
   equivalent
 - [`modules`](components/modules.md) — the module execution protocol plus
@@ -23,8 +24,10 @@ on every push and pull request:
   scoping composes to any depth), both the `linear` and `free` execution
   strategies, `until`/`retries`/`delay`, `run_once`, a real `Forks`
   concurrency cap, `vars_prompt`, `async`/`poll` (for `command`/`shell`),
-  fully-qualified collection names, dynamic inventory scripts, and
-  `ansible.cfg` file support
+  fully-qualified collection names, dynamic inventory scripts,
+  `ansible.cfg` file support, `become_exe`/`become_flags`, a swappable
+  `Callback` interface with the default stdout callback implemented
+  against it, and `local`/`ssh`/`winrm` connections
 - [`cli`](components/cli.md) — all 8 real `ansible-*` binaries, plus a
   multi-arch `FROM scratch` OCI image on every version tag
 
@@ -73,10 +76,17 @@ developed further and is not part of the current architecture.
 - **Real Ansible's structured module documentation** (`DOCUMENTATION`/
   `EXAMPLES`/`RETURN` YAML) — `ansible-doc` here prints this port's own Go
   doc comments instead, real content in a different shape.
-- **The namespace/collection metadata system**, real
+- **The namespace/collection metadata system** and real
   `ansible-galaxy collection install` (this port's `ansible-galaxy` only
-  clones a role from a git URL — no galaxy.ansible.com API), and
-  lookup/callback plugins.
+  clones a role from a git URL — no galaxy.ansible.com API).
+- **The `ansible.windows` module family.** `ansible_connection: winrm`
+  reaches a Windows target over WS-Management, using the real plugin's
+  own `ansible_winrm_*` variables, but the modules that would run there
+  are not ported: 326 of the 566 compose POSIX shell. The transport half
+  is done and the module half is not, which is why a Windows target is
+  listed here rather than under Shipped. (A Windows *control node* is
+  shipped: all nine binaries build for `windows/amd64` and
+  `windows/arm64`, which real ansible-core does not support at all.)
 - **Active kill-on-timeout for `async`/`poll`.** An overrunning backgrounded
   job is detected but not killed — real Ansible's `async_wrapper.py` sends
   `killpg` to the whole process group, and there is no portable POSIX
