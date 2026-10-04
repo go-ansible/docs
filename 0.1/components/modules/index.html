@@ -978,9 +978,26 @@ five divergences in modules a value-only pass had called identical.</p>
 <td>an empty <code>msg</code></td>
 <td>no <code>msg</code> at all</td>
 </tr>
+<tr>
+<td><code>set_fact</code></td>
+<td><code>msg: "facts set"</code></td>
+<td>no <code>msg</code> — a sentence real never emits</td>
+</tr>
+<tr>
+<td><code>pause</code></td>
+<td>3 keys</td>
+<td><strong>12</strong> keys: <code>rc</code>, <code>echo</code>, <code>delta</code>, <code>start</code>, <code>stop</code>, <code>user_input</code>, <code>stdout</code>(+<code>_lines</code>), <code>stderr</code>(+<code>_lines</code>)</td>
+</tr>
 </tbody>
 </table>
-<p>Two of those needed a measurement rather than a judgement. Real's
+<p><code>pause</code> carries a distinction only a measurement shows: <strong><code>delta</code> is
+the int seconds while <code>stdout</code> carries the real elapsed to two
+decimals</strong> ("Paused for 1.02 seconds" against <code>delta: 1</code>). They are not
+the same number, so reusing one for both would be wrong in whichever
+place it was reused. Its <code>stdout_lines</code>/<code>stderr_lines</code> needed no code
+at all — <code>finalizeOutput</code> derives them from <code>stdout</code>/<code>stderr</code> for every
+module, so setting <code>stdout</code> produced all four keys.</p>
+<p>Three of those needed a measurement rather than a judgement. Real's
 <code>template</code> reports <strong>exactly</strong> the key set real's <code>copy</code> reports, so
 the builder here is <code>copy</code>'s own rather than a second implementation.
 And <code>addPathInfo</code> <strong>overwrites</strong> <code>state</code>, so <code>known_hosts</code> reports the
