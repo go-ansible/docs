@@ -1030,13 +1030,22 @@ five divergences in modules a value-only pass had called identical.</p>
 </tr>
 </tbody>
 </table>
-<p>One is measured and <strong>deliberately not fixed</strong>: <code>get_url</code> reports twelve
-keys where real reports eighteen, and three of the missing ones (<code>src</code>,
-<code>checksum_dest</code>, <code>checksum_src</code>) only have honest values if the download
-goes through a <strong>staging file</strong> the way real's does — real downloads to a
-temp and moves it, this writes straight to <code>dest</code>. Inventing them would
-be worse than their absence, so it waits for the change to how the
-download runs.</p>
+<p>| <code>get_url</code> | 12 keys, skipped blindly when <code>dest</code> existed | <strong>18</strong> on a download, <strong>14</strong> on a 304 |</p>
+<p><code>get_url</code> was the one deliberately left for its own change, and it got
+it. The download now goes through a <strong>staging file</strong> and is moved into
+place, which is what makes <code>src</code> nameable and <code>checksum_dest</code>
+meaningful. Four things the measurement settled:</p>
+<ul>
+<li>a <strong>second run is a 304</strong>, not a skip — real sends a conditional
+  request (<code>If-Modified-Since</code> from the destination's mtime) and reports
+  <code>changed=false</code> with <code>msg: "HTTP Error 304: Not Modified"</code>;</li>
+<li>the 304 run reports fourteen keys against eighteen, differing by
+  exactly <code>src</code>/<code>checksum_src</code>/<code>checksum_dest</code>/<code>md5sum</code>;</li>
+<li><code>checksum_dest</code> is the <strong>empty string</strong> when the destination did not
+  exist, not an absent key;</li>
+<li><code>force</code> forces the <strong>download</strong>, not the verdict — with identical
+  content real reports <code>changed=false</code> and <code>status_code=200</code>.</li>
+</ul>
 <p><code>uri</code> is the largest of them. Real builds most of its result <strong>from the
 response headers</strong> — lowercasing each name and turning hyphens into
 underscores — so <code>content_type</code>, <code>content_length</code>, <code>date</code>,
