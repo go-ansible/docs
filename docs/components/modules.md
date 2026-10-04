@@ -97,6 +97,16 @@ five divergences in modules a value-only pass had called identical.
 | `service_facts` | **failed** | **skipped** |
 | `setup` | `msg: "gathered facts"` | no `msg` — another sentence real never emits |
 | `uri` | **6** keys, `content` always | **15** keys built from the response HEADERS; `content` only with `return_content` |
+| `git` | `"<dest> cloned"` | `before` / `after` — the commit it was at and is at — no `msg` |
+| `cron` | `"<name> unchanged"` | `envs` / `jobs` — the entries it manages — no `msg` |
+
+One is measured and **deliberately not fixed**: `get_url` reports twelve
+keys where real reports eighteen, and three of the missing ones (`src`,
+`checksum_dest`, `checksum_src`) only have honest values if the download
+goes through a **staging file** the way real's does — real downloads to a
+temp and moves it, this writes straight to `dest`. Inventing them would
+be worse than their absence, so it waits for the change to how the
+download runs.
 
 `uri` is the largest of them. Real builds most of its result **from the
 response headers** — lowercasing each name and turning hyphens into
