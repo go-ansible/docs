@@ -95,6 +95,19 @@ five divergences in modules a value-only pass had called identical.
 | `async_status` | 6 of 11 keys | + `results_file`, `stdout`(+`_lines`), `stderr`(+`_lines`) |
 | `package_facts` | its own failure wording | real's, verbatim |
 | `service_facts` | **failed** | **skipped** |
+| `setup` | `msg: "gathered facts"` | no `msg` — another sentence real never emits |
+| `uri` | **6** keys, `content` always | **15** keys built from the response HEADERS; `content` only with `return_content` |
+
+`uri` is the largest of them. Real builds most of its result **from the
+response headers** — lowercasing each name and turning hyphens into
+underscores — so `content_type`, `content_length`, `date`,
+`last_modified` and `server` are the server's own headers rather than a
+list this port could hardcode. It captured no headers at all, which is
+why its curl invocation changed. Three further rules each needed
+measuring: `msg` is the status line's reason phrase plus the body size
+("OK (12 bytes)", not "OK (200)"); `content` appears only with
+`return_content: true`; and `json` appears only when the body parses as
+one, real skipping the key rather than reporting null.
 
 `service_facts` is the one that was not about keys at all. Real does not
 fail when it finds no services — it sets `skipped=True` — and **a failed
