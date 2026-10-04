@@ -89,8 +89,18 @@ five divergences in modules a value-only pass had called identical.
 | `known_hosts` | an English sentence | its own **parameters**, echoed back |
 | `slurp` | path in `msg`, no `source` | `content`, `encoding`, `source`, no `msg` |
 | `stat` | an empty `msg` | no `msg` at all |
+| `set_fact` | `msg: "facts set"` | no `msg` — a sentence real never emits |
+| `pause` | 3 keys | **12** keys: `rc`, `echo`, `delta`, `start`, `stop`, `user_input`, `stdout`(+`_lines`), `stderr`(+`_lines`) |
 
-Two of those needed a measurement rather than a judgement. Real's
+`pause` carries a distinction only a measurement shows: **`delta` is
+the int seconds while `stdout` carries the real elapsed to two
+decimals** ("Paused for 1.02 seconds" against `delta: 1`). They are not
+the same number, so reusing one for both would be wrong in whichever
+place it was reused. Its `stdout_lines`/`stderr_lines` needed no code
+at all — `finalizeOutput` derives them from `stdout`/`stderr` for every
+module, so setting `stdout` produced all four keys.
+
+Three of those needed a measurement rather than a judgement. Real's
 `template` reports **exactly** the key set real's `copy` reports, so
 the builder here is `copy`'s own rather than a second implementation.
 And `addPathInfo` **overwrites** `state`, so `known_hosts` reports the
