@@ -898,6 +898,14 @@ trimmed off <code>stdout</code>/<code>stderr</code>, and a matching <code>stdout
 is added. The trim is exactly Python's <code>rstrip("\r\n")</code> — every trailing
 carriage return and newline goes, trailing spaces and tabs survive, and
 leading newlines survive.</p>
+<p><code>Run</code> also attaches real's <strong><code>exception</code></strong> key to every failing result,
+and to no successful one. Real emits it on every <code>fail_json</code> path, and
+where Python has no traceback to show — which, measured across eight
+failures in six modules, is every time — the value is the literal
+string <code>(traceback unavailable)</code>. The key is in the result and not in
+the printed output: real's own <code>_dump_results</code> pops <code>exception</code>,
+<code>warnings</code> and <code>deprecations</code> before printing, so <code>r.exception</code>
+templates and registers while no failure line shows it.</p>
 <h2 id="measured-against-real-ansible">Measured against real Ansible<a class="headerlink" href="#measured-against-real-ansible" title="Permanent link">&para;</a></h2>
 <p>The module surface has been run side by side with <strong>real ansible-core
 2.21.4</strong>: the same playbook through both engines, <strong>twice</strong>, comparing the
@@ -907,8 +915,18 @@ idempotence matches, which is where a module port most easily drifts.</p>
 <p>Across <code>file</code> (directory/touch/absent), <code>copy</code>, <code>template</code>, <code>lineinfile</code>
 (both plain and <code>regexp</code>), <code>blockinfile</code>, <code>replace</code>, <code>stat</code>, <code>slurp</code>,
 <code>find</code>, <code>command</code>, <code>shell</code>, <code>set_fact</code> and <code>assert</code>, the compared values
-are <strong>byte-identical to real Ansible on both passes</strong>, and the two produced
-trees match exactly, permissions included.</p>
+are byte-identical on both passes, and the two produced trees match
+exactly, permissions included.</p>
+<p><strong>That sentence used to say "byte-identical to real Ansible" without
+qualification, and a later, wider comparison disproved it.</strong> The run
+above compared the values a playbook reads; it did not compare the
+registered result's full KEY SET. A census that did found <code>slurp</code>
+returning the file path in <code>msg</code> and omitting <code>source</code> entirely, <code>stat</code>
+returning an empty <code>msg</code> where real returns none at all, and <code>find</code>
+returning an empty <code>msg</code> where real always reports one of three
+sentences. All three are fixed, and the lesson is kept here rather than
+quietly edited away: a comparison is only as wide as the fields it
+looks at, and "identical" means nothing without naming them.</p>
 <p>Two defects were found and fixed that way, neither of which any unit test
 had caught:</p>
 <ul>
