@@ -91,6 +91,18 @@ five divergences in modules a value-only pass had called identical.
 | `stat` | an empty `msg` | no `msg` at all |
 | `set_fact` | `msg: "facts set"` | no `msg` — a sentence real never emits |
 | `pause` | 3 keys | **12** keys: `rc`, `echo`, `delta`, `start`, `stop`, `user_input`, `stdout`(+`_lines`), `stderr`(+`_lines`) |
+| `wait_for_connection` | `msg: "connection is usable"` | `changed`, `elapsed`, `failed` — no `msg` |
+| `async_status` | 6 of 11 keys | + `results_file`, `stdout`(+`_lines`), `stderr`(+`_lines`) |
+| `package_facts` | its own failure wording | real's, verbatim |
+| `service_facts` | **failed** | **skipped** |
+
+`service_facts` is the one that was not about keys at all. Real does not
+fail when it finds no services — it sets `skipped=True` — and **a failed
+task stops a play that a skipped one does not**, so this port halted
+playbooks real lets through. Reaching a playbook took both halves: the
+module setting `Result.Skipped` and `playbook`'s own `resultToMap`
+serialising it, which it never had. `skipped` is emitted only when
+true, which is how real does it.
 
 `pause` carries a distinction only a measurement shows: **`delta` is
 the int seconds while `stdout` carries the real elapsed to two
