@@ -591,6 +591,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="API">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#the-result-key-census" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The result-key census
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -787,6 +804,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="API">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#the-result-key-census" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The result-key census
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -906,6 +940,58 @@ string <code>(traceback unavailable)</code>. The key is in the result and not in
 the printed output: real's own <code>_dump_results</code> pops <code>exception</code>,
 <code>warnings</code> and <code>deprecations</code> before printing, so <code>r.exception</code>
 templates and registers while no failure line shows it.</p>
+<h3 id="the-result-key-census">The result-key census<a class="headerlink" href="#the-result-key-census" title="Permanent link">&para;</a></h3>
+<p><code>Run</code>'s finalization is only half the story: each module's own key set
+is real's too, and comparing <strong>values</strong> rather than <strong>key sets</strong> hid
+five divergences in modules a value-only pass had called identical.</p>
+<table>
+<thead>
+<tr>
+<th>module</th>
+<th>what it returned</th>
+<th>what real returns</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>template</code></td>
+<td>3 keys, dest path in <code>msg</code></td>
+<td>the same <strong>13</strong> keys <code>copy</code> returns, no <code>msg</code></td>
+</tr>
+<tr>
+<td><code>unarchive</code></td>
+<td>3 keys, dest path in <code>msg</code></td>
+<td><strong>13</strong> keys incl. <code>handler</code>, <code>extract_results</code></td>
+</tr>
+<tr>
+<td><code>known_hosts</code></td>
+<td>an English sentence</td>
+<td>its own <strong>parameters</strong>, echoed back</td>
+</tr>
+<tr>
+<td><code>slurp</code></td>
+<td>path in <code>msg</code>, no <code>source</code></td>
+<td><code>content</code>, <code>encoding</code>, <code>source</code>, no <code>msg</code></td>
+</tr>
+<tr>
+<td><code>stat</code></td>
+<td>an empty <code>msg</code></td>
+<td>no <code>msg</code> at all</td>
+</tr>
+</tbody>
+</table>
+<p>Two of those needed a measurement rather than a judgement. Real's
+<code>template</code> reports <strong>exactly</strong> the key set real's <code>copy</code> reports, so
+the builder here is <code>copy</code>'s own rather than a second implementation.
+And <code>addPathInfo</code> <strong>overwrites</strong> <code>state</code>, so <code>known_hosts</code> reports the
+file's state and not its own <code>state:</code> parameter — real reports
+<code>state=file</code> for a task whose parameter said <code>present</code>.</p>
+<p>One divergence is deliberate and stays. Real's <code>unarchive</code> <strong>fails</strong> on
+macOS for <code>.tar</code> and <code>.tgz</code> with "Failed to find handler", because it
+probes for a GNU tar this platform does not have; this port uses bsdtar
+and succeeds. Levelling down to match would be a regression, not
+parity — the same reasoning that leaves <code>getent</code> working here while
+real requires a <code>getent</code> binary macOS does not ship.</p>
 <h2 id="measured-against-real-ansible">Measured against real Ansible<a class="headerlink" href="#measured-against-real-ansible" title="Permanent link">&para;</a></h2>
 <p>The module surface has been run side by side with <strong>real ansible-core
 2.21.4</strong>: the same playbook through both engines, <strong>twice</strong>, comparing the

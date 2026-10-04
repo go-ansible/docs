@@ -1007,7 +1007,50 @@ and <code>'xabc' is match('abc')</code> is false.</p>
 <code>contains</code>, <code>any</code>, <code>all</code>, <code>nan</code>/<code>isnan</code>.</p>
 <p><em>Versions</em>: <code>version</code> and <code>version_compare</code>, which are the same test
 under real's two names.</p>
-<p><strong>A known gap</strong>, measured: gonja cannot parse a <em>keyword</em> argument in a
+<p><strong>The known parser gaps</strong>, both measured and both gonja's rather than
+this package's — neither is reachable from the filter, test or lookup
+registries.</p>
+<p><em>A method call on a parenthesised expression</em> does not parse:</p>
+<table>
+<thead>
+<tr>
+<th>expression</th>
+<th>real</th>
+<th>here</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>d.keys()</code></td>
+<td>works</td>
+<td><strong>works</strong></td>
+</tr>
+<tr>
+<td><code>(d).keys()</code></td>
+<td>works</td>
+<td><strong>fails</strong></td>
+</tr>
+<tr>
+<td><code>(d \| default({})).keys()</code></td>
+<td>works</td>
+<td><strong>fails</strong></td>
+</tr>
+<tr>
+<td><code>d \| default({}) \| list</code></td>
+<td>works</td>
+<td>works</td>
+</tr>
+<tr>
+<td><code>d \| dict2items \| map(attribute='key')</code></td>
+<td>works</td>
+<td>works</td>
+</tr>
+</tbody>
+</table>
+<p>The <strong>parenthesis</strong> is what breaks it, not the filter — <code>(d).keys()</code>
+fails with no filter in sight. Use one of the two working forms above;
+<code>| list</code> gives a dict's keys and <code>dict2items</code> gives key/value pairs.</p>
+<p><em>And</em> gonja cannot parse a <em>keyword</em> argument in a
 test call. <code>'ABC' is match('abc', true)</code> works; <code>'ABC' is match('abc',
 ignorecase=true)</code> is a parse error. Every option above is reachable
 positionally, and the test functions already read keyword arguments, so
