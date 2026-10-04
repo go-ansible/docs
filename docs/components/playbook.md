@@ -505,6 +505,32 @@ cache. It is accepted so a command line written for real
 ansible-playbook still runs, and says so rather than implying a cache
 exists.
 
+## Connections
+
+`ansible_connection` takes `local`, `ssh` (the default, and what `smart`
+resolves to) or `winrm`.
+
+`winrm` speaks WS-Management to a Windows host through
+`go-remoteexec/transport`, reading the real plugin's own variables:
+`ansible_winrm_port` (5986), `ansible_winrm_scheme` (inferred from the
+port — http at 5985, https otherwise), `ansible_winrm_path` (`/wsman`),
+`ansible_winrm_transport`, `ansible_winrm_server_cert_validation`,
+`ansible_winrm_ca_trust_path`, `ansible_winrm_cert_pem` and
+`ansible_winrm_cert_key_pem`. The `ansible_winrm_*` spelling is real's
+documented pattern for any pywinrm `Protocol` argument, not an
+invention here.
+
+Two of real's transport values are refused by name rather than
+downgraded: `kerberos` needs a GSSAPI ticket exchange and `credssp` its
+own SPNEGO-over-TLS handshake, neither of which this transport
+implements. `server_cert_validation` takes only `validate` or `ignore`,
+and a third value is an error — read as `ignore` by accident, a typo
+there would stop certificates being checked.
+
+What this does **not** give you is a working Windows run. The
+connection is there; the `ansible.windows` module family is not, and
+326 of the 566 modules here compose POSIX shell.
+
 ## no_log, and the keywords this port refuses
 
 `no_log: true` is honoured: the outcome of a task is still reported,
@@ -520,11 +546,19 @@ with *"ambiguous module"* — a message that reads like the playbook is
 malformed when it is this port that is incomplete. Now it says which
 keyword, and how to get the same effect where there is a way:
 task-level `connection:` → set it on the play, or `ansible_connection`
-on the host; `throttle:` → use `serial:`.
+on the host.
 
-The list shrinks as the port catches up: `environment:`,
+The list shrinks as the port catches up. `environment:`,
 `any_errors_fatal:`, `check_mode:`, `no_log:`, `module_defaults:` and
-`ignore_unreachable:` were all on it and are now honoured.
+`ignore_unreachable:` were all on it; so were `throttle:` and
+`timeout:`, which are now real (`TestThrottleLimitsOneTask`,
+`TestTaskTimeout`); and so were `become_exe:`/`become_flags:`, which
+were refused only because `BecomeConfig` had nowhere to put them until
+go-remoteexec/transport v0.2.0 gave it `Exe` and `Flags`.
+
+What remains refused: task-level `connection:`/`remote_user:`/`port:`,
+`collections:`, `delegate_facts:`, `debugger:`, and any strategy other
+than `linear` or `free`.
 
 They are refused rather than ignored on purpose. Silently accepting
 `connection: local` would run the task somewhere other than the
