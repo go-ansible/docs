@@ -766,6 +766,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#connections" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Connections
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#no_log-and-the-keywords-this-port-refuses" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1364,6 +1375,17 @@
     <span class="md-ellipsis">
       
         Resuming and forcing
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#connections" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Connections
       
     </span>
   </a>
@@ -2189,6 +2211,27 @@ stopped because the handler that would have restarted it never ran.</p>
 cache. It is accepted so a command line written for real
 ansible-playbook still runs, and says so rather than implying a cache
 exists.</p>
+<h2 id="connections">Connections<a class="headerlink" href="#connections" title="Permanent link">&para;</a></h2>
+<p><code>ansible_connection</code> takes <code>local</code>, <code>ssh</code> (the default, and what <code>smart</code>
+resolves to) or <code>winrm</code>.</p>
+<p><code>winrm</code> speaks WS-Management to a Windows host through
+<code>go-remoteexec/transport</code>, reading the real plugin's own variables:
+<code>ansible_winrm_port</code> (5986), <code>ansible_winrm_scheme</code> (inferred from the
+port — http at 5985, https otherwise), <code>ansible_winrm_path</code> (<code>/wsman</code>),
+<code>ansible_winrm_transport</code>, <code>ansible_winrm_server_cert_validation</code>,
+<code>ansible_winrm_ca_trust_path</code>, <code>ansible_winrm_cert_pem</code> and
+<code>ansible_winrm_cert_key_pem</code>. The <code>ansible_winrm_*</code> spelling is real's
+documented pattern for any pywinrm <code>Protocol</code> argument, not an
+invention here.</p>
+<p>Two of real's transport values are refused by name rather than
+downgraded: <code>kerberos</code> needs a GSSAPI ticket exchange and <code>credssp</code> its
+own SPNEGO-over-TLS handshake, neither of which this transport
+implements. <code>server_cert_validation</code> takes only <code>validate</code> or <code>ignore</code>,
+and a third value is an error — read as <code>ignore</code> by accident, a typo
+there would stop certificates being checked.</p>
+<p>What this does <strong>not</strong> give you is a working Windows run. The
+connection is there; the <code>ansible.windows</code> module family is not, and
+326 of the 566 modules here compose POSIX shell.</p>
 <h2 id="no_log-and-the-keywords-this-port-refuses">no_log, and the keywords this port refuses<a class="headerlink" href="#no_log-and-the-keywords-this-port-refuses" title="Permanent link">&para;</a></h2>
 <p><code>no_log: true</code> is honoured: the outcome of a task is still reported,
 its contents are not, and a <strong>failing</strong> task — the case where a result
@@ -2202,10 +2245,17 @@ with <em>"ambiguous module"</em> — a message that reads like the playbook is
 malformed when it is this port that is incomplete. Now it says which
 keyword, and how to get the same effect where there is a way:
 task-level <code>connection:</code> → set it on the play, or <code>ansible_connection</code>
-on the host; <code>throttle:</code> → use <code>serial:</code>.</p>
-<p>The list shrinks as the port catches up: <code>environment:</code>,
+on the host.</p>
+<p>The list shrinks as the port catches up. <code>environment:</code>,
 <code>any_errors_fatal:</code>, <code>check_mode:</code>, <code>no_log:</code>, <code>module_defaults:</code> and
-<code>ignore_unreachable:</code> were all on it and are now honoured.</p>
+<code>ignore_unreachable:</code> were all on it; so were <code>throttle:</code> and
+<code>timeout:</code>, which are now real (<code>TestThrottleLimitsOneTask</code>,
+<code>TestTaskTimeout</code>); and so were <code>become_exe:</code>/<code>become_flags:</code>, which
+were refused only because <code>BecomeConfig</code> had nowhere to put them until
+go-remoteexec/transport v0.2.0 gave it <code>Exe</code> and <code>Flags</code>.</p>
+<p>What remains refused: task-level <code>connection:</code>/<code>remote_user:</code>/<code>port:</code>,
+<code>collections:</code>, <code>delegate_facts:</code>, <code>debugger:</code>, and any strategy other
+than <code>linear</code> or <code>free</code>.</p>
 <p>They are refused rather than ignored on purpose. Silently accepting
 <code>connection: local</code> would run the task somewhere other than the
 playbook says.</p>

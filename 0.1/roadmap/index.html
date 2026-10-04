@@ -826,7 +826,8 @@ on every push and pull request:</p>
   ancestry, host-pattern matching</li>
 <li><a href="../components/vars/"><code>vars</code></a> — the variable precedence ladder</li>
 <li><a href="../components/template/"><code>template</code></a> — Jinja2-compatible templating with
-  Ansible's filter and test library</li>
+  Ansible's filter and test library, plus 17 lookup plugins reachable as
+  the real <code>lookup()</code>/<code>query()</code>/<code>q()</code> Jinja globals</li>
 <li><a href="../components/facts/"><code>facts</code></a> — fact gathering, the <code>setup</code> module
   equivalent</li>
 <li><a href="../components/modules/"><code>modules</code></a> — the module execution protocol plus
@@ -838,8 +839,10 @@ on every push and pull request:</p>
   scoping composes to any depth), both the <code>linear</code> and <code>free</code> execution
   strategies, <code>until</code>/<code>retries</code>/<code>delay</code>, <code>run_once</code>, a real <code>Forks</code>
   concurrency cap, <code>vars_prompt</code>, <code>async</code>/<code>poll</code> (for <code>command</code>/<code>shell</code>),
-  fully-qualified collection names, dynamic inventory scripts, and
-  <code>ansible.cfg</code> file support</li>
+  fully-qualified collection names, dynamic inventory scripts,
+  <code>ansible.cfg</code> file support, <code>become_exe</code>/<code>become_flags</code>, a swappable
+  <code>Callback</code> interface with the default stdout callback implemented
+  against it, and <code>local</code>/<code>ssh</code>/<code>winrm</code> connections</li>
 <li><a href="../components/cli/"><code>cli</code></a> — all 8 real <code>ansible-*</code> binaries, plus a
   multi-arch <code>FROM scratch</code> OCI image on every version tag</li>
 </ul>
@@ -887,10 +890,17 @@ developed further and is not part of the current architecture.</p>
 <li><strong>Real Ansible's structured module documentation</strong> (<code>DOCUMENTATION</code>/
   <code>EXAMPLES</code>/<code>RETURN</code> YAML) — <code>ansible-doc</code> here prints this port's own Go
   doc comments instead, real content in a different shape.</li>
-<li><strong>The namespace/collection metadata system</strong>, real
+<li><strong>The namespace/collection metadata system</strong> and real
   <code>ansible-galaxy collection install</code> (this port's <code>ansible-galaxy</code> only
-  clones a role from a git URL — no galaxy.ansible.com API), and
-  lookup/callback plugins.</li>
+  clones a role from a git URL — no galaxy.ansible.com API).</li>
+<li><strong>The <code>ansible.windows</code> module family.</strong> <code>ansible_connection: winrm</code>
+  reaches a Windows target over WS-Management, using the real plugin's
+  own <code>ansible_winrm_*</code> variables, but the modules that would run there
+  are not ported: 326 of the 566 compose POSIX shell. The transport half
+  is done and the module half is not, which is why a Windows target is
+  listed here rather than under Shipped. (A Windows <em>control node</em> is
+  shipped: all nine binaries build for <code>windows/amd64</code> and
+  <code>windows/arm64</code>, which real ansible-core does not support at all.)</li>
 <li><strong>Active kill-on-timeout for <code>async</code>/<code>poll</code>.</strong> An overrunning backgrounded
   job is detected but not killed — real Ansible's <code>async_wrapper.py</code> sends
   <code>killpg</code> to the whole process group, and there is no portable POSIX

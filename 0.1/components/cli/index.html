@@ -995,7 +995,14 @@ real <code>ansible</code>.</p>
 <p><code>cli</code> also publishes a multi-arch <code>FROM scratch</code> OCI image,
 <a href="https://github.com/go-ansible/cli/pkgs/container/cli"><code>ghcr.io/go-ansible/cli</code></a>,
 bundling every binary, on every version tag — all six 64-bit architectures
-(amd64/arm64/riscv64/loong64/ppc64le/s390x). The build stage cross-compiles
+(amd64/arm64/riscv64/loong64/ppc64le/s390x).</p>
+<p>Those six are the Linux image. The binaries themselves also build for
+<code>windows/amd64</code> and <code>windows/arm64</code>, checked on every push by a CI job
+that builds all nine and asserts the count — so <strong>the control node can
+be Windows</strong>, which real ansible-core does not support at all. That is
+about running <code>ansible-playbook</code>; reaching a Windows <em>target</em> is
+<code>ansible_connection: winrm</code>, and the <code>ansible.windows</code> module family it
+would need is not ported. The build stage cross-compiles
 from the runner's own native architecture instead of running under QEMU for
 every target, which is what makes loong64 possible at all: the official
 <code>golang</code> image itself publishes no <code>linux/loong64</code> manifest. A <code>CGO_ENABLED=0</code>
