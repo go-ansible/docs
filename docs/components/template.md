@@ -26,6 +26,14 @@ func (e *Engine) RenderValue(raw any, data map[string]any) (any, error)
 // degrades to errors=ignore.
 Engine.OnWarning func(msg string)
 
+// Ansible's filter and test plugins: add your own without forking.
+// Both refuse an existing name rather than replacing it, and both are
+// per-engine.
+type TestFunc func(*exec.Evaluator, *exec.Value, *exec.VarArgs) (bool, error)
+
+func (e *Engine) RegisterFilter(name string, fn exec.FilterFunction) error
+func (e *Engine) RegisterTest(name string, fn TestFunc) error
+
 func IsTemplate(s string) bool
 ```
 
@@ -186,6 +194,52 @@ which go-ansible does not model yet. `errors=warn` reports through the
 caller-supplied `Engine.OnWarning` hook, since this package has no
 display layer of its own; with no hook installed it degrades to
 `errors=ignore`.
+
+## Adding a filter or a test of your own
+
+Real Ansible extends Jinja2 with **filter plugins** and **test plugins**.
+This engine assembled both sets inside `New()` behind unexported fields,
+so a caller who needed one of their own had to fork the package.
+`RegisterFilter` (contributed by [@kshvakov](https://github.com/kshvakov))
+and `RegisterTest` close that, as of v0.33.0.
+
+```go
+e := template.New()
+e.RegisterFilter("shout", func(_ *exec.Evaluator, in *exec.Value, _ *exec.VarArgs) *exec.Value {
+    return exec.AsValue(strings.ToUpper(in.String()) + "!")
+})
+out, _ := e.Render("{{ word | shout }}", map[string]any{"word": "hello"}) // HELLO!
+```
+
+Three properties, each pinned by a test:
+
+- **Per-engine, structurally.** `New()` builds a fresh set
+  (`exec.NewFilterSet(map[string]exec.FilterFunction{}).Update(builtins.Filters)`)
+  and `Update` copies *into* the receiver, so the package-level built-ins
+  are never written to and a registration cannot escape into another
+  engine.
+- **An existing name is refused, not replaced.** Silently replacing
+  `default`, `changed` or `version` would change what a playbook means.
+- **Filters and tests resolve by name at each application**, so a
+  registration is visible to later renders. Register before rendering
+  begins; see the caveat below.
+
+### Two asymmetries worth knowing
+
+`RegisterTest` is **not** a copy of `RegisterFilter`, because gonja's two
+sets are not alike. `exec.FilterFunction` is a real func type, so the
+compiler checks your filter. `exec.TestFunction` is **`any`** — gonja
+widened it to accept a legacy first argument of `*exec.Context` beside
+`*exec.Evaluator` — with the shape checked by *reflection at
+registration*. Taking `any` here would move a wrong signature from a
+compile error to a run-time error value, so `RegisterTest` declares its
+own typed `TestFunc`.
+
+And gonja's `Register` is synchronized per call but **not atomic**: it
+asks `Exists`, which takes and releases the lock, and only then takes the
+lock again to write. Two goroutines registering the same name can both
+pass that check. Registering from one goroutine, before rendering starts,
+is the contract rather than merely the advice.
 
 ## String literals are raw
 
