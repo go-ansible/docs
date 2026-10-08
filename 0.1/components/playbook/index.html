@@ -788,6 +788,56 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#hostvars-is-live" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        hostvars is live
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="hostvars is live">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#how-and-why-not-the-obvious-way" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How, and why not the obvious way
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#what-that-means-under-free" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What that means under free
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#cost" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Cost
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#environment" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1455,6 +1505,56 @@
       
     </span>
   </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#hostvars-is-live" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        hostvars is live
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="hostvars is live">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#how-and-why-not-the-obvious-way" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How, and why not the obvious way
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#what-that-means-under-free" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What that means under free
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#cost" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Cost
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -2377,17 +2477,74 @@ stdin closed, <code>debugger: on_failed</code> on a failing task still prints
 the transcript and the control flow.</p>
 <p>What remains refused: <code>delegate_facts:</code>, <code>debugger:</code> with any value but
 <code>never</code>, and any strategy other than <code>linear</code>, <code>free</code> or <code>host_pinned</code>.</p>
-<p><code>delegate_facts:</code> now says what it would need rather than refusing
-blankly: facts would have to be written to <strong>another host's</strong> variables
-and read back, and <code>hostvars</code> here is built once from the inventory at
-play start — a snapshot, not a live store — so a fact written to another
-host would be invisible to every reader of it, including that host's own
-next task. It is refused rather than half-built because the half that
-would work (a delegate inside the play) looks identical to the half that
-would not.</p>
+<p><code>delegate_facts:</code> says what it would need rather than refusing blankly —
+and what that is changed within a day, which is worth recording. The hint
+first said <em>“hostvars is a snapshot of the inventory”</em>; making <code>hostvars</code>
+live (v0.132.0) removed exactly that blocker. <strong>A refusal that explains
+itself has to be re-read when the thing it blames changes</strong>, or it goes on
+explaining something that stopped being true.</p>
+<p>What remains is the <strong>write</strong>. <code>vars.Context</code> is not synchronised, and a
+host's own goroutine is the only thing that touches it; writing to another
+host's Context from this one is a data race, and the snapshot mechanism
+below only ever <em>publishes</em>, never accepts. A safe hand-off needs a queue
+applied at a barrier, and under <code>free</code> there is no barrier to apply it at.</p>
 <p>They are refused rather than ignored on purpose. Silently accepting a
 keyword this port does not honour would run the task differently from
 what the playbook says, which is worse than saying no.</p>
+<h2 id="hostvars-is-live">hostvars is live<a class="headerlink" href="#hostvars-is-live" title="Permanent link">&para;</a></h2>
+<p><code>hostvars['web1']['ansible_default_ipv4']</code> is how a playbook templates one
+host's configuration from another's facts, and it is one of the most
+common things a real playbook does. This port built <code>hostvars</code> <strong>once per
+play, from the inventory</strong>, so a fact gathered or a variable set by
+another host was invisible — and produced nothing, silently. Measured
+against ansible-core 2.21.4:</p>
+<table>
+<thead>
+<tr>
+<th>expression</th>
+<th>real</th>
+<th>this port, before v0.132.0</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>hostvars['h2']['my_mark']</code> (a <code>set_fact</code>)</td>
+<td><code>mark-of-h2</code></td>
+<td><code>&lt;MISSING&gt;</code></td>
+</tr>
+<tr>
+<td><code>hostvars['h2']['ansible_system']</code> (gathered)</td>
+<td><code>Darwin</code></td>
+<td><code>&lt;MISSING&gt;</code></td>
+</tr>
+</tbody>
+</table>
+<h3 id="how-and-why-not-the-obvious-way">How, and why not the obvious way<a class="headerlink" href="#how-and-why-not-the-obvious-way" title="Permanent link">&para;</a></h3>
+<p>Each host <strong>publishes an immutable snapshot</strong> of its own variables and
+reads everyone else's. It does not read another host's <code>vars.Context</code>
+directly, because that Context is not synchronised and under <code>free</code> and
+<code>host_pinned</code> every host runs in its own goroutine. A host writes only
+its own snapshot and only its own Context; snapshots are replaced
+wholesale rather than mutated, so a reader holding one holds something
+nobody will write to.</p>
+<p>The timing is deliberate: a host publishes at the <strong>end</strong> of each of its
+tasks and reads at the <strong>start</strong> of the next, so under <code>linear</code> — which
+has a per-task barrier — <code>hostvars</code> reflects exactly the tasks that have
+finished.</p>
+<h3 id="what-that-means-under-free">What that means under <code>free</code><a class="headerlink" href="#what-that-means-under-free" title="Permanent link">&para;</a></h3>
+<p><code>free</code> gives <strong>no cross-host ordering</strong>; that is what it is for. So a host
+can reach a task that reads <code>hostvars['other']</code> before <code>other</code> has
+finished the task that sets it, and a missing value is then the correct
+answer rather than a bug. Real behaves the same way. (The test for this
+first asserted the value under all three strategies and passed here every
+time; CI caught it on ppc64le under qemu, slow enough to lose the race
+this machine always won.)</p>
+<p>A host <strong>outside the play</strong> still resolves, from the inventory's own view
+— real's <code>hostvars</code> covers the whole inventory, not the batch.</p>
+<h3 id="cost">Cost<a class="headerlink" href="#cost" title="Permanent link">&para;</a></h3>
+<p>Measured rather than assumed, on a 50-task play: 0.04s against 0.02s at
+50 hosts, 0.21s against 0.09s at 150 — about 2×, with the same growth
+rate, because the refresh copies pointers rather than variable maps.</p>
 <h2 id="environment">environment<a class="headerlink" href="#environment" title="Permanent link">&para;</a></h2>
 <p><code>environment:</code> sets variables in the environment of the command a task
 runs, at play and task level. A play's entries reach every task; a
