@@ -560,8 +560,7 @@ taken for the module, so `no_log: true` beside `debug:` used to fail
 with *"ambiguous module"* — a message that reads like the playbook is
 malformed when it is this port that is incomplete. Now it says which
 keyword, and how to get the same effect where there is a way:
-task-level `connection:` → set it on the play, or `ansible_connection`
-on the host.
+`collections:` → use a fully-qualified module name.
 
 The list shrinks as the port catches up. `environment:`,
 `any_errors_fatal:`, `check_mode:`, `no_log:`, `module_defaults:` and
@@ -571,13 +570,27 @@ The list shrinks as the port catches up. `environment:`,
 were refused only because `BecomeConfig` had nowhere to put them until
 go-remoteexec/transport v0.2.0 gave it `Exe` and `Flags`.
 
-What remains refused: task-level `connection:`/`remote_user:`/`port:`,
-`collections:`, `delegate_facts:`, `debugger:`, and any strategy other
-than `linear` or `free`.
+Task-level `connection:`, `remote_user:` and `port:` left it in
+v0.129.0. They were refused only because a connection was built once per
+play and could not change; v0.128.0 made a task's own variables decide
+which connection it gets, and these three are the keyword spelling of
+`ansible_connection`, `ansible_user` and `ansible_port`. The measured
+precedence is the ladder `become:` already uses:
 
-They are refused rather than ignored on purpose. Silently accepting
-`connection: local` would run the task somewhere other than the
-playbook says.
+```
+host var  >  task keyword  >  play keyword
+```
+
+— a host with `ansible_connection=ssh` *ignores* `connection: local` on a
+task, while a host with no connection variable runs that task locally
+beneath a play saying `connection: ssh`.
+
+What remains refused: `collections:`, `delegate_facts:`, `debugger:`,
+and any strategy other than `linear` or `free`.
+
+They are refused rather than ignored on purpose. Silently accepting a
+keyword this port does not honour would run the task differently from
+what the playbook says, which is worse than saying no.
 
 ## environment
 
@@ -888,8 +901,10 @@ takes either a bare path or the mapping form `{file: path}`.
 ## Unreachable hosts, and connecting per task
 
 Real Ansible establishes a connection when a task needs one, not once
-before the play. Five things follow from that, and this port now does
-the same:
+before the play. Six things follow from that, and this port now does the
+same — the sixth only as of v0.128.0, which is worth saying because this
+paragraph claimed all of it earlier while the connection itself was
+still built once per play. What was per task was the *reporting*.
 
 `ignore_unreachable:` keeps a host in the play when it cannot be
 reached — the result still prints `UNREACHABLE!`, the recap counts it
@@ -925,6 +940,55 @@ when one merely failed, and unreachable **wins** rather than
 combining: one failed host plus one unreachable host exits 4, not 6.
 This port returned 2 for both, so a caller telling them apart — a retry
 loop, a deployment gate — could not.
+
+### A task may change the connection, and that is the sixth
+
+`hostState`'s own comment in this engine said *"Real Ansible connects per
+TASK"* for a long time while the connection was built once at play start
+and never reconsidered. So this:
+
+```yaml
+- set_fact: {ansible_connection: ssh}
+- command: echo still-here
+```
+
+left the variable **visible** and changed nothing — the `command` ran
+locally. Real switches, and the next task reports UNREACHABLE. Measured,
+same playbook:
+
+| | |
+|---|---|
+| real | `conn=ssh` → `UNREACHABLE!` — `ok=2 unreachable=1 failed=0` |
+| this port, before v0.128.0 | `conn=ssh` → `ran=still-here` |
+
+A variable that is read back correctly and then ignored is the worst
+shape a divergence can take, because nothing fails.
+
+Three things make it work, and each took a measurement to get right:
+
+- **The signature folds in the play's `connection:`/`remote_user:`/
+  `port:`.** Those are added to the variables at connect time and are
+  absent from a task's own merged variables, so comparing without them
+  differs for *every* task of such a play — a fresh dial per task. An
+  ordinary play still connects **once**, and a test pins that.
+- **A task that needs no connection does not dial one.** Real opens
+  nothing until a task reaches for a connection, so a `debug` between
+  the change and the next real task still reports ok. Reconnecting for
+  every task gave `ok=1` against real's `ok=2`.
+- **A connection that cannot be made is UNREACHABLE**, not a failed
+  task — real counts it in its own recap column.
+
+The signature ignores the dozens of `ansible_*` variables fact gathering
+adds, or every gather would look like a change.
+
+### One named divergence
+
+A task asking for a *different* connection than the one that failed gets
+a fresh attempt. A task asking for the **same** unreachable endpoint does
+not: this port reports from the recorded failure. Real re-attempts per
+task, which on a host that is simply down costs a full SSH timeout per
+task. The difference is visible only in timing, and it has a test of its
+own rather than being left to be discovered.
 
 ## meta
 
