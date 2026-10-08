@@ -665,6 +665,37 @@ this machine always won.)
 A host **outside the play** still resolves, from the inventory's own view
 — real's `hostvars` covers the whole inventory, not the batch.
 
+### `groups` and `group_names` follow the inventory too
+
+`add_host` and `group_by` **change the inventory while the play runs**,
+and `groups`, `group_names` and `hostvars` were all derived from it once
+at play start. Measured against ansible-core 2.21.4:
+
+| expression | real | before |
+|---|---|---|
+| `groups['latecomers']` after `add_host` | `['h2']` | `<MISSING>` |
+| `hostvars['newbie']['some_var']` after `add_host` | `hello` | `<MISSING>` |
+| `groups['tagged']` after `group_by` | `['h1']` | `<NO-GROUP>` |
+| `group_names` after `group_by` | `tagged` | `ungrouped` |
+
+(`ansible_play_hosts` after a failed host was checked at the same time
+and was already correct — worth saying, because the point of a sweep is
+also which ones are *not* broken.)
+
+Rebuilding those on every task would cost O(hosts × groups) per task per
+host for a playbook that never calls `add_host`, which is nearly all of
+them. So the inventory carries a **generation**: the two directives that
+mutate it bump a counter, and the derived view is rebuilt only when the
+number a reader last saw has changed. The common case is one atomic load.
+
+The lock for that lives in the engine rather than in
+[`inventory`](inventory.md), and deliberately: `Inventory`'s maps are
+**exported fields**, so an internal mutex could not guard
+`inv.Hosts[name]` and hiding them would break every caller. What it
+guards is the engine's own concurrent access — which also closes a race
+that predates all of this, since two hosts calling `add_host` under
+`free` were already writing the same map.
+
 ### Cost
 
 Measured rather than assumed, on a 50-task play: 0.04s against 0.02s at
