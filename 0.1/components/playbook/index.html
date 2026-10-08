@@ -822,6 +822,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#groups-and-group_names-follow-the-inventory-too" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        groups and group_names follow the inventory too
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#cost" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1536,6 +1547,17 @@
     <span class="md-ellipsis">
       
         What that means under free
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#groups-and-group_names-follow-the-inventory-too" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        groups and group_names follow the inventory too
       
     </span>
   </a>
@@ -2541,6 +2563,56 @@ time; CI caught it on ppc64le under qemu, slow enough to lose the race
 this machine always won.)</p>
 <p>A host <strong>outside the play</strong> still resolves, from the inventory's own view
 — real's <code>hostvars</code> covers the whole inventory, not the batch.</p>
+<h3 id="groups-and-group_names-follow-the-inventory-too"><code>groups</code> and <code>group_names</code> follow the inventory too<a class="headerlink" href="#groups-and-group_names-follow-the-inventory-too" title="Permanent link">&para;</a></h3>
+<p><code>add_host</code> and <code>group_by</code> <strong>change the inventory while the play runs</strong>,
+and <code>groups</code>, <code>group_names</code> and <code>hostvars</code> were all derived from it once
+at play start. Measured against ansible-core 2.21.4:</p>
+<table>
+<thead>
+<tr>
+<th>expression</th>
+<th>real</th>
+<th>before</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>groups['latecomers']</code> after <code>add_host</code></td>
+<td><code>['h2']</code></td>
+<td><code>&lt;MISSING&gt;</code></td>
+</tr>
+<tr>
+<td><code>hostvars['newbie']['some_var']</code> after <code>add_host</code></td>
+<td><code>hello</code></td>
+<td><code>&lt;MISSING&gt;</code></td>
+</tr>
+<tr>
+<td><code>groups['tagged']</code> after <code>group_by</code></td>
+<td><code>['h1']</code></td>
+<td><code>&lt;NO-GROUP&gt;</code></td>
+</tr>
+<tr>
+<td><code>group_names</code> after <code>group_by</code></td>
+<td><code>tagged</code></td>
+<td><code>ungrouped</code></td>
+</tr>
+</tbody>
+</table>
+<p>(<code>ansible_play_hosts</code> after a failed host was checked at the same time
+and was already correct — worth saying, because the point of a sweep is
+also which ones are <em>not</em> broken.)</p>
+<p>Rebuilding those on every task would cost O(hosts × groups) per task per
+host for a playbook that never calls <code>add_host</code>, which is nearly all of
+them. So the inventory carries a <strong>generation</strong>: the two directives that
+mutate it bump a counter, and the derived view is rebuilt only when the
+number a reader last saw has changed. The common case is one atomic load.</p>
+<p>The lock for that lives in the engine rather than in
+<a href="../inventory/"><code>inventory</code></a>, and deliberately: <code>Inventory</code>'s maps are
+<strong>exported fields</strong>, so an internal mutex could not guard
+<code>inv.Hosts[name]</code> and hiding them would break every caller. What it
+guards is the engine's own concurrent access — which also closes a race
+that predates all of this, since two hosts calling <code>add_host</code> under
+<code>free</code> were already writing the same map.</p>
 <h3 id="cost">Cost<a class="headerlink" href="#cost" title="Permanent link">&para;</a></h3>
 <p>Measured rather than assumed, on a 50-task play: 0.04s against 0.02s at
 50 hosts, 0.21s against 0.09s at 150 — about 2×, with the same growth
