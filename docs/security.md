@@ -173,6 +173,71 @@ looked for the first task's output in real's stdout and **found it**, because
 real's error message quotes the offending source lines — including the
 neighbouring one. A file witness is what settled it.
 
+## ⛔ Untrusted data reaching the template engine
+
+The most serious defect this audit found, and the one with the widest
+blast radius.
+
+A module's result is **data a managed host chose**. This port re-rendered
+it as a Jinja template — and `lookup('pipe', ...)` runs on the **control
+node**. So a host returning
+
+```
+{{ lookup('pipe','touch FILE') }}
+```
+
+from any command created that file **on the controller**: the machine
+holding the vault password, the fleet's SSH keys and the cloud
+credentials. One compromised target, and the control node runs its code.
+
+Measured against ansible-core 2.21.4, a command whose output is the text
+`{{ 7*7 }}`:
+
+| | `r.stdout` |
+|---|---|
+| real | `"{{ 7*7 }}"` — literal, and still a string |
+| this port, before `playbook` v0.135.0 | `49` — evaluated, and no longer a string |
+
+Real refuses because it wraps such data in `AnsibleUnsafeText` and its
+templar will not template those. The fix is the same brake, applied where
+the second evaluation actually happens: `resolved()`, which walks the
+merged variables and re-renders strings until they settle — this port's
+own emulation of lazy variables, and the only place a value is rendered
+twice.
+
+### Three routes, and a proof of concept that kept firing
+
+The payload was a `touch` into a temporary directory, run after each
+attempted fix. It kept firing until all three were closed, which is the
+argument for having one rather than reasoning about coverage:
+
+1. **The `Facts` and `Registered` variable layers** are never re-rendered.
+   That covers the direct case — `register:`, `set_fact:`, gathered facts.
+2. **`hostvars` and `groups` are untrusted too.** They are derived
+   *structures*, never a place an author writes a template, and `hostvars`
+   carries every host's registered results — so leaving it resolvable put
+   all of that untrusted data back under a *trusted* key.
+3. **One call site had been missed.** `snapshotVars`, which publishes a
+   host's variables at the end of every task, called the unbraked form —
+   and it was added by the `hostvars` work a few hours earlier. A security
+   brake is only as good as its least-covered caller.
+
+### The brake keys on provenance, not on appearance
+
+It asks whether a template **references an untrusted name**. The first
+attempt asked whether *the result still looks like a template*, which is
+wrong for an ordinary chain: `c: "{{ b }}/c"` renders to something that
+is still a template simply because `b` has not been resolved yet, and that
+version stopped resolving it. Provenance is the distinction real draws
+too.
+
+### What this does not cover
+
+A playbook's **own** text is trusted, as it is in real: if an author
+writes `{{ lookup('pipe', ...) }}`, it runs. The boundary is where data
+from a host, a file or an API becomes a variable — not what the author
+wrote.
+
 ## A fact can now redirect where later tasks run
 
 As of `playbook` v0.128.0 a task's own variables decide which connection
