@@ -173,6 +173,35 @@ looked for the first task's output in real's stdout and **found it**, because
 real's error message quotes the offending source lines — including the
 neighbouring one. A file witness is what settled it.
 
+## A fact can now redirect where later tasks run
+
+As of `playbook` v0.128.0 a task's own variables decide which connection
+it gets — which is real Ansible's behaviour, and is what makes
+`set_fact: {ansible_connection: ...}` work. It also means a value that
+sets `ansible_connection`, `ansible_host`, `ansible_user` or `ansible_port`
+can send **subsequent tasks to a different endpoint**.
+
+This is parity, not a hole we opened: real does the same, measured — after
+`set_fact: {ansible_connection: ssh}` the next task really does go over
+SSH and reports UNREACHABLE. It is on this page because the consequence is
+worth stating plainly rather than leaving for someone to find.
+
+What it means in practice:
+
+- **A module result is trusted.** A module that returns `ansible_facts`
+  with a connection variable in it changes where later tasks run. Real
+  Ansible has the same property, and it is why `gather_facts` against a
+  host you do not control is a trust decision, not a read-only one.
+- **A custom fact file is namespaced, and that matters here.**
+  `ansible_local` entries land under `ansible_local.<name>`, keyed by the
+  `.fact` filename, so a target's own file cannot reach a top-level
+  `ansible_connection`.
+- **The connection variables are a known, closed set.** They are listed
+  in one place and a test reads the functions that build a connection and
+  fails if one consults a variable the list does not name — which is how
+  thirteen `ansible_winrm_*` variables were found missing from it. A
+  reviewer asking "what can redirect a task?" has one list to read.
+
 ## What remains, named rather than smoothed over
 
 - **`security`'s own `argv` on macOS.** `keyring` on macOS runs
