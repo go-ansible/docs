@@ -772,6 +772,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#a-fact-can-now-redirect-where-later-tasks-run" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        A fact can now redirect where later tasks run
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#what-remains-named-rather-than-smoothed-over" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -986,6 +997,17 @@
     <span class="md-ellipsis">
       
         Partial application: a refused run that ran anyway
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#a-fact-can-now-redirect-where-later-tasks-run" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        A fact can now redirect where later tasks run
       
     </span>
   </a>
@@ -1214,6 +1236,32 @@ module name is left alone, because real accepts it.</p>
 looked for the first task's output in real's stdout and <strong>found it</strong>, because
 real's error message quotes the offending source lines — including the
 neighbouring one. A file witness is what settled it.</p>
+<h2 id="a-fact-can-now-redirect-where-later-tasks-run">A fact can now redirect where later tasks run<a class="headerlink" href="#a-fact-can-now-redirect-where-later-tasks-run" title="Permanent link">&para;</a></h2>
+<p>As of <code>playbook</code> v0.128.0 a task's own variables decide which connection
+it gets — which is real Ansible's behaviour, and is what makes
+<code>set_fact: {ansible_connection: ...}</code> work. It also means a value that
+sets <code>ansible_connection</code>, <code>ansible_host</code>, <code>ansible_user</code> or <code>ansible_port</code>
+can send <strong>subsequent tasks to a different endpoint</strong>.</p>
+<p>This is parity, not a hole we opened: real does the same, measured — after
+<code>set_fact: {ansible_connection: ssh}</code> the next task really does go over
+SSH and reports UNREACHABLE. It is on this page because the consequence is
+worth stating plainly rather than leaving for someone to find.</p>
+<p>What it means in practice:</p>
+<ul>
+<li><strong>A module result is trusted.</strong> A module that returns <code>ansible_facts</code>
+  with a connection variable in it changes where later tasks run. Real
+  Ansible has the same property, and it is why <code>gather_facts</code> against a
+  host you do not control is a trust decision, not a read-only one.</li>
+<li><strong>A custom fact file is namespaced, and that matters here.</strong>
+  <code>ansible_local</code> entries land under <code>ansible_local.&lt;name&gt;</code>, keyed by the
+  <code>.fact</code> filename, so a target's own file cannot reach a top-level
+  <code>ansible_connection</code>.</li>
+<li><strong>The connection variables are a known, closed set.</strong> They are listed
+  in one place and a test reads the functions that build a connection and
+  fails if one consults a variable the list does not name — which is how
+  thirteen <code>ansible_winrm_*</code> variables were found missing from it. A
+  reviewer asking "what can redirect a task?" has one list to read.</li>
+</ul>
 <h2 id="what-remains-named-rather-than-smoothed-over">What remains, named rather than smoothed over<a class="headerlink" href="#what-remains-named-rather-than-smoothed-over" title="Permanent link">&para;</a></h2>
 <ul>
 <li><strong><code>security</code>'s own <code>argv</code> on macOS.</strong> <code>keyring</code> on macOS runs
