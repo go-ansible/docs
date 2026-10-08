@@ -585,8 +585,35 @@ host var  >  task keyword  >  play keyword
 task, while a host with no connection variable runs that task locally
 beneath a play saying `connection: ssh`.
 
-What remains refused: `collections:`, `delegate_facts:`, `debugger:`,
-and any strategy other than `linear` or `free`.
+`collections:` left it in v0.130.0, for a different reason from the
+others: it is **accepted and has no effect**, and that is not the
+silent-ignore this list exists to prevent. The module registry is one
+flat namespace by construction — `NormalizeName` strips every known
+collection prefix, so `community.general.ufw` and a bare `ufw` are the
+same entry — and no two modules share a bare name (566 registrations,
+566 distinct, pinned by `TestNoDuplicateRegistrations` in `modules`). A
+search path has nothing to search. It was already accepted on a **play**
+while being refused on a **task**, so the rule was only half applied.
+
+`debugger: never` left it too, and only that value: it asks for nothing,
+since it turns *off* a debugger this port does not have. The other
+values are refused by name. They are **not** no-ops in a
+non-interactive run, which is the tempting assumption — measured, with
+stdin closed, `debugger: on_failed` on a failing task still prints
+`[h1] TASK: fails (debug)> User interrupted execution`, changing both
+the transcript and the control flow.
+
+What remains refused: `delegate_facts:`, `debugger:` with any value but
+`never`, and any strategy other than `linear`, `free` or `host_pinned`.
+
+`delegate_facts:` now says what it would need rather than refusing
+blankly: facts would have to be written to **another host's** variables
+and read back, and `hostvars` here is built once from the inventory at
+play start — a snapshot, not a live store — so a fact written to another
+host would be invisible to every reader of it, including that host's own
+next task. It is refused rather than half-built because the half that
+would work (a delegate inside the play) looks identical to the half that
+would not.
 
 They are refused rather than ignored on purpose. Silently accepting a
 keyword this port does not honour would run the task differently from
@@ -1227,9 +1254,23 @@ possibly-templated resolution — documented as narrower, not silently
 different. The namespace/collection metadata system, Python-style inventory
 *plugins*, and lookup/callback plugins are out of scope entirely (executable
 inventory *scripts* — the `--list`/`--host` protocol — are supported; see
-[inventory](inventory.md)). Any playbook `strategy` other than `linear`/
-`free` (`debug`, `host_pinned`, a strategy plugin) is rejected with an
-explicit parse error rather than silently treated as `linear`.
+[inventory](inventory.md)). `host_pinned` joined `linear` and `free` in v0.130.0 — real
+implements it as `free` plus one rule, that a host does not start until a
+fork slot is free and holds it until the play is done, and the difference
+shows at `-f 1`, where `free` collapses to `linear` and `host_pinned`
+does not:
+
+```
+linear       one[h1 h2] two[h1 h2] three[h1 h2]
+free         one[h1 h2] two[h1 h2] three[h1 h2]
+host_pinned  one[h1] two[h1] three[h1] one[h2] two[h2] three[h2]
+```
+
+`debug` and any strategy plugin are still rejected with an explicit parse
+error rather than silently treated as `linear`. `debug` is refused for a
+reason worth separating from the others: it is real's `linear` plus its
+**interactive debugger**, so running it as `linear` would silently drop
+the only thing it asks for.
 `async`/`poll` only genuinely backgrounds `command`/`shell` on the target
 — the only two modules whose entire work reduces to one remote invocation —
 and an overrunning job is detected on timeout but not actively killed, since
