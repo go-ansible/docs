@@ -962,6 +962,34 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Unreachable hosts, and connecting per task">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#a-task-may-change-the-connection-and-that-is-the-sixth" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        A task may change the connection, and that is the sixth
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#one-named-divergence" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        One named divergence
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -1604,6 +1632,34 @@
       
     </span>
   </a>
+  
+    <nav class="md-nav" aria-label="Unreachable hosts, and connecting per task">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#a-task-may-change-the-connection-and-that-is-the-sixth" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        A task may change the connection, and that is the sixth
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#one-named-divergence" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        One named divergence
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -2284,8 +2340,7 @@ taken for the module, so <code>no_log: true</code> beside <code>debug:</code> us
 with <em>"ambiguous module"</em> — a message that reads like the playbook is
 malformed when it is this port that is incomplete. Now it says which
 keyword, and how to get the same effect where there is a way:
-task-level <code>connection:</code> → set it on the play, or <code>ansible_connection</code>
-on the host.</p>
+<code>collections:</code> → use a fully-qualified module name.</p>
 <p>The list shrinks as the port catches up. <code>environment:</code>,
 <code>any_errors_fatal:</code>, <code>check_mode:</code>, <code>no_log:</code>, <code>module_defaults:</code> and
 <code>ignore_unreachable:</code> were all on it; so were <code>throttle:</code> and
@@ -2293,12 +2348,22 @@ on the host.</p>
 <code>TestTaskTimeout</code>); and so were <code>become_exe:</code>/<code>become_flags:</code>, which
 were refused only because <code>BecomeConfig</code> had nowhere to put them until
 go-remoteexec/transport v0.2.0 gave it <code>Exe</code> and <code>Flags</code>.</p>
-<p>What remains refused: task-level <code>connection:</code>/<code>remote_user:</code>/<code>port:</code>,
-<code>collections:</code>, <code>delegate_facts:</code>, <code>debugger:</code>, and any strategy other
-than <code>linear</code> or <code>free</code>.</p>
-<p>They are refused rather than ignored on purpose. Silently accepting
-<code>connection: local</code> would run the task somewhere other than the
-playbook says.</p>
+<p>Task-level <code>connection:</code>, <code>remote_user:</code> and <code>port:</code> left it in
+v0.129.0. They were refused only because a connection was built once per
+play and could not change; v0.128.0 made a task's own variables decide
+which connection it gets, and these three are the keyword spelling of
+<code>ansible_connection</code>, <code>ansible_user</code> and <code>ansible_port</code>. The measured
+precedence is the ladder <code>become:</code> already uses:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>host var  &gt;  task keyword  &gt;  play keyword
+</code></pre></div>
+<p>— a host with <code>ansible_connection=ssh</code> <em>ignores</em> <code>connection: local</code> on a
+task, while a host with no connection variable runs that task locally
+beneath a play saying <code>connection: ssh</code>.</p>
+<p>What remains refused: <code>collections:</code>, <code>delegate_facts:</code>, <code>debugger:</code>,
+and any strategy other than <code>linear</code> or <code>free</code>.</p>
+<p>They are refused rather than ignored on purpose. Silently accepting a
+keyword this port does not honour would run the task differently from
+what the playbook says, which is worse than saying no.</p>
 <h2 id="environment">environment<a class="headerlink" href="#environment" title="Permanent link">&para;</a></h2>
 <p><code>environment:</code> sets variables in the environment of the command a task
 runs, at play and task level. A play's entries reach every task; a
@@ -2321,12 +2386,12 @@ what Python's <code>str()</code> produces and what a script testing
 a string with one interpolated into it, in a <code>when:</code>. This port
 rendered it as null, so a <strong>misspelled variable name silently did the
 wrong thing</strong>:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="nt">debug</span><span class="p">:</span><span class="w">   </span><span class="p p-Indicator">{</span><span class="nt">msg</span><span class="p">:</span><span class="w"> </span><span class="s">"{{</span><span class="nv"> </span><span class="s">pakcage_name</span><span class="nv"> </span><span class="s">}}"</span><span class="p p-Indicator">}</span><span class="w">   </span><span class="c1"># printed null, reported ok</span>
-<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="nt">command</span><span class="p">:</span><span class="w"> </span><span class="s">"echo</span><span class="nv"> </span><span class="s">{{</span><span class="nv"> </span><span class="s">pakcage_name</span><span class="nv"> </span><span class="s">}}"</span><span class="w">     </span><span class="c1"># ran `echo `, reported changed</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="nt">debug</span><span class="p">:</span><span class="w">   </span><span class="p p-Indicator">{</span><span class="nt">msg</span><span class="p">:</span><span class="w"> </span><span class="s">"{{</span><span class="nv"> </span><span class="s">pakcage_name</span><span class="nv"> </span><span class="s">}}"</span><span class="p p-Indicator">}</span><span class="w">   </span><span class="c1"># printed null, reported ok</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="nt">command</span><span class="p">:</span><span class="w"> </span><span class="s">"echo</span><span class="nv"> </span><span class="s">{{</span><span class="nv"> </span><span class="s">pakcage_name</span><span class="nv"> </span><span class="s">}}"</span><span class="w">     </span><span class="c1"># ran `echo `, reported changed</span>
 </code></pre></div>
 <p>Both now stop the play, as they do there. <code>default()</code> still guards,
 which is what a real playbook uses:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="nt">msg</span><span class="p">:</span><span class="w"> </span><span class="s">"{{</span><span class="nv"> </span><span class="s">maybe_missing</span><span class="nv"> </span><span class="s">|</span><span class="nv"> </span><span class="s">default('fallback')</span><span class="nv"> </span><span class="s">}}"</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="nt">msg</span><span class="p">:</span><span class="w"> </span><span class="s">"{{</span><span class="nv"> </span><span class="s">maybe_missing</span><span class="nv"> </span><span class="s">|</span><span class="nv"> </span><span class="s">default('fallback')</span><span class="nv"> </span><span class="s">}}"</span>
 </code></pre></div>
 <p>The innermost message matches real's wording — <code>'x' is undefined</code> —
 but not its whole chain: real names the module and the argument
@@ -2355,8 +2420,8 @@ measured rather than assumed: <code>list</code> does <strong>not</strong> flatte
 <p>Each iteration prints <code>(item=...)</code> using Python's <code>str()</code> — a dict
 shows as <code>{'k': 'v'}</code>, <code>None</code> rather than <code>&lt;nil&gt;</code>. <code>loop_control.label</code>
 replaces what is shown, which is the point of it:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="nt">loop_control</span><span class="p">:</span>
-<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="w">  </span><span class="nt">label</span><span class="p">:</span><span class="w"> </span><span class="s">"user</span><span class="nv"> </span><span class="s">{{</span><span class="nv"> </span><span class="s">item.name</span><span class="nv"> </span><span class="s">}}"</span><span class="w">    </span><span class="c1"># not the whole record</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="nt">loop_control</span><span class="p">:</span>
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="w">  </span><span class="nt">label</span><span class="p">:</span><span class="w"> </span><span class="s">"user</span><span class="nv"> </span><span class="s">{{</span><span class="nv"> </span><span class="s">item.name</span><span class="nv"> </span><span class="s">}}"</span><span class="w">    </span><span class="c1"># not the whole record</span>
 </code></pre></div>
 <p>The label changes only the printing: <code>register:</code> and the result dict
 still carry the real item.</p>
@@ -2371,8 +2436,8 @@ about one run in eight.)</p>
 <h2 id="how-a-failure-reads">How a failure reads<a class="headerlink" href="#how-a-failure-reads" title="Permanent link">&para;</a></h2>
 <p>A failure names the module and the argument it could not resolve, as
 real's does:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>Task failed: Finalization of task args for 'ansible.builtin.copy' failed:
-<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>Error while resolving value for 'content': 'nope' is undefined
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>Task failed: Finalization of task args for 'ansible.builtin.copy' failed:
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>Error while resolving value for 'content': 'nope' is undefined
 </code></pre></div>
 <p>Getting the argument named means rendering a task's arguments one
 top-level key at a time — rendering the whole map in one call can only
@@ -2395,8 +2460,8 @@ rendered as an ordinary argument, which turned an undefined name into
 an args-finalization failure.</p>
 <h3 id="loops">Loops<a class="headerlink" href="#loops" title="Permanent link">&para;</a></h3>
 <p>A failing <strong>iteration</strong> reads differently from a failing task:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>failed: [h1] (item=a) =&gt; {...}     an item
-<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>fatal: [h1]: FAILED! =&gt; {...}      a task
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>failed: [h1] (item=a) =&gt; {...}     an item
+<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>fatal: [h1]: FAILED! =&gt; {...}      a task
 </code></pre></div>
 <p>Lowercase, no <code>FAILED!</code> marker, and the label before the arrow rather
 than after it. <code>...ignoring</code> comes once after the last item, not after
@@ -2413,9 +2478,9 @@ block above it is absent.</p>
 <h2 id="what-a-rescue-can-see">What a rescue can see<a class="headerlink" href="#what-a-rescue-can-see" title="Permanent link">&para;</a></h2>
 <p><code>ansible_failed_task</code> and <code>ansible_failed_result</code> are set the moment a
 block starts <strong>rescuing</strong>, which is how a rescue says what it caught:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="nt">rescue</span><span class="p">:</span>
-<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">debug</span><span class="p">:</span>
-<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a><span class="w">      </span><span class="nt">msg</span><span class="p">:</span><span class="w"> </span><span class="s">"{{</span><span class="nv"> </span><span class="s">ansible_failed_task.name</span><span class="nv"> </span><span class="s">}}</span><span class="nv"> </span><span class="s">failed:</span><span class="nv"> </span><span class="s">{{</span><span class="nv"> </span><span class="s">ansible_failed_result.msg</span><span class="nv"> </span><span class="s">}}"</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="nt">rescue</span><span class="p">:</span>
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">debug</span><span class="p">:</span>
+<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a><span class="w">      </span><span class="nt">msg</span><span class="p">:</span><span class="w"> </span><span class="s">"{{</span><span class="nv"> </span><span class="s">ansible_failed_task.name</span><span class="nv"> </span><span class="s">}}</span><span class="nv"> </span><span class="s">failed:</span><span class="nv"> </span><span class="s">{{</span><span class="nv"> </span><span class="s">ansible_failed_result.msg</span><span class="nv"> </span><span class="s">}}"</span>
 </code></pre></div>
 <p>Neither existed until this was measured, so the idiom the Ansible
 docs give for a rescue block failed on an undefined variable.</p>
@@ -2451,11 +2516,11 @@ block.</p>
 <h2 id="action-local_action-and-args">action, local_action and args<a class="headerlink" href="#action-local_action-and-args" title="Permanent link">&para;</a></h2>
 <p>Three ways to name a module, or its arguments, somewhere other than
 the module's own key. All three are honoured:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">action</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">command id -un</span><span class="w">                 </span><span class="c1"># first word is the module</span>
-<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">action</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">module</span><span class="p">:</span><span class="w"> </span><span class="nv">copy</span><span class="p p-Indicator">,</span><span class="nt"> content</span><span class="p">:</span><span class="w"> </span><span class="nv">hi</span><span class="p p-Indicator">,</span><span class="nt"> dest</span><span class="p">:</span><span class="w"> </span><span class="nv">/tmp/x</span><span class="p p-Indicator">}</span>
-<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">local_action</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">command id -un</span><span class="w">           </span><span class="c1"># = action + delegate_to: localhost</span>
-<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">command</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">echo hello</span>
-<a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a><span class="w">  </span><span class="nt">args</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">chdir</span><span class="p">:</span><span class="w"> </span><span class="nv">/tmp</span><span class="p p-Indicator">}</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">action</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">command id -un</span><span class="w">                 </span><span class="c1"># first word is the module</span>
+<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">action</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">module</span><span class="p">:</span><span class="w"> </span><span class="nv">copy</span><span class="p p-Indicator">,</span><span class="nt"> content</span><span class="p">:</span><span class="w"> </span><span class="nv">hi</span><span class="p p-Indicator">,</span><span class="nt"> dest</span><span class="p">:</span><span class="w"> </span><span class="nv">/tmp/x</span><span class="p p-Indicator">}</span>
+<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">local_action</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">command id -un</span><span class="w">           </span><span class="c1"># = action + delegate_to: localhost</span>
+<a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">command</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">echo hello</span>
+<a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a><span class="w">  </span><span class="nt">args</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">chdir</span><span class="p">:</span><span class="w"> </span><span class="nv">/tmp</span><span class="p p-Indicator">}</span>
 </code></pre></div>
 <p>A string value's <strong>first word</strong> names the module and the rest is
 <code>_raw_params</code> — which differs from the module-key form, where the
@@ -2545,10 +2610,10 @@ no group may exceed 59, which leaves <code>1:60</code> a string.</p>
 scope with it, sitting between the play's variables and the task's
 own. The same applies to an <code>include_tasks</code>/<code>import_tasks</code>, which is
 how an included file is parameterised:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">set it up</span>
-<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a><span class="w">  </span><span class="nt">include_tasks</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">setup.yml</span>
-<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a><span class="w">  </span><span class="nt">vars</span><span class="p">:</span>
-<a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a><span class="w">    </span><span class="nt">port</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">8080</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">set it up</span>
+<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a><span class="w">  </span><span class="nt">include_tasks</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">setup.yml</span>
+<a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a><span class="w">  </span><span class="nt">vars</span><span class="p">:</span>
+<a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a><span class="w">    </span><span class="nt">port</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">8080</span>
 </code></pre></div>
 <p>Both were accepted and <strong>dropped</strong> until this was measured — the
 variable arrived undefined, silently.</p>
@@ -2558,18 +2623,20 @@ ok in the recap. A static import announces nothing. <code>include_tasks:</code>
 takes either a bare path or the mapping form <code>{file: path}</code>.</p>
 <h2 id="unreachable-hosts-and-connecting-per-task">Unreachable hosts, and connecting per task<a class="headerlink" href="#unreachable-hosts-and-connecting-per-task" title="Permanent link">&para;</a></h2>
 <p>Real Ansible establishes a connection when a task needs one, not once
-before the play. Five things follow from that, and this port now does
-the same:</p>
+before the play. Six things follow from that, and this port now does the
+same — the sixth only as of v0.128.0, which is worth saying because this
+paragraph claimed all of it earlier while the connection itself was
+still built once per play. What was per task was the <em>reporting</em>.</p>
 <p><code>ignore_unreachable:</code> keeps a host in the play when it cannot be
 reached — the result still prints <code>UNREACHABLE!</code>, the recap counts it
 ok+ignored rather than unreachable, and the run can still exit 0. It is
 decided <strong>per task</strong>, at play or task level, which is what makes an
 ignored-unreachable <code>ping</code> followed by an ordinary <code>command</code> report
 UNREACHABLE <em>twice</em> and drop the host only on the second:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>TASK [dead]        fatal: [hx]: UNREACHABLE! =&gt; {...}
-<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a>                   ...ignoring                       ← ignore_unreachable
-<a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a>TASK [some debug]  ok: [hx]                          ← needs no connection
-<a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a>TASK [needs one]   fatal: [hx]: UNREACHABLE! =&gt; {...}← host dropped here
+<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a>TASK [dead]        fatal: [hx]: UNREACHABLE! =&gt; {...}
+<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a>                   ...ignoring                       ← ignore_unreachable
+<a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a>TASK [some debug]  ok: [hx]                          ← needs no connection
+<a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a>TASK [needs one]   fatal: [hx]: UNREACHABLE! =&gt; {...}← host dropped here
 </code></pre></div>
 <p>The tasks that run anyway are the ones real Ansible never opens a
 connection for: <code>add_host</code>, <code>assert</code>, <code>debug</code>, <code>fail</code>, <code>group_by</code>,
@@ -2589,6 +2656,59 @@ when one merely failed, and unreachable <strong>wins</strong> rather than
 combining: one failed host plus one unreachable host exits 4, not 6.
 This port returned 2 for both, so a caller telling them apart — a retry
 loop, a deployment gate — could not.</p>
+<h3 id="a-task-may-change-the-connection-and-that-is-the-sixth">A task may change the connection, and that is the sixth<a class="headerlink" href="#a-task-may-change-the-connection-and-that-is-the-sixth" title="Permanent link">&para;</a></h3>
+<p><code>hostState</code>'s own comment in this engine said <em>"Real Ansible connects per
+TASK"</em> for a long time while the connection was built once at play start
+and never reconsidered. So this:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">set_fact</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">ansible_connection</span><span class="p">:</span><span class="w"> </span><span class="nv">ssh</span><span class="p p-Indicator">}</span>
+<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">command</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">echo still-here</span>
+</code></pre></div>
+<p>left the variable <strong>visible</strong> and changed nothing — the <code>command</code> ran
+locally. Real switches, and the next task reports UNREACHABLE. Measured,
+same playbook:</p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>real</td>
+<td><code>conn=ssh</code> → <code>UNREACHABLE!</code> — <code>ok=2 unreachable=1 failed=0</code></td>
+</tr>
+<tr>
+<td>this port, before v0.128.0</td>
+<td><code>conn=ssh</code> → <code>ran=still-here</code></td>
+</tr>
+</tbody>
+</table>
+<p>A variable that is read back correctly and then ignored is the worst
+shape a divergence can take, because nothing fails.</p>
+<p>Three things make it work, and each took a measurement to get right:</p>
+<ul>
+<li><strong>The signature folds in the play's <code>connection:</code>/<code>remote_user:</code>/
+  <code>port:</code>.</strong> Those are added to the variables at connect time and are
+  absent from a task's own merged variables, so comparing without them
+  differs for <em>every</em> task of such a play — a fresh dial per task. An
+  ordinary play still connects <strong>once</strong>, and a test pins that.</li>
+<li><strong>A task that needs no connection does not dial one.</strong> Real opens
+  nothing until a task reaches for a connection, so a <code>debug</code> between
+  the change and the next real task still reports ok. Reconnecting for
+  every task gave <code>ok=1</code> against real's <code>ok=2</code>.</li>
+<li><strong>A connection that cannot be made is UNREACHABLE</strong>, not a failed
+  task — real counts it in its own recap column.</li>
+</ul>
+<p>The signature ignores the dozens of <code>ansible_*</code> variables fact gathering
+adds, or every gather would look like a change.</p>
+<h3 id="one-named-divergence">One named divergence<a class="headerlink" href="#one-named-divergence" title="Permanent link">&para;</a></h3>
+<p>A task asking for a <em>different</em> connection than the one that failed gets
+a fresh attempt. A task asking for the <strong>same</strong> unreachable endpoint does
+not: this port reports from the recorded failure. Real re-attempts per
+task, which on a host that is simply down costs a full SSH timeout per
+task. The difference is visible only in timing, and it has a test of its
+own rather than being left to be discovered.</p>
 <h2 id="meta">meta<a class="headerlink" href="#meta" title="Permanent link">&para;</a></h2>
 <p><code>meta:</code> is not a module. Real Ansible's strategy executes it directly:
 it prints a TASK header with <strong>nothing underneath</strong>, and counts toward
@@ -2598,11 +2718,11 @@ any other action is refused by name.</p>
 <h2 id="module_defaults">module_defaults<a class="headerlink" href="#module_defaults" title="Permanent link">&para;</a></h2>
 <p><code>module_defaults:</code> gives a module its arguments once, for every task in
 scope, at play, block or task level:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">hosts</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">web</span>
-<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a><span class="w">  </span><span class="nt">module_defaults</span><span class="p">:</span>
-<a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a><span class="w">    </span><span class="nt">file</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">mode</span><span class="p">:</span><span class="w"> </span><span class="s">"0640"</span><span class="p p-Indicator">}</span>
-<a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a><span class="w">  </span><span class="nt">tasks</span><span class="p">:</span>
-<a id="__codelineno-14-5" name="__codelineno-14-5" href="#__codelineno-14-5"></a><span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">file</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">path</span><span class="p">:</span><span class="w"> </span><span class="nv">/etc/app.conf</span><span class="p p-Indicator">,</span><span class="nt"> state</span><span class="p">:</span><span class="w"> </span><span class="nv">touch</span><span class="p p-Indicator">}</span><span class="w">   </span><span class="c1"># created 0640</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">hosts</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">web</span>
+<a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a><span class="w">  </span><span class="nt">module_defaults</span><span class="p">:</span>
+<a id="__codelineno-16-3" name="__codelineno-16-3" href="#__codelineno-16-3"></a><span class="w">    </span><span class="nt">file</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">mode</span><span class="p">:</span><span class="w"> </span><span class="s">"0640"</span><span class="p p-Indicator">}</span>
+<a id="__codelineno-16-4" name="__codelineno-16-4" href="#__codelineno-16-4"></a><span class="w">  </span><span class="nt">tasks</span><span class="p">:</span>
+<a id="__codelineno-16-5" name="__codelineno-16-5" href="#__codelineno-16-5"></a><span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">file</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">path</span><span class="p">:</span><span class="w"> </span><span class="nv">/etc/app.conf</span><span class="p p-Indicator">,</span><span class="nt"> state</span><span class="p">:</span><span class="w"> </span><span class="nv">touch</span><span class="p p-Indicator">}</span><span class="w">   </span><span class="c1"># created 0640</span>
 </code></pre></div>
 <p>The defaults sit <strong>under</strong> a task's own arguments, which keep winning.
 Values are templated like any argument, and a fully-qualified key
@@ -2732,47 +2852,47 @@ in <code>{{ }}</code>, so one already wrapped became <code>{{ {{ flag }} }}</cod
 conditional that is entirely one expression is unwrapped; <code>{{ a }} and
 {{ b }}</code> is left as written.</p>
 <h2 id="example">Example<a class="headerlink" href="#example" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a><span class="kn">package</span><span class="w"> </span><span class="nx">main</span>
-<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a>
-<a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a><span class="kn">import</span><span class="w"> </span><span class="p">(</span>
-<a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a><span class="w">    </span><span class="s">"context"</span>
-<a id="__codelineno-15-5" name="__codelineno-15-5" href="#__codelineno-15-5"></a><span class="w">    </span><span class="s">"fmt"</span>
-<a id="__codelineno-15-6" name="__codelineno-15-6" href="#__codelineno-15-6"></a><span class="w">    </span><span class="s">"log"</span>
-<a id="__codelineno-15-7" name="__codelineno-15-7" href="#__codelineno-15-7"></a>
-<a id="__codelineno-15-8" name="__codelineno-15-8" href="#__codelineno-15-8"></a><span class="w">    </span><span class="s">"github.com/go-ansible/inventory"</span>
-<a id="__codelineno-15-9" name="__codelineno-15-9" href="#__codelineno-15-9"></a><span class="w">    </span><span class="s">"github.com/go-ansible/playbook"</span>
-<a id="__codelineno-15-10" name="__codelineno-15-10" href="#__codelineno-15-10"></a><span class="p">)</span>
-<a id="__codelineno-15-11" name="__codelineno-15-11" href="#__codelineno-15-11"></a>
-<a id="__codelineno-15-12" name="__codelineno-15-12" href="#__codelineno-15-12"></a><span class="kd">func</span><span class="w"> </span><span class="nx">main</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-15-13" name="__codelineno-15-13" href="#__codelineno-15-13"></a><span class="w">    </span><span class="nx">inv</span><span class="p">,</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">inventory</span><span class="p">.</span><span class="nx">ParseYAML</span><span class="p">([]</span><span class="kt">byte</span><span class="p">(</span><span class="s">`</span>
-<a id="__codelineno-15-14" name="__codelineno-15-14" href="#__codelineno-15-14"></a><span class="s">all:</span>
-<a id="__codelineno-15-15" name="__codelineno-15-15" href="#__codelineno-15-15"></a><span class="s">  hosts:</span>
-<a id="__codelineno-15-16" name="__codelineno-15-16" href="#__codelineno-15-16"></a><span class="s">    localhost:</span>
-<a id="__codelineno-15-17" name="__codelineno-15-17" href="#__codelineno-15-17"></a><span class="s">      ansible_connection: local</span>
-<a id="__codelineno-15-18" name="__codelineno-15-18" href="#__codelineno-15-18"></a><span class="s">`</span><span class="p">))</span>
-<a id="__codelineno-15-19" name="__codelineno-15-19" href="#__codelineno-15-19"></a><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="kc">nil</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-15-20" name="__codelineno-15-20" href="#__codelineno-15-20"></a><span class="w">        </span><span class="nx">log</span><span class="p">.</span><span class="nx">Fatal</span><span class="p">(</span><span class="nx">err</span><span class="p">)</span>
-<a id="__codelineno-15-21" name="__codelineno-15-21" href="#__codelineno-15-21"></a><span class="w">    </span><span class="p">}</span>
-<a id="__codelineno-15-22" name="__codelineno-15-22" href="#__codelineno-15-22"></a>
-<a id="__codelineno-15-23" name="__codelineno-15-23" href="#__codelineno-15-23"></a><span class="w">    </span><span class="nx">pb</span><span class="p">,</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">playbook</span><span class="p">.</span><span class="nx">ParseFile</span><span class="p">(</span><span class="s">"site.yml"</span><span class="p">)</span>
-<a id="__codelineno-15-24" name="__codelineno-15-24" href="#__codelineno-15-24"></a><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="kc">nil</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-15-25" name="__codelineno-15-25" href="#__codelineno-15-25"></a><span class="w">        </span><span class="nx">log</span><span class="p">.</span><span class="nx">Fatal</span><span class="p">(</span><span class="nx">err</span><span class="p">)</span>
-<a id="__codelineno-15-26" name="__codelineno-15-26" href="#__codelineno-15-26"></a><span class="w">    </span><span class="p">}</span>
-<a id="__codelineno-15-27" name="__codelineno-15-27" href="#__codelineno-15-27"></a>
-<a id="__codelineno-15-28" name="__codelineno-15-28" href="#__codelineno-15-28"></a><span class="w">    </span><span class="nx">e</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">playbook</span><span class="p">.</span><span class="nx">New</span><span class="p">(</span><span class="nx">inv</span><span class="p">)</span>
-<a id="__codelineno-15-29" name="__codelineno-15-29" href="#__codelineno-15-29"></a><span class="w">    </span><span class="nx">rr</span><span class="p">,</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">e</span><span class="p">.</span><span class="nx">RunPlaybook</span><span class="p">(</span><span class="nx">context</span><span class="p">.</span><span class="nx">Background</span><span class="p">(),</span><span class="w"> </span><span class="nx">pb</span><span class="p">)</span>
-<a id="__codelineno-15-30" name="__codelineno-15-30" href="#__codelineno-15-30"></a><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="kc">nil</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-15-31" name="__codelineno-15-31" href="#__codelineno-15-31"></a><span class="w">        </span><span class="nx">log</span><span class="p">.</span><span class="nx">Fatal</span><span class="p">(</span><span class="nx">err</span><span class="p">)</span>
-<a id="__codelineno-15-32" name="__codelineno-15-32" href="#__codelineno-15-32"></a><span class="w">    </span><span class="p">}</span>
-<a id="__codelineno-15-33" name="__codelineno-15-33" href="#__codelineno-15-33"></a><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="nx">rr</span><span class="p">.</span><span class="nx">Failed</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-15-34" name="__codelineno-15-34" href="#__codelineno-15-34"></a><span class="w">        </span><span class="nx">log</span><span class="p">.</span><span class="nx">Fatalf</span><span class="p">(</span><span class="s">"run failed: %+v"</span><span class="p">,</span><span class="w"> </span><span class="nx">rr</span><span class="p">.</span><span class="nx">Summary</span><span class="p">())</span>
-<a id="__codelineno-15-35" name="__codelineno-15-35" href="#__codelineno-15-35"></a><span class="w">    </span><span class="p">}</span>
-<a id="__codelineno-15-36" name="__codelineno-15-36" href="#__codelineno-15-36"></a><span class="w">    </span><span class="nx">fmt</span><span class="p">.</span><span class="nx">Println</span><span class="p">(</span><span class="nx">rr</span><span class="p">.</span><span class="nx">Summary</span><span class="p">())</span>
-<a id="__codelineno-15-37" name="__codelineno-15-37" href="#__codelineno-15-37"></a><span class="p">}</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a><span class="kn">package</span><span class="w"> </span><span class="nx">main</span>
+<a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a>
+<a id="__codelineno-17-3" name="__codelineno-17-3" href="#__codelineno-17-3"></a><span class="kn">import</span><span class="w"> </span><span class="p">(</span>
+<a id="__codelineno-17-4" name="__codelineno-17-4" href="#__codelineno-17-4"></a><span class="w">    </span><span class="s">"context"</span>
+<a id="__codelineno-17-5" name="__codelineno-17-5" href="#__codelineno-17-5"></a><span class="w">    </span><span class="s">"fmt"</span>
+<a id="__codelineno-17-6" name="__codelineno-17-6" href="#__codelineno-17-6"></a><span class="w">    </span><span class="s">"log"</span>
+<a id="__codelineno-17-7" name="__codelineno-17-7" href="#__codelineno-17-7"></a>
+<a id="__codelineno-17-8" name="__codelineno-17-8" href="#__codelineno-17-8"></a><span class="w">    </span><span class="s">"github.com/go-ansible/inventory"</span>
+<a id="__codelineno-17-9" name="__codelineno-17-9" href="#__codelineno-17-9"></a><span class="w">    </span><span class="s">"github.com/go-ansible/playbook"</span>
+<a id="__codelineno-17-10" name="__codelineno-17-10" href="#__codelineno-17-10"></a><span class="p">)</span>
+<a id="__codelineno-17-11" name="__codelineno-17-11" href="#__codelineno-17-11"></a>
+<a id="__codelineno-17-12" name="__codelineno-17-12" href="#__codelineno-17-12"></a><span class="kd">func</span><span class="w"> </span><span class="nx">main</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-17-13" name="__codelineno-17-13" href="#__codelineno-17-13"></a><span class="w">    </span><span class="nx">inv</span><span class="p">,</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">inventory</span><span class="p">.</span><span class="nx">ParseYAML</span><span class="p">([]</span><span class="kt">byte</span><span class="p">(</span><span class="s">`</span>
+<a id="__codelineno-17-14" name="__codelineno-17-14" href="#__codelineno-17-14"></a><span class="s">all:</span>
+<a id="__codelineno-17-15" name="__codelineno-17-15" href="#__codelineno-17-15"></a><span class="s">  hosts:</span>
+<a id="__codelineno-17-16" name="__codelineno-17-16" href="#__codelineno-17-16"></a><span class="s">    localhost:</span>
+<a id="__codelineno-17-17" name="__codelineno-17-17" href="#__codelineno-17-17"></a><span class="s">      ansible_connection: local</span>
+<a id="__codelineno-17-18" name="__codelineno-17-18" href="#__codelineno-17-18"></a><span class="s">`</span><span class="p">))</span>
+<a id="__codelineno-17-19" name="__codelineno-17-19" href="#__codelineno-17-19"></a><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="kc">nil</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-17-20" name="__codelineno-17-20" href="#__codelineno-17-20"></a><span class="w">        </span><span class="nx">log</span><span class="p">.</span><span class="nx">Fatal</span><span class="p">(</span><span class="nx">err</span><span class="p">)</span>
+<a id="__codelineno-17-21" name="__codelineno-17-21" href="#__codelineno-17-21"></a><span class="w">    </span><span class="p">}</span>
+<a id="__codelineno-17-22" name="__codelineno-17-22" href="#__codelineno-17-22"></a>
+<a id="__codelineno-17-23" name="__codelineno-17-23" href="#__codelineno-17-23"></a><span class="w">    </span><span class="nx">pb</span><span class="p">,</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">playbook</span><span class="p">.</span><span class="nx">ParseFile</span><span class="p">(</span><span class="s">"site.yml"</span><span class="p">)</span>
+<a id="__codelineno-17-24" name="__codelineno-17-24" href="#__codelineno-17-24"></a><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="kc">nil</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-17-25" name="__codelineno-17-25" href="#__codelineno-17-25"></a><span class="w">        </span><span class="nx">log</span><span class="p">.</span><span class="nx">Fatal</span><span class="p">(</span><span class="nx">err</span><span class="p">)</span>
+<a id="__codelineno-17-26" name="__codelineno-17-26" href="#__codelineno-17-26"></a><span class="w">    </span><span class="p">}</span>
+<a id="__codelineno-17-27" name="__codelineno-17-27" href="#__codelineno-17-27"></a>
+<a id="__codelineno-17-28" name="__codelineno-17-28" href="#__codelineno-17-28"></a><span class="w">    </span><span class="nx">e</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">playbook</span><span class="p">.</span><span class="nx">New</span><span class="p">(</span><span class="nx">inv</span><span class="p">)</span>
+<a id="__codelineno-17-29" name="__codelineno-17-29" href="#__codelineno-17-29"></a><span class="w">    </span><span class="nx">rr</span><span class="p">,</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">e</span><span class="p">.</span><span class="nx">RunPlaybook</span><span class="p">(</span><span class="nx">context</span><span class="p">.</span><span class="nx">Background</span><span class="p">(),</span><span class="w"> </span><span class="nx">pb</span><span class="p">)</span>
+<a id="__codelineno-17-30" name="__codelineno-17-30" href="#__codelineno-17-30"></a><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="kc">nil</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-17-31" name="__codelineno-17-31" href="#__codelineno-17-31"></a><span class="w">        </span><span class="nx">log</span><span class="p">.</span><span class="nx">Fatal</span><span class="p">(</span><span class="nx">err</span><span class="p">)</span>
+<a id="__codelineno-17-32" name="__codelineno-17-32" href="#__codelineno-17-32"></a><span class="w">    </span><span class="p">}</span>
+<a id="__codelineno-17-33" name="__codelineno-17-33" href="#__codelineno-17-33"></a><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="nx">rr</span><span class="p">.</span><span class="nx">Failed</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-17-34" name="__codelineno-17-34" href="#__codelineno-17-34"></a><span class="w">        </span><span class="nx">log</span><span class="p">.</span><span class="nx">Fatalf</span><span class="p">(</span><span class="s">"run failed: %+v"</span><span class="p">,</span><span class="w"> </span><span class="nx">rr</span><span class="p">.</span><span class="nx">Summary</span><span class="p">())</span>
+<a id="__codelineno-17-35" name="__codelineno-17-35" href="#__codelineno-17-35"></a><span class="w">    </span><span class="p">}</span>
+<a id="__codelineno-17-36" name="__codelineno-17-36" href="#__codelineno-17-36"></a><span class="w">    </span><span class="nx">fmt</span><span class="p">.</span><span class="nx">Println</span><span class="p">(</span><span class="nx">rr</span><span class="p">.</span><span class="nx">Summary</span><span class="p">())</span>
+<a id="__codelineno-17-37" name="__codelineno-17-37" href="#__codelineno-17-37"></a><span class="p">}</span>
 </code></pre></div>
 <h2 id="warnings">Warnings<a class="headerlink" href="#warnings" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a><span class="kd">type</span><span class="w"> </span><span class="nx">Warner</span><span class="w"> </span><span class="kd">func</span><span class="p">(</span><span class="nx">msg</span><span class="w"> </span><span class="kt">string</span><span class="p">)</span>
-<a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a><span class="kd">func</span><span class="w"> </span><span class="nx">NewWarner</span><span class="p">(</span><span class="nx">w</span><span class="w"> </span><span class="nx">io</span><span class="p">.</span><span class="nx">Writer</span><span class="p">)</span><span class="w"> </span><span class="nx">Warner</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a><span class="kd">type</span><span class="w"> </span><span class="nx">Warner</span><span class="w"> </span><span class="kd">func</span><span class="p">(</span><span class="nx">msg</span><span class="w"> </span><span class="kt">string</span><span class="p">)</span>
+<a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a><span class="kd">func</span><span class="w"> </span><span class="nx">NewWarner</span><span class="p">(</span><span class="nx">w</span><span class="w"> </span><span class="nx">io</span><span class="p">.</span><span class="nx">Writer</span><span class="p">)</span><span class="w"> </span><span class="nx">Warner</span>
 </code></pre></div>
 <p><code>Engine.Warn</code> reports non-fatal diagnostics about a run's <strong>inputs</strong> — today,
 a host pattern that matched nothing. It is deliberately separate from
