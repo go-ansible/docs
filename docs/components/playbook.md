@@ -606,18 +606,70 @@ the transcript and the control flow.
 What remains refused: `delegate_facts:`, `debugger:` with any value but
 `never`, and any strategy other than `linear`, `free` or `host_pinned`.
 
-`delegate_facts:` now says what it would need rather than refusing
-blankly: facts would have to be written to **another host's** variables
-and read back, and `hostvars` here is built once from the inventory at
-play start — a snapshot, not a live store — so a fact written to another
-host would be invisible to every reader of it, including that host's own
-next task. It is refused rather than half-built because the half that
-would work (a delegate inside the play) looks identical to the half that
-would not.
+`delegate_facts:` says what it would need rather than refusing blankly —
+and what that is changed within a day, which is worth recording. The hint
+first said *“hostvars is a snapshot of the inventory”*; making `hostvars`
+live (v0.132.0) removed exactly that blocker. **A refusal that explains
+itself has to be re-read when the thing it blames changes**, or it goes on
+explaining something that stopped being true.
+
+What remains is the **write**. `vars.Context` is not synchronised, and a
+host's own goroutine is the only thing that touches it; writing to another
+host's Context from this one is a data race, and the snapshot mechanism
+below only ever *publishes*, never accepts. A safe hand-off needs a queue
+applied at a barrier, and under `free` there is no barrier to apply it at.
 
 They are refused rather than ignored on purpose. Silently accepting a
 keyword this port does not honour would run the task differently from
 what the playbook says, which is worse than saying no.
+
+## hostvars is live
+
+`hostvars['web1']['ansible_default_ipv4']` is how a playbook templates one
+host's configuration from another's facts, and it is one of the most
+common things a real playbook does. This port built `hostvars` **once per
+play, from the inventory**, so a fact gathered or a variable set by
+another host was invisible — and produced nothing, silently. Measured
+against ansible-core 2.21.4:
+
+| expression | real | this port, before v0.132.0 |
+|---|---|---|
+| `hostvars['h2']['my_mark']` (a `set_fact`) | `mark-of-h2` | `<MISSING>` |
+| `hostvars['h2']['ansible_system']` (gathered) | `Darwin` | `<MISSING>` |
+
+### How, and why not the obvious way
+
+Each host **publishes an immutable snapshot** of its own variables and
+reads everyone else's. It does not read another host's `vars.Context`
+directly, because that Context is not synchronised and under `free` and
+`host_pinned` every host runs in its own goroutine. A host writes only
+its own snapshot and only its own Context; snapshots are replaced
+wholesale rather than mutated, so a reader holding one holds something
+nobody will write to.
+
+The timing is deliberate: a host publishes at the **end** of each of its
+tasks and reads at the **start** of the next, so under `linear` — which
+has a per-task barrier — `hostvars` reflects exactly the tasks that have
+finished.
+
+### What that means under `free`
+
+`free` gives **no cross-host ordering**; that is what it is for. So a host
+can reach a task that reads `hostvars['other']` before `other` has
+finished the task that sets it, and a missing value is then the correct
+answer rather than a bug. Real behaves the same way. (The test for this
+first asserted the value under all three strategies and passed here every
+time; CI caught it on ppc64le under qemu, slow enough to lose the race
+this machine always won.)
+
+A host **outside the play** still resolves, from the inventory's own view
+— real's `hostvars` covers the whole inventory, not the batch.
+
+### Cost
+
+Measured rather than assumed, on a 50-task play: 0.04s against 0.02s at
+50 hosts, 0.21s against 0.09s at 150 — about 2×, with the same growth
+rate, because the refresh copies pointers rather than variable maps.
 
 ## environment
 
