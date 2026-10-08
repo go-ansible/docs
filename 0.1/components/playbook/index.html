@@ -2359,8 +2359,32 @@ precedence is the ladder <code>become:</code> already uses:</p>
 <p>— a host with <code>ansible_connection=ssh</code> <em>ignores</em> <code>connection: local</code> on a
 task, while a host with no connection variable runs that task locally
 beneath a play saying <code>connection: ssh</code>.</p>
-<p>What remains refused: <code>collections:</code>, <code>delegate_facts:</code>, <code>debugger:</code>,
-and any strategy other than <code>linear</code> or <code>free</code>.</p>
+<p><code>collections:</code> left it in v0.130.0, for a different reason from the
+others: it is <strong>accepted and has no effect</strong>, and that is not the
+silent-ignore this list exists to prevent. The module registry is one
+flat namespace by construction — <code>NormalizeName</code> strips every known
+collection prefix, so <code>community.general.ufw</code> and a bare <code>ufw</code> are the
+same entry — and no two modules share a bare name (566 registrations,
+566 distinct, pinned by <code>TestNoDuplicateRegistrations</code> in <code>modules</code>). A
+search path has nothing to search. It was already accepted on a <strong>play</strong>
+while being refused on a <strong>task</strong>, so the rule was only half applied.</p>
+<p><code>debugger: never</code> left it too, and only that value: it asks for nothing,
+since it turns <em>off</em> a debugger this port does not have. The other
+values are refused by name. They are <strong>not</strong> no-ops in a
+non-interactive run, which is the tempting assumption — measured, with
+stdin closed, <code>debugger: on_failed</code> on a failing task still prints
+<code>[h1] TASK: fails (debug)&gt; User interrupted execution</code>, changing both
+the transcript and the control flow.</p>
+<p>What remains refused: <code>delegate_facts:</code>, <code>debugger:</code> with any value but
+<code>never</code>, and any strategy other than <code>linear</code>, <code>free</code> or <code>host_pinned</code>.</p>
+<p><code>delegate_facts:</code> now says what it would need rather than refusing
+blankly: facts would have to be written to <strong>another host's</strong> variables
+and read back, and <code>hostvars</code> here is built once from the inventory at
+play start — a snapshot, not a live store — so a fact written to another
+host would be invisible to every reader of it, including that host's own
+next task. It is refused rather than half-built because the half that
+would work (a delegate inside the play) looks identical to the half that
+would not.</p>
 <p>They are refused rather than ignored on purpose. Silently accepting a
 keyword this port does not honour would run the task differently from
 what the playbook says, which is worse than saying no.</p>
@@ -2918,9 +2942,20 @@ possibly-templated resolution — documented as narrower, not silently
 different. The namespace/collection metadata system, Python-style inventory
 <em>plugins</em>, and lookup/callback plugins are out of scope entirely (executable
 inventory <em>scripts</em> — the <code>--list</code>/<code>--host</code> protocol — are supported; see
-<a href="../inventory/">inventory</a>). Any playbook <code>strategy</code> other than <code>linear</code>/
-<code>free</code> (<code>debug</code>, <code>host_pinned</code>, a strategy plugin) is rejected with an
-explicit parse error rather than silently treated as <code>linear</code>.
+<a href="../inventory/">inventory</a>). <code>host_pinned</code> joined <code>linear</code> and <code>free</code> in v0.130.0 — real
+implements it as <code>free</code> plus one rule, that a host does not start until a
+fork slot is free and holds it until the play is done, and the difference
+shows at <code>-f 1</code>, where <code>free</code> collapses to <code>linear</code> and <code>host_pinned</code>
+does not:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a>linear       one[h1 h2] two[h1 h2] three[h1 h2]
+<a id="__codelineno-19-2" name="__codelineno-19-2" href="#__codelineno-19-2"></a>free         one[h1 h2] two[h1 h2] three[h1 h2]
+<a id="__codelineno-19-3" name="__codelineno-19-3" href="#__codelineno-19-3"></a>host_pinned  one[h1] two[h1] three[h1] one[h2] two[h2] three[h2]
+</code></pre></div>
+<p><code>debug</code> and any strategy plugin are still rejected with an explicit parse
+error rather than silently treated as <code>linear</code>. <code>debug</code> is refused for a
+reason worth separating from the others: it is real's <code>linear</code> plus its
+<strong>interactive debugger</strong>, so running it as <code>linear</code> would silently drop
+the only thing it asks for.
 <code>async</code>/<code>poll</code> only genuinely backgrounds <code>command</code>/<code>shell</code> on the target
 — the only two modules whose entire work reduces to one remote invocation —
 and an overrunning job is detected on timeout but not actively killed, since
