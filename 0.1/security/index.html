@@ -772,6 +772,56 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#untrusted-data-reaching-the-template-engine" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ⛔ Untrusted data reaching the template engine
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="⛔ Untrusted data reaching the template engine">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#three-routes-and-a-proof-of-concept-that-kept-firing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Three routes, and a proof of concept that kept firing
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-brake-keys-on-provenance-not-on-appearance" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The brake keys on provenance, not on appearance
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#what-this-does-not-cover" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What this does not cover
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#a-fact-can-now-redirect-where-later-tasks-run" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1000,6 +1050,56 @@
       
     </span>
   </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#untrusted-data-reaching-the-template-engine" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ⛔ Untrusted data reaching the template engine
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="⛔ Untrusted data reaching the template engine">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#three-routes-and-a-proof-of-concept-that-kept-firing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Three routes, and a proof of concept that kept firing
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-brake-keys-on-provenance-not-on-appearance" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The brake keys on provenance, not on appearance
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#what-this-does-not-cover" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What this does not cover
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -1236,6 +1336,71 @@ module name is left alone, because real accepts it.</p>
 looked for the first task's output in real's stdout and <strong>found it</strong>, because
 real's error message quotes the offending source lines — including the
 neighbouring one. A file witness is what settled it.</p>
+<h2 id="untrusted-data-reaching-the-template-engine">⛔ Untrusted data reaching the template engine<a class="headerlink" href="#untrusted-data-reaching-the-template-engine" title="Permanent link">&para;</a></h2>
+<p>The most serious defect this audit found, and the one with the widest
+blast radius.</p>
+<p>A module's result is <strong>data a managed host chose</strong>. This port re-rendered
+it as a Jinja template — and <code>lookup('pipe', ...)</code> runs on the <strong>control
+node</strong>. So a host returning</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>{{ lookup('pipe','touch FILE') }}
+</code></pre></div>
+<p>from any command created that file <strong>on the controller</strong>: the machine
+holding the vault password, the fleet's SSH keys and the cloud
+credentials. One compromised target, and the control node runs its code.</p>
+<p>Measured against ansible-core 2.21.4, a command whose output is the text
+<code>{{ 7*7 }}</code>:</p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th><code>r.stdout</code></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>real</td>
+<td><code>"{{ 7*7 }}"</code> — literal, and still a string</td>
+</tr>
+<tr>
+<td>this port, before <code>playbook</code> v0.135.0</td>
+<td><code>49</code> — evaluated, and no longer a string</td>
+</tr>
+</tbody>
+</table>
+<p>Real refuses because it wraps such data in <code>AnsibleUnsafeText</code> and its
+templar will not template those. The fix is the same brake, applied where
+the second evaluation actually happens: <code>resolved()</code>, which walks the
+merged variables and re-renders strings until they settle — this port's
+own emulation of lazy variables, and the only place a value is rendered
+twice.</p>
+<h3 id="three-routes-and-a-proof-of-concept-that-kept-firing">Three routes, and a proof of concept that kept firing<a class="headerlink" href="#three-routes-and-a-proof-of-concept-that-kept-firing" title="Permanent link">&para;</a></h3>
+<p>The payload was a <code>touch</code> into a temporary directory, run after each
+attempted fix. It kept firing until all three were closed, which is the
+argument for having one rather than reasoning about coverage:</p>
+<ol>
+<li><strong>The <code>Facts</code> and <code>Registered</code> variable layers</strong> are never re-rendered.
+   That covers the direct case — <code>register:</code>, <code>set_fact:</code>, gathered facts.</li>
+<li><strong><code>hostvars</code> and <code>groups</code> are untrusted too.</strong> They are derived
+   <em>structures</em>, never a place an author writes a template, and <code>hostvars</code>
+   carries every host's registered results — so leaving it resolvable put
+   all of that untrusted data back under a <em>trusted</em> key.</li>
+<li><strong>One call site had been missed.</strong> <code>snapshotVars</code>, which publishes a
+   host's variables at the end of every task, called the unbraked form —
+   and it was added by the <code>hostvars</code> work a few hours earlier. A security
+   brake is only as good as its least-covered caller.</li>
+</ol>
+<h3 id="the-brake-keys-on-provenance-not-on-appearance">The brake keys on provenance, not on appearance<a class="headerlink" href="#the-brake-keys-on-provenance-not-on-appearance" title="Permanent link">&para;</a></h3>
+<p>It asks whether a template <strong>references an untrusted name</strong>. The first
+attempt asked whether <em>the result still looks like a template</em>, which is
+wrong for an ordinary chain: <code>c: "{{ b }}/c"</code> renders to something that
+is still a template simply because <code>b</code> has not been resolved yet, and that
+version stopped resolving it. Provenance is the distinction real draws
+too.</p>
+<h3 id="what-this-does-not-cover">What this does not cover<a class="headerlink" href="#what-this-does-not-cover" title="Permanent link">&para;</a></h3>
+<p>A playbook's <strong>own</strong> text is trusted, as it is in real: if an author
+writes <code>{{ lookup('pipe', ...) }}</code>, it runs. The boundary is where data
+from a host, a file or an API becomes a variable — not what the author
+wrote.</p>
 <h2 id="a-fact-can-now-redirect-where-later-tasks-run">A fact can now redirect where later tasks run<a class="headerlink" href="#a-fact-can-now-redirect-where-later-tasks-run" title="Permanent link">&para;</a></h2>
 <p>As of <code>playbook</code> v0.128.0 a task's own variables decide which connection
 it gets — which is real Ansible's behaviour, and is what makes
