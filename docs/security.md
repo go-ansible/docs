@@ -383,6 +383,50 @@ What it means in practice:
   thirteen `ansible_winrm_*` variables were found missing from it. A
   reviewer asking "what can redirect a task?" has one list to read.
 
+## Resource exhaustion: a malformed expression leaked a goroutine per evaluation
+
+`gonja`'s `tokens.Lex` runs the lexer in a goroutine feeding an **unbuffered**
+channel. The expression evaluator drove that stream with `ParseExpressionNode`,
+which stops at the closing `}}` — and on a parse error returns immediately, with
+tokens still unsent. The lexer goroutine is then blocked on a send nobody will
+ever receive, holding the lexer, its input string and a token alive with it.
+
+`Eval` and `EvalBool` are the `when:` path: once per task, per host. A single
+malformed condition therefore leaked a goroutine on **every** evaluation —
+unbounded growth in goroutines and memory for as long as the run lasts, out of
+one typo in a playbook.
+
+### Measured — and the first measurement said there was nothing
+
+200 evaluations of an expression that fails to parse:
+
+| expression | where it fails | leaked goroutines |
+|---|---|---|
+| `a + 1 > 0` | — | +0 |
+| `a +` | at the very end | +0 |
+| `a + + + b \| nosuchfilter \| another` | mid-stream | **+200** |
+
+The first probe used `a +` and reported zero, which is true and useless: a
+failure at the *end* of the stream leaves nothing unsent. Only a failure
+**mid-stream** strands the lexer. A test case has to fail in the right place,
+and "no leak found" was the wrong conclusion from the right number.
+
+The fix is `tokens.LexAll`, which lexes synchronously into a slice and starts no
+goroutine at all; `NewStream` accepts either a channel or a slice, so it is a
+drop-in. Removing a goroutine handoff per token also made that hot path about
+**2.05×** faster — ~9728 → ~4748 ns/op, 169 → 149 allocs/op.
+
+### The test carries its own positive control
+
+A leak probe that has gone blind reports zero just as loudly as a fixed engine
+does. `TestLeakProbeCanSeeALeak` abandons lexer streams on purpose and **fails**
+if it cannot count them, so a green leak test means something. Verified by
+neutering: restoring `tokens.Lex` makes the test fail with `+200 goroutines`.
+
+It was found in a `ppc64le` CI timeout dump — a lexer goroutine parked on
+`chan send` for nine minutes, beside a test that had timed out for an unrelated
+reason.
+
 ## What remains, named rather than smoothed over
 
 - **`security`'s own `argv` on macOS.** `keyring` on macOS runs
