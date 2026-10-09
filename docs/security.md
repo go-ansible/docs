@@ -238,6 +238,46 @@ writes `{{ lookup('pipe', ...) }}`, it runs. The boundary is where data
 from a host, a file or an API becomes a variable — not what the author
 wrote.
 
+### Where the hole was, and where it was not
+
+The vulnerable mechanism was *repeated variable resolution* — and only
+that. The other places a value meets an evaluator render **once** and do
+not re-render what they substituted. Checked with the same payload
+against the **vulnerable** build, which is the only way the answer means
+anything: `when:`, `loop:`, a module argument, a task's `vars:`,
+`changed_when:` and `assert:` were all clean *before* the fix as well as
+after.
+
+That is a boundary, not a reassurance: it says the fix had one mechanism
+to cover, and that the single-pass paths are safe by construction rather
+than by luck.
+
+## A fact a target injects is inert
+
+A fact *value* can contain a newline, and the probe's output is parsed
+line by line — so a managed host can make the parser see an extra
+`key=value`:
+
+```go
+parseKV("distribution='Debian\nconnection=ssh'")
+  -> map[connection:ssh distribution:Debian]
+```
+
+`/etc/os-release` is the reachable route: the probe **sources** it and
+emits `$ID`, `$VERSION_ID`, `$ID_LIKE` and `$VERSION_CODENAME`.
+
+It reaches nothing, because `assemble` **names** every fact it builds and
+never ranges over the parsed map — an allow-list. The stakes if it did
+not: `assemble` returns *unprefixed* keys and the engine adds `ansible_`,
+so an injected `connection` would land as `ansible_connection`, which
+since `playbook` v0.128.0 takes effect **per task** and decides where
+later tasks run.
+
+That safety is one refactor away from being false, so it is pinned by a
+test (`facts` v0.18.1) that fails if the parsed map is ever copied
+wholesale. The env-variable route is guarded the same way, by cutting the
+stream before the first `ENV ` line — a guard that was already there.
+
 ## A fact can now redirect where later tasks run
 
 As of `playbook` v0.128.0 a task's own variables decide which connection
