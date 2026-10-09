@@ -888,6 +888,45 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#resource-exhaustion-a-malformed-expression-leaked-a-goroutine-per-evaluation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Resource exhaustion: a malformed expression leaked a goroutine per evaluation
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Resource exhaustion: a malformed expression leaked a goroutine per evaluation">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#measured-and-the-first-measurement-said-there-was-nothing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Measured — and the first measurement said there was nothing
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-test-carries-its-own-positive-control" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The test carries its own positive control
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#what-remains-named-rather-than-smoothed-over" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1221,6 +1260,45 @@
       
     </span>
   </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#resource-exhaustion-a-malformed-expression-leaked-a-goroutine-per-evaluation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Resource exhaustion: a malformed expression leaked a goroutine per evaluation
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Resource exhaustion: a malformed expression leaked a goroutine per evaluation">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#measured-and-the-first-measurement-said-there-was-nothing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Measured — and the first measurement said there was nothing
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-test-carries-its-own-positive-control" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The test carries its own positive control
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -1643,6 +1721,60 @@ worth stating plainly rather than leaving for someone to find.</p>
   thirteen <code>ansible_winrm_*</code> variables were found missing from it. A
   reviewer asking "what can redirect a task?" has one list to read.</li>
 </ul>
+<h2 id="resource-exhaustion-a-malformed-expression-leaked-a-goroutine-per-evaluation">Resource exhaustion: a malformed expression leaked a goroutine per evaluation<a class="headerlink" href="#resource-exhaustion-a-malformed-expression-leaked-a-goroutine-per-evaluation" title="Permanent link">&para;</a></h2>
+<p><code>gonja</code>'s <code>tokens.Lex</code> runs the lexer in a goroutine feeding an <strong>unbuffered</strong>
+channel. The expression evaluator drove that stream with <code>ParseExpressionNode</code>,
+which stops at the closing <code>}}</code> — and on a parse error returns immediately, with
+tokens still unsent. The lexer goroutine is then blocked on a send nobody will
+ever receive, holding the lexer, its input string and a token alive with it.</p>
+<p><code>Eval</code> and <code>EvalBool</code> are the <code>when:</code> path: once per task, per host. A single
+malformed condition therefore leaked a goroutine on <strong>every</strong> evaluation —
+unbounded growth in goroutines and memory for as long as the run lasts, out of
+one typo in a playbook.</p>
+<h3 id="measured-and-the-first-measurement-said-there-was-nothing">Measured — and the first measurement said there was nothing<a class="headerlink" href="#measured-and-the-first-measurement-said-there-was-nothing" title="Permanent link">&para;</a></h3>
+<p>200 evaluations of an expression that fails to parse:</p>
+<table>
+<thead>
+<tr>
+<th>expression</th>
+<th>where it fails</th>
+<th>leaked goroutines</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>a + 1 &gt; 0</code></td>
+<td>—</td>
+<td>+0</td>
+</tr>
+<tr>
+<td><code>a +</code></td>
+<td>at the very end</td>
+<td>+0</td>
+</tr>
+<tr>
+<td><code>a + + + b \| nosuchfilter \| another</code></td>
+<td>mid-stream</td>
+<td><strong>+200</strong></td>
+</tr>
+</tbody>
+</table>
+<p>The first probe used <code>a +</code> and reported zero, which is true and useless: a
+failure at the <em>end</em> of the stream leaves nothing unsent. Only a failure
+<strong>mid-stream</strong> strands the lexer. A test case has to fail in the right place,
+and "no leak found" was the wrong conclusion from the right number.</p>
+<p>The fix is <code>tokens.LexAll</code>, which lexes synchronously into a slice and starts no
+goroutine at all; <code>NewStream</code> accepts either a channel or a slice, so it is a
+drop-in. Removing a goroutine handoff per token also made that hot path about
+<strong>2.05×</strong> faster — ~9728 → ~4748 ns/op, 169 → 149 allocs/op.</p>
+<h3 id="the-test-carries-its-own-positive-control">The test carries its own positive control<a class="headerlink" href="#the-test-carries-its-own-positive-control" title="Permanent link">&para;</a></h3>
+<p>A leak probe that has gone blind reports zero just as loudly as a fixed engine
+does. <code>TestLeakProbeCanSeeALeak</code> abandons lexer streams on purpose and <strong>fails</strong>
+if it cannot count them, so a green leak test means something. Verified by
+neutering: restoring <code>tokens.Lex</code> makes the test fail with <code>+200 goroutines</code>.</p>
+<p>It was found in a <code>ppc64le</code> CI timeout dump — a lexer goroutine parked on
+<code>chan send</code> for nine minutes, beside a test that had timed out for an unrelated
+reason.</p>
 <h2 id="what-remains-named-rather-than-smoothed-over">What remains, named rather than smoothed over<a class="headerlink" href="#what-remains-named-rather-than-smoothed-over" title="Permanent link">&para;</a></h2>
 <ul>
 <li><strong><code>security</code>'s own <code>argv</code> on macOS.</strong> <code>keyring</code> on macOS runs
