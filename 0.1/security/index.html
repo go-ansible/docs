@@ -828,6 +828,28 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#provenance-is-per-key-not-per-layer-and-getting-that-wrong-broke-something" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Provenance is per key, not per layer — and getting that wrong broke something
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#storing-and-marking-happen-in-one-statement" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Storing and marking happen in one statement
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#where-the-hole-was-and-where-it-was-not" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1136,6 +1158,28 @@
     <span class="md-ellipsis">
       
         A second source: a lookup's result
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#provenance-is-per-key-not-per-layer-and-getting-that-wrong-broke-something" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Provenance is per key, not per layer — and getting that wrong broke something
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#storing-and-marking-happen-in-one-statement" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Storing and marking happen in one statement
       
     </span>
   </a>
@@ -1509,6 +1553,40 @@ did not fire" would also be satisfied by breaking lookups entirely.</p>
 <p>It was found by asking where <em>else</em> untrusted data enters rather than
 waiting for it — the first fix covered data arriving through a module
 result, this is the same data arriving through a function call.</p>
+<h3 id="provenance-is-per-key-not-per-layer-and-getting-that-wrong-broke-something">Provenance is per key, not per layer — and getting that wrong broke something<a class="headerlink" href="#provenance-is-per-key-not-per-layer-and-getting-that-wrong-broke-something" title="Permanent link">&para;</a></h3>
+<p>The first version inferred provenance from the <strong>layer</strong> a variable sits
+in, and that is an approximation which is wrong in <strong>both</strong> directions.
+<code>include_vars</code> shares the <code>Facts</code> layer with <code>set_fact</code>, and real
+<em>templates</em> an included vars file — it is a file the author named. So
+marking the layer broke an ordinary pattern:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>include_vars of  greeting: "Hello {{ who }}"
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>real:   Hello world
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>ours:   Hello {{ who }}      ← playbook v0.135.0 and v0.136.0
+</code></pre></div>
+<p>Fixed in <code>playbook</code> v0.137.0, which reads a per-key mark recorded beside
+the variables (<code>vars</code> v0.3.0). <strong>A security brake that breaks a common,
+legitimate pattern does not survive contact with a real playbook</strong>, so
+this is worth as much attention as the hole itself.</p>
+<p><code>vars_files</code> was checked at the same time and needed no change: real
+evaluates a payload there too, because that file is named by the author
+as well. We match.</p>
+<h3 id="storing-and-marking-happen-in-one-statement">Storing and marking happen in one statement<a class="headerlink" href="#storing-and-marking-happen-in-one-statement" title="Permanent link">&para;</a></h3>
+<p>Marking "the three obvious entry points" by hand left <strong>five</strong> other
+stores into the registered layer unmarked — including the main
+<code>register:</code> path — and the proof of concept fired again. The two actions
+now happen in a single call, and a test refuses a raw write into those
+layers.</p>
+<p>Two details of that test earned their place:</p>
+<ul>
+<li>its exceptions <strong>declare themselves in the code</strong> with a
+  <code>provenance: trusted</code> comment, rather than being recognised by a nearby
+  function name — which is how its own first version missed
+  <code>include_vars</code>, whose function is long enough that the name was out of
+  window;</li>
+<li>it <strong>refuses to run</strong> if the helper is used fewer than five times,
+  since "no raw stores" would otherwise be satisfied by an engine that
+  stores nothing.</li>
+</ul>
 <h3 id="where-the-hole-was-and-where-it-was-not">Where the hole was, and where it was not<a class="headerlink" href="#where-the-hole-was-and-where-it-was-not" title="Permanent link">&para;</a></h3>
 <p>The vulnerable mechanism was <em>repeated variable resolution</em> — and only
 that. The other places a value meets an evaluator render <strong>once</strong> and do
@@ -1524,8 +1602,8 @@ than by luck.</p>
 <p>A fact <em>value</em> can contain a newline, and the probe's output is parsed
 line by line — so a managed host can make the parser see an extra
 <code>key=value</code>:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="nx">parseKV</span><span class="p">(</span><span class="s">"distribution='Debian\nconnection=ssh'"</span><span class="p">)</span>
-<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="w">  </span><span class="o">-&gt;</span><span class="w"> </span><span class="kt">map</span><span class="p">[</span><span class="nx">connection</span><span class="p">:</span><span class="nx">ssh</span><span class="w"> </span><span class="nx">distribution</span><span class="p">:</span><span class="nx">Debian</span><span class="p">]</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="nx">parseKV</span><span class="p">(</span><span class="s">"distribution='Debian\nconnection=ssh'"</span><span class="p">)</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="w">  </span><span class="o">-&gt;</span><span class="w"> </span><span class="kt">map</span><span class="p">[</span><span class="nx">connection</span><span class="p">:</span><span class="nx">ssh</span><span class="w"> </span><span class="nx">distribution</span><span class="p">:</span><span class="nx">Debian</span><span class="p">]</span>
 </code></pre></div>
 <p><code>/etc/os-release</code> is the reachable route: the probe <strong>sources</strong> it and
 emits <code>$ID</code>, <code>$VERSION_ID</code>, <code>$ID_LIKE</code> and <code>$VERSION_CODENAME</code>.</p>
