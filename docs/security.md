@@ -238,6 +238,40 @@ writes `{{ lookup('pipe', ...) }}`, it runs. The boundary is where data
 from a host, a file or an API becomes a variable — not what the author
 wrote.
 
+### A second source: a lookup's result
+
+The brake above keys on *untrusted names*, and that is not enough on its
+own:
+
+```yaml
+vars:
+  from_file: "{{ lookup('file', 'data.txt') }}"
+```
+
+names nothing untrusted, yet pulls a file's contents into a **trusted**
+variable — and the next resolution pass rendered *that*. With `data.txt`
+holding `{{ lookup('pipe','touch FILE') }}`, measured against
+ansible-core 2.21.4:
+
+| | result | file |
+|---|---|---|
+| real | the text, literal | none |
+| this port, before `playbook` v0.136.0 | empty — the lookup **ran** | **created** |
+
+A lookup returns a file's contents, a command's output, an API's answer:
+**data by definition**. Real marks a lookup's *result* unsafe, and this
+is the same rule. `query()` and `q()` carry it too — the same machinery
+under other names, and covering only `lookup` would leave two spellings
+of the same hole open.
+
+An **ordinary lookup still resolves**, with a test to say so: refusing to
+re-render a result must not stop the lookup from running, or "the payload
+did not fire" would also be satisfied by breaking lookups entirely.
+
+It was found by asking where *else* untrusted data enters rather than
+waiting for it — the first fix covered data arriving through a module
+result, this is the same data arriving through a function call.
+
 ### Where the hole was, and where it was not
 
 The vulnerable mechanism was *repeated variable resolution* — and only
