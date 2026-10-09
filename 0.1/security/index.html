@@ -817,6 +817,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#a-second-source-a-lookups-result" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        A second source: a lookup's result
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#where-the-hole-was-and-where-it-was-not" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1114,6 +1125,17 @@
     <span class="md-ellipsis">
       
         What this does not cover
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#a-second-source-a-lookups-result" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        A second source: a lookup's result
       
     </span>
   </a>
@@ -1445,6 +1467,48 @@ too.</p>
 writes <code>{{ lookup('pipe', ...) }}</code>, it runs. The boundary is where data
 from a host, a file or an API becomes a variable — not what the author
 wrote.</p>
+<h3 id="a-second-source-a-lookups-result">A second source: a lookup's result<a class="headerlink" href="#a-second-source-a-lookups-result" title="Permanent link">&para;</a></h3>
+<p>The brake above keys on <em>untrusted names</em>, and that is not enough on its
+own:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="nt">vars</span><span class="p">:</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="w">  </span><span class="nt">from_file</span><span class="p">:</span><span class="w"> </span><span class="s">"{{</span><span class="nv"> </span><span class="s">lookup('file',</span><span class="nv"> </span><span class="s">'data.txt')</span><span class="nv"> </span><span class="s">}}"</span>
+</code></pre></div>
+<p>names nothing untrusted, yet pulls a file's contents into a <strong>trusted</strong>
+variable — and the next resolution pass rendered <em>that</em>. With <code>data.txt</code>
+holding <code>{{ lookup('pipe','touch FILE') }}</code>, measured against
+ansible-core 2.21.4:</p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>result</th>
+<th>file</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>real</td>
+<td>the text, literal</td>
+<td>none</td>
+</tr>
+<tr>
+<td>this port, before <code>playbook</code> v0.136.0</td>
+<td>empty — the lookup <strong>ran</strong></td>
+<td><strong>created</strong></td>
+</tr>
+</tbody>
+</table>
+<p>A lookup returns a file's contents, a command's output, an API's answer:
+<strong>data by definition</strong>. Real marks a lookup's <em>result</em> unsafe, and this
+is the same rule. <code>query()</code> and <code>q()</code> carry it too — the same machinery
+under other names, and covering only <code>lookup</code> would leave two spellings
+of the same hole open.</p>
+<p>An <strong>ordinary lookup still resolves</strong>, with a test to say so: refusing to
+re-render a result must not stop the lookup from running, or "the payload
+did not fire" would also be satisfied by breaking lookups entirely.</p>
+<p>It was found by asking where <em>else</em> untrusted data enters rather than
+waiting for it — the first fix covered data arriving through a module
+result, this is the same data arriving through a function call.</p>
 <h3 id="where-the-hole-was-and-where-it-was-not">Where the hole was, and where it was not<a class="headerlink" href="#where-the-hole-was-and-where-it-was-not" title="Permanent link">&para;</a></h3>
 <p>The vulnerable mechanism was <em>repeated variable resolution</em> — and only
 that. The other places a value meets an evaluator render <strong>once</strong> and do
@@ -1460,8 +1524,8 @@ than by luck.</p>
 <p>A fact <em>value</em> can contain a newline, and the probe's output is parsed
 line by line — so a managed host can make the parser see an extra
 <code>key=value</code>:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="nx">parseKV</span><span class="p">(</span><span class="s">"distribution='Debian\nconnection=ssh'"</span><span class="p">)</span>
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="w">  </span><span class="o">-&gt;</span><span class="w"> </span><span class="kt">map</span><span class="p">[</span><span class="nx">connection</span><span class="p">:</span><span class="nx">ssh</span><span class="w"> </span><span class="nx">distribution</span><span class="p">:</span><span class="nx">Debian</span><span class="p">]</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="nx">parseKV</span><span class="p">(</span><span class="s">"distribution='Debian\nconnection=ssh'"</span><span class="p">)</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="w">  </span><span class="o">-&gt;</span><span class="w"> </span><span class="kt">map</span><span class="p">[</span><span class="nx">connection</span><span class="p">:</span><span class="nx">ssh</span><span class="w"> </span><span class="nx">distribution</span><span class="p">:</span><span class="nx">Debian</span><span class="p">]</span>
 </code></pre></div>
 <p><code>/etc/os-release</code> is the reachable route: the probe <strong>sources</strong> it and
 emits <code>$ID</code>, <code>$VERSION_ID</code>, <code>$ID_LIKE</code> and <code>$VERSION_CODENAME</code>.</p>
