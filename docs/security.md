@@ -272,6 +272,48 @@ It was found by asking where *else* untrusted data enters rather than
 waiting for it — the first fix covered data arriving through a module
 result, this is the same data arriving through a function call.
 
+### Provenance is per key, not per layer — and getting that wrong broke something
+
+The first version inferred provenance from the **layer** a variable sits
+in, and that is an approximation which is wrong in **both** directions.
+`include_vars` shares the `Facts` layer with `set_fact`, and real
+*templates* an included vars file — it is a file the author named. So
+marking the layer broke an ordinary pattern:
+
+```
+include_vars of  greeting: "Hello {{ who }}"
+real:   Hello world
+ours:   Hello {{ who }}      ← playbook v0.135.0 and v0.136.0
+```
+
+Fixed in `playbook` v0.137.0, which reads a per-key mark recorded beside
+the variables (`vars` v0.3.0). **A security brake that breaks a common,
+legitimate pattern does not survive contact with a real playbook**, so
+this is worth as much attention as the hole itself.
+
+`vars_files` was checked at the same time and needed no change: real
+evaluates a payload there too, because that file is named by the author
+as well. We match.
+
+### Storing and marking happen in one statement
+
+Marking "the three obvious entry points" by hand left **five** other
+stores into the registered layer unmarked — including the main
+`register:` path — and the proof of concept fired again. The two actions
+now happen in a single call, and a test refuses a raw write into those
+layers.
+
+Two details of that test earned their place:
+
+- its exceptions **declare themselves in the code** with a
+  `provenance: trusted` comment, rather than being recognised by a nearby
+  function name — which is how its own first version missed
+  `include_vars`, whose function is long enough that the name was out of
+  window;
+- it **refuses to run** if the helper is used fewer than five times,
+  since "no raw stores" would otherwise be satisfied by an engine that
+  stores nothing.
+
 ### Where the hole was, and where it was not
 
 The vulnerable mechanism was *repeated variable resolution* — and only
