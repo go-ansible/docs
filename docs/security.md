@@ -383,6 +383,54 @@ What it means in practice:
   thirteen `ansible_winrm_*` variables were found missing from it. A
   reviewer asking "what can redirect a task?" has one list to read.
 
+## The file we examined and the file we ran were not the same file
+
+`Load` stats the inventory path and reads its mode to decide the file is a
+dynamic inventory script — real Ansible's own detection, any executable bit
+set. It then handed that same string to `exec.Command`, which does a **`$PATH`
+lookup** for any name with no separator in it.
+
+So `-i inv.sh` stat'd `./inv.sh`, concluded from *that* file's permissions that
+it was a script, and then executed a different `inv.sh` found somewhere on
+`$PATH`. A check is worth nothing when it is applied to a different object than
+the one the decision acts on.
+
+### Measured, with an impostor of the same basename earlier on `$PATH`
+
+| | `Load("inv.sh")` runs |
+|---|---|
+| before | `FROM-SOMEWHERE-ON-PATH` |
+| after | **`FROM-THE-FILE-WE-NAMED`** |
+
+Real **ansible-core 2.21.4**, given that identical setup, runs the file it was
+pointed at, and names it absolutely in its own diagnostics:
+
+```
+Origin: <inventory script output from '.../work/inv.sh'>
+```
+
+so this was a parity divergence as well as a security defect. Fixed in
+`go-ansible/inventory v0.19.3` with `filepath.Abs` in `ParseScript`, at the
+**exported** entry point, so a caller that bypasses `Load` is covered too.
+
+### A command name and a file are different things
+
+The stack's only other `exec.Command` on a variable is `ansible-vault`'s
+`$EDITOR`, and that one is **correct as it stands**: a command *name* is
+supposed to be resolved on `$PATH`, which is how `EDITOR=vim` works at all.
+Only a path we have already stat'd must not be. The audit question is therefore
+not "does this do a `$PATH` lookup?" but "did something already decide this
+string names a particular file?"
+
+### The test carries a control, because the trap can disarm itself
+
+`TestTheImpostorIsReachableOnPath` resolves the bare name itself and **fails if
+the impostor is not reachable**. Without it, the real test would pass whenever
+the setup silently failed to arm — a green that means nothing. Verified by
+neutering: removing `filepath.Abs` fails only the one test, with
+`FROM-SOMEWHERE-ON-PATH`, while the control and the explicit-`./` case stay
+green.
+
 ## Resource exhaustion: a malformed expression leaked a goroutine per evaluation
 
 `gonja`'s `tokens.Lex` runs the lexer in a goroutine feeding an **unbuffered**
