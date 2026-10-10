@@ -888,6 +888,56 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#the-file-we-examined-and-the-file-we-ran-were-not-the-same-file" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The file we examined and the file we ran were not the same file
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="The file we examined and the file we ran were not the same file">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#measured-with-an-impostor-of-the-same-basename-earlier-on-path" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Measured, with an impostor of the same basename earlier on $PATH
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#a-command-name-and-a-file-are-different-things" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        A command name and a file are different things
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-test-carries-a-control-because-the-trap-can-disarm-itself" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The test carries a control, because the trap can disarm itself
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#resource-exhaustion-a-malformed-expression-leaked-a-goroutine-per-evaluation" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1260,6 +1310,56 @@
       
     </span>
   </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-file-we-examined-and-the-file-we-ran-were-not-the-same-file" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The file we examined and the file we ran were not the same file
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="The file we examined and the file we ran were not the same file">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#measured-with-an-impostor-of-the-same-basename-earlier-on-path" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Measured, with an impostor of the same basename earlier on $PATH
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#a-command-name-and-a-file-are-different-things" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        A command name and a file are different things
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-test-carries-a-control-because-the-trap-can-disarm-itself" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The test carries a control, because the trap can disarm itself
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -1721,6 +1821,55 @@ worth stating plainly rather than leaving for someone to find.</p>
   thirteen <code>ansible_winrm_*</code> variables were found missing from it. A
   reviewer asking "what can redirect a task?" has one list to read.</li>
 </ul>
+<h2 id="the-file-we-examined-and-the-file-we-ran-were-not-the-same-file">The file we examined and the file we ran were not the same file<a class="headerlink" href="#the-file-we-examined-and-the-file-we-ran-were-not-the-same-file" title="Permanent link">&para;</a></h2>
+<p><code>Load</code> stats the inventory path and reads its mode to decide the file is a
+dynamic inventory script — real Ansible's own detection, any executable bit
+set. It then handed that same string to <code>exec.Command</code>, which does a <strong><code>$PATH</code>
+lookup</strong> for any name with no separator in it.</p>
+<p>So <code>-i inv.sh</code> stat'd <code>./inv.sh</code>, concluded from <em>that</em> file's permissions that
+it was a script, and then executed a different <code>inv.sh</code> found somewhere on
+<code>$PATH</code>. A check is worth nothing when it is applied to a different object than
+the one the decision acts on.</p>
+<h3 id="measured-with-an-impostor-of-the-same-basename-earlier-on-path">Measured, with an impostor of the same basename earlier on <code>$PATH</code><a class="headerlink" href="#measured-with-an-impostor-of-the-same-basename-earlier-on-path" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th></th>
+<th><code>Load("inv.sh")</code> runs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>before</td>
+<td><code>FROM-SOMEWHERE-ON-PATH</code></td>
+</tr>
+<tr>
+<td>after</td>
+<td><strong><code>FROM-THE-FILE-WE-NAMED</code></strong></td>
+</tr>
+</tbody>
+</table>
+<p>Real <strong>ansible-core 2.21.4</strong>, given that identical setup, runs the file it was
+pointed at, and names it absolutely in its own diagnostics:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>Origin: &lt;inventory script output from '.../work/inv.sh'&gt;
+</code></pre></div>
+<p>so this was a parity divergence as well as a security defect. Fixed in
+<code>go-ansible/inventory v0.19.3</code> with <code>filepath.Abs</code> in <code>ParseScript</code>, at the
+<strong>exported</strong> entry point, so a caller that bypasses <code>Load</code> is covered too.</p>
+<h3 id="a-command-name-and-a-file-are-different-things">A command name and a file are different things<a class="headerlink" href="#a-command-name-and-a-file-are-different-things" title="Permanent link">&para;</a></h3>
+<p>The stack's only other <code>exec.Command</code> on a variable is <code>ansible-vault</code>'s
+<code>$EDITOR</code>, and that one is <strong>correct as it stands</strong>: a command <em>name</em> is
+supposed to be resolved on <code>$PATH</code>, which is how <code>EDITOR=vim</code> works at all.
+Only a path we have already stat'd must not be. The audit question is therefore
+not "does this do a <code>$PATH</code> lookup?" but "did something already decide this
+string names a particular file?"</p>
+<h3 id="the-test-carries-a-control-because-the-trap-can-disarm-itself">The test carries a control, because the trap can disarm itself<a class="headerlink" href="#the-test-carries-a-control-because-the-trap-can-disarm-itself" title="Permanent link">&para;</a></h3>
+<p><code>TestTheImpostorIsReachableOnPath</code> resolves the bare name itself and <strong>fails if
+the impostor is not reachable</strong>. Without it, the real test would pass whenever
+the setup silently failed to arm — a green that means nothing. Verified by
+neutering: removing <code>filepath.Abs</code> fails only the one test, with
+<code>FROM-SOMEWHERE-ON-PATH</code>, while the control and the explicit-<code>./</code> case stay
+green.</p>
 <h2 id="resource-exhaustion-a-malformed-expression-leaked-a-goroutine-per-evaluation">Resource exhaustion: a malformed expression leaked a goroutine per evaluation<a class="headerlink" href="#resource-exhaustion-a-malformed-expression-leaked-a-goroutine-per-evaluation" title="Permanent link">&para;</a></h2>
 <p><code>gonja</code>'s <code>tokens.Lex</code> runs the lexer in a goroutine feeding an <strong>unbuffered</strong>
 channel. The expression evaluator drove that stream with <code>ParseExpressionNode</code>,
