@@ -383,6 +383,68 @@ What it means in practice:
   thirteen `ansible_winrm_*` variables were found missing from it. A
   reviewer asking "what can redirect a task?" has one list to read.
 
+## `vault`: the crypto was right, the property was untested
+
+The audit of `vault` found nothing wrong with the cryptography:
+
+- `crypto/rand` for the salt, not `math/rand`
+- PBKDF2-SHA256, **10000** rounds, 80 bytes split 32/32/16 — real Ansible's
+  parameters, which is also why the interop tests pass in both directions
+- `subtle.ConstantTimeCompare` for the HMAC
+- the HMAC verified **before** decrypting: encrypt-then-MAC
+- PKCS7 unpadding that validates the length *and every pad byte*, and which is
+  **unreachable without a valid HMAC** — so it is not a padding oracle
+
+What no test asserted was the property all of that exists to provide.
+
+### AES-CTR is malleable, and that is the whole point of the HMAC
+
+Ciphertext is plaintext XOR a keystream, so flipping a ciphertext bit flips
+exactly the corresponding plaintext bit. Nothing about the cipher stops someone
+with write access to an encrypted file — a repository, a backup, a clone in
+flight — from making a chosen, surgical edit to a secret **they cannot read**.
+
+The existing tests covered a **wrong password** and malformed **shapes**. A
+*correct* password against a *modified* ciphertext was untested. Those are
+different properties: "the wrong key is rejected" is not "the data is
+authentic".
+
+### The control re-authenticates the tamper
+
+A tampered-ciphertext test that passes because the flip was a no-op proves
+nothing, so the control does what an attacker cannot — recomputes a valid HMAC
+over the tampered ciphertext — and shows the edit landing:
+
+```
+permit_root_login: 0   becomes   permit_root_login: 1
+```
+
+one flipped bit, because `'0'` is `0x30` and `'1'` is `0x31`. It fails loudly if
+the flip turns out to be ineffective.
+
+Four tampering shapes are now refused with `ErrHMACMismatch`: a flipped
+ciphertext bit, a flipped salt bit, a flipped HMAC bit, and a truncated
+ciphertext.
+
+Verified by neutering — and the neuter was written to keep **compiling**, so
+that a build failure could not be mistaken for evidence. Discarding the
+comparison's *result* makes the flipped-ciphertext case decrypt cleanly:
+
+```
+tampering was not refused: err=<nil>, plaintext="permit_root_login: 1\n"
+```
+
+All four shapes fail under the neuter while the untampered round trip keeps
+passing, so they are not passing by refusing everything.
+
+### The judge cannot be allowed to skip
+
+The interop tests measure this package against the real `ansible-vault`, and a
+skipped judge reads exactly like a passing one. The CI lane installs
+`ansible-core==2.21.4` and sets `ANSIBLE_REQUIRE`, which turns the "not
+installed" skip into a **failure**. A comment claiming CI did not install
+Python had gone stale against that and was corrected.
+
 ## The file we examined and the file we ran were not the same file
 
 `Load` stats the inventory path and reads its mode to decide the file is a
