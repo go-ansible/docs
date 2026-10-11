@@ -708,6 +708,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="ansible-inventory">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#an-unusable-source-warns-one-you-cannot-decrypt-is-fatal" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        An unusable source warns; one you cannot decrypt is fatal
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -947,6 +964,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="ansible-inventory">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#an-unusable-source-warns-one-you-cannot-decrypt-is-fatal" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        An unusable source warns; one you cannot decrypt is fatal
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -1035,7 +1069,7 @@ underneath, no subprocess boundary at all.</p>
 </tr>
 <tr>
 <td><code>ansible-inventory</code></td>
-<td>Dumps the parsed inventory: <code>--list</code> (JSON), <code>--host</code> (one host's merged vars), <code>--graph</code> (tree), with <code>--export</code>, <code>--vars</code>, <code>--limit</code> and <code>--output</code> — see <a href="#ansible-inventory">below</a></td>
+<td>Dumps the parsed inventory: <code>--list</code> (JSON), <code>--host</code> (one host's merged vars), <code>--graph</code> (tree), with <code>--export</code>, <code>--vars</code>, <code>--limit</code>, <code>--output</code> and the vault options — see <a href="#ansible-inventory">below</a></td>
 </tr>
 <tr>
 <td><code>ansible-vault</code></td>
@@ -1232,8 +1266,12 @@ sentinels (<code>ErrNoPassword</code>, <code>ErrHMACMismatch</code>) rather than
 <p>An unresolvable module name exits 4 under <code>--syntax-check</code> and
 <code>--list-tasks</code> too, which is what real does.</p>
 <h2 id="ansible-inventory">ansible-inventory<a class="headerlink" href="#ansible-inventory" title="Permanent link">&para;</a></h2>
-<p><code>--list</code>, <code>--host</code> and <code>--graph</code>, with <code>--export</code>, <code>--vars</code>, <code>--limit</code> and
-<code>--output</code>. The output shapes follow real's, which are more particular than
+<p><code>--list</code>, <code>--host</code> and <code>--graph</code>, with <code>--export</code>, <code>--vars</code>, <code>--limit</code>,
+<code>--output</code>, and <code>--vault-password-file</code> / <code>--vault-pass-file</code> /
+<code>--ask-vault-password</code> / <code>--ask-vault-pass</code> — the same vault surface
+<code>ansible-playbook</code> takes, because the canonical place real Ansible keeps a
+secret is a <code>group_vars/*/vault.yml</code>, and a command that reads an inventory
+has to be able to unlock one. <code>ansible</code> takes them too. The output shapes follow real's, which are more particular than
 they look:</p>
 <ul>
 <li>a group is emitted only if it has <strong>hosts, children, or (with <code>--export</code>)
@@ -1251,6 +1289,45 @@ they look:</p>
   ["ungrouped", "prod"]}</code>, <code>"prod": {"children": ["web", "db"]}</code> for a
   <code>[prod:children]</code> section written web-then-db.</li>
 </ul>
+<h3 id="an-unusable-source-warns-one-you-cannot-decrypt-is-fatal">An unusable source warns; one you cannot decrypt is fatal<a class="headerlink" href="#an-unusable-source-warns-one-you-cannot-decrypt-is-fatal" title="Permanent link">&para;</a></h3>
+<p>These are different failures and real separates them. An inventory source that
+cannot be <em>parsed</em> means "carry on with what you have"; one that is encrypted
+and cannot be <em>read</em> means the inventory you asked for is not the one you would
+get. Measured against ansible-core 2.21.4, and identical from
+<code>ansible-inventory</code>, <code>ansible-playbook</code> and <code>ansible</code>:</p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>stderr</th>
+<th>exit</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>-i /nope.ini</code></td>
+<td><code>[WARNING]: Unable to parse …</code></td>
+<td>0</td>
+</tr>
+<tr>
+<td>encrypted, no vault secret</td>
+<td><code>[ERROR]: Attempting to decrypt but no vault secrets found.</code></td>
+<td><strong>4</strong></td>
+</tr>
+<tr>
+<td>encrypted, wrong password</td>
+<td><code>[ERROR]: Decryption failed (no vault secrets were found that could decrypt).</code></td>
+<td><strong>4</strong></td>
+</tr>
+</tbody>
+</table>
+<p>This port treated the encrypted cases as ordinary parse failures until
+<code>cli v0.139.0</code>: a warning, and exit 0. The consequence is worth stating plainly,
+because it is why the distinction is not pedantry —</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>ansible-inventory --list &gt; hosts.json &amp;&amp; deploy
+</code></pre></div>
+<p>succeeded, with a <code>hosts.json</code> holding <strong>no hosts</strong>. The classification keys on
+<code>vault</code>'s sentinels (<code>ErrNoPassword</code>, <code>ErrHMACMismatch</code>), not on message text.</p>
 <p>Unlike <code>ansible-playbook</code>, it prints <strong>two</strong> warnings for an unusable
 inventory rather than three: the "provided hosts list is empty" one comes from
 real's own <code>get_host_list</code>, which this binary never calls because it resolves
@@ -1284,8 +1361,8 @@ that is what real does.</p>
 connect as, the current pattern, how many hosts it matches, and the fork
 count. It ends in <code>#</code> rather than <code>$</code> while become is on, the way a root
 shell prompt does:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>david@all (3)[f:5]$
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>david@all (3)[f:5]#     under become
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>david@all (3)[f:5]$
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>david@all (3)[f:5]#     under become
 </code></pre></div>
 <p>A banner is printed at startup and <code>Ansible-console was exited.</code> when the
 session ends, including when the input simply runs out — which is what a
