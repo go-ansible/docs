@@ -12,7 +12,7 @@ underneath, no subprocess boundary at all.
 |---|---|
 | `ansible` | Ad-hoc module execution against a pattern (`ansible all -m ping`) |
 | `ansible-playbook` | Runs a playbook via [`playbook.Engine`](playbook.md); `-f`/`--forks` sets the concurrency cap, and `vars_prompt:` prompts at a real terminal (masked input for `private` vars, falling back to defaults when not a TTY); `--check`/`-C` predicts changes without making them and `--diff`/`-D` shows them as unified diffs |
-| `ansible-inventory` | Dumps the parsed inventory: `--list` (JSON), `--host` (one host's merged vars), `--graph` (tree), with `--export`, `--vars`, `--limit` and `--output` — see [below](#ansible-inventory) |
+| `ansible-inventory` | Dumps the parsed inventory: `--list` (JSON), `--host` (one host's merged vars), `--graph` (tree), with `--export`, `--vars`, `--limit`, `--output` and the vault options — see [below](#ansible-inventory) |
 | `ansible-vault` | Encrypt/decrypt/view/edit/rekey — wraps [`vault`](vault.md) |
 | `ansible-galaxy` | `install` a role from a git URL via [`go-git`](https://github.com/go-git/go-git), plus `list` and `remove` of installed roles — **no galaxy.ansible.com HTTP API**, out of scope |
 | `ansible-pull` | Clones/pulls a git repo and runs a playbook from it against **this machine only** — see [below](#ansible-pull) |
@@ -161,8 +161,12 @@ An unresolvable module name exits 4 under `--syntax-check` and
 
 ## ansible-inventory
 
-`--list`, `--host` and `--graph`, with `--export`, `--vars`, `--limit` and
-`--output`. The output shapes follow real's, which are more particular than
+`--list`, `--host` and `--graph`, with `--export`, `--vars`, `--limit`,
+`--output`, and `--vault-password-file` / `--vault-pass-file` /
+`--ask-vault-password` / `--ask-vault-pass` — the same vault surface
+`ansible-playbook` takes, because the canonical place real Ansible keeps a
+secret is a `group_vars/*/vault.yml`, and a command that reads an inventory
+has to be able to unlock one. `ansible` takes them too. The output shapes follow real's, which are more particular than
 they look:
 
 - a group is emitted only if it has **hosts, children, or (with `--export`)
@@ -179,6 +183,31 @@ they look:
 - orders are **document order, not alphabetical** — `"all": {"children":
   ["ungrouped", "prod"]}`, `"prod": {"children": ["web", "db"]}` for a
   `[prod:children]` section written web-then-db.
+
+### An unusable source warns; one you cannot decrypt is fatal
+
+These are different failures and real separates them. An inventory source that
+cannot be *parsed* means "carry on with what you have"; one that is encrypted
+and cannot be *read* means the inventory you asked for is not the one you would
+get. Measured against ansible-core 2.21.4, and identical from
+`ansible-inventory`, `ansible-playbook` and `ansible`:
+
+| | stderr | exit |
+|---|---|---|
+| `-i /nope.ini` | `[WARNING]: Unable to parse …` | 0 |
+| encrypted, no vault secret | `[ERROR]: Attempting to decrypt but no vault secrets found.` | **4** |
+| encrypted, wrong password | `[ERROR]: Decryption failed (no vault secrets were found that could decrypt).` | **4** |
+
+This port treated the encrypted cases as ordinary parse failures until
+`cli v0.139.0`: a warning, and exit 0. The consequence is worth stating plainly,
+because it is why the distinction is not pedantry —
+
+```
+ansible-inventory --list > hosts.json && deploy
+```
+
+succeeded, with a `hosts.json` holding **no hosts**. The classification keys on
+`vault`'s sentinels (`ErrNoPassword`, `ErrHMACMismatch`), not on message text.
 
 Unlike `ansible-playbook`, it prints **two** warnings for an unusable
 inventory rather than three: the "provided hosts list is empty" one comes from
