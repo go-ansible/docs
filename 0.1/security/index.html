@@ -888,6 +888,56 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#vault-the-crypto-was-right-the-property-was-untested" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        vault: the crypto was right, the property was untested
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="vault: the crypto was right, the property was untested">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#aes-ctr-is-malleable-and-that-is-the-whole-point-of-the-hmac" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        AES-CTR is malleable, and that is the whole point of the HMAC
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-control-re-authenticates-the-tamper" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The control re-authenticates the tamper
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-judge-cannot-be-allowed-to-skip" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The judge cannot be allowed to skip
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#the-file-we-examined-and-the-file-we-ran-were-not-the-same-file" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1310,6 +1360,56 @@
       
     </span>
   </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#vault-the-crypto-was-right-the-property-was-untested" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        vault: the crypto was right, the property was untested
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="vault: the crypto was right, the property was untested">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#aes-ctr-is-malleable-and-that-is-the-whole-point-of-the-hmac" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        AES-CTR is malleable, and that is the whole point of the HMAC
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-control-re-authenticates-the-tamper" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The control re-authenticates the tamper
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-judge-cannot-be-allowed-to-skip" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The judge cannot be allowed to skip
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -1821,6 +1921,51 @@ worth stating plainly rather than leaving for someone to find.</p>
   thirteen <code>ansible_winrm_*</code> variables were found missing from it. A
   reviewer asking "what can redirect a task?" has one list to read.</li>
 </ul>
+<h2 id="vault-the-crypto-was-right-the-property-was-untested"><code>vault</code>: the crypto was right, the property was untested<a class="headerlink" href="#vault-the-crypto-was-right-the-property-was-untested" title="Permanent link">&para;</a></h2>
+<p>The audit of <code>vault</code> found nothing wrong with the cryptography:</p>
+<ul>
+<li><code>crypto/rand</code> for the salt, not <code>math/rand</code></li>
+<li>PBKDF2-SHA256, <strong>10000</strong> rounds, 80 bytes split 32/32/16 — real Ansible's
+  parameters, which is also why the interop tests pass in both directions</li>
+<li><code>subtle.ConstantTimeCompare</code> for the HMAC</li>
+<li>the HMAC verified <strong>before</strong> decrypting: encrypt-then-MAC</li>
+<li>PKCS7 unpadding that validates the length <em>and every pad byte</em>, and which is
+  <strong>unreachable without a valid HMAC</strong> — so it is not a padding oracle</li>
+</ul>
+<p>What no test asserted was the property all of that exists to provide.</p>
+<h3 id="aes-ctr-is-malleable-and-that-is-the-whole-point-of-the-hmac">AES-CTR is malleable, and that is the whole point of the HMAC<a class="headerlink" href="#aes-ctr-is-malleable-and-that-is-the-whole-point-of-the-hmac" title="Permanent link">&para;</a></h3>
+<p>Ciphertext is plaintext XOR a keystream, so flipping a ciphertext bit flips
+exactly the corresponding plaintext bit. Nothing about the cipher stops someone
+with write access to an encrypted file — a repository, a backup, a clone in
+flight — from making a chosen, surgical edit to a secret <strong>they cannot read</strong>.</p>
+<p>The existing tests covered a <strong>wrong password</strong> and malformed <strong>shapes</strong>. A
+<em>correct</em> password against a <em>modified</em> ciphertext was untested. Those are
+different properties: "the wrong key is rejected" is not "the data is
+authentic".</p>
+<h3 id="the-control-re-authenticates-the-tamper">The control re-authenticates the tamper<a class="headerlink" href="#the-control-re-authenticates-the-tamper" title="Permanent link">&para;</a></h3>
+<p>A tampered-ciphertext test that passes because the flip was a no-op proves
+nothing, so the control does what an attacker cannot — recomputes a valid HMAC
+over the tampered ciphertext — and shows the edit landing:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>permit_root_login: 0   becomes   permit_root_login: 1
+</code></pre></div>
+<p>one flipped bit, because <code>'0'</code> is <code>0x30</code> and <code>'1'</code> is <code>0x31</code>. It fails loudly if
+the flip turns out to be ineffective.</p>
+<p>Four tampering shapes are now refused with <code>ErrHMACMismatch</code>: a flipped
+ciphertext bit, a flipped salt bit, a flipped HMAC bit, and a truncated
+ciphertext.</p>
+<p>Verified by neutering — and the neuter was written to keep <strong>compiling</strong>, so
+that a build failure could not be mistaken for evidence. Discarding the
+comparison's <em>result</em> makes the flipped-ciphertext case decrypt cleanly:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>tampering was not refused: err=&lt;nil&gt;, plaintext="permit_root_login: 1\n"
+</code></pre></div>
+<p>All four shapes fail under the neuter while the untampered round trip keeps
+passing, so they are not passing by refusing everything.</p>
+<h3 id="the-judge-cannot-be-allowed-to-skip">The judge cannot be allowed to skip<a class="headerlink" href="#the-judge-cannot-be-allowed-to-skip" title="Permanent link">&para;</a></h3>
+<p>The interop tests measure this package against the real <code>ansible-vault</code>, and a
+skipped judge reads exactly like a passing one. The CI lane installs
+<code>ansible-core==2.21.4</code> and sets <code>ANSIBLE_REQUIRE</code>, which turns the "not
+installed" skip into a <strong>failure</strong>. A comment claiming CI did not install
+Python had gone stale against that and was corrected.</p>
 <h2 id="the-file-we-examined-and-the-file-we-ran-were-not-the-same-file">The file we examined and the file we ran were not the same file<a class="headerlink" href="#the-file-we-examined-and-the-file-we-ran-were-not-the-same-file" title="Permanent link">&para;</a></h2>
 <p><code>Load</code> stats the inventory path and reads its mode to decide the file is a
 dynamic inventory script — real Ansible's own detection, any executable bit
@@ -1851,7 +1996,7 @@ the one the decision acts on.</p>
 </table>
 <p>Real <strong>ansible-core 2.21.4</strong>, given that identical setup, runs the file it was
 pointed at, and names it absolutely in its own diagnostics:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>Origin: &lt;inventory script output from '.../work/inv.sh'&gt;
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>Origin: &lt;inventory script output from '.../work/inv.sh'&gt;
 </code></pre></div>
 <p>so this was a parity divergence as well as a security defect. Fixed in
 <code>go-ansible/inventory v0.19.3</code> with <code>filepath.Abs</code> in <code>ParseScript</code>, at the
