@@ -728,6 +728,45 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#ansible-how-a-is-parsed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ansible: how -a is parsed
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="ansible: how -a is parsed">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#two-lists-and-they-are-not-the-same-list" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Two lists, and they are not the same list
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#what-still-differs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What still differs
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#ansible-galaxy-list-and-remove" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -972,6 +1011,45 @@
     <span class="md-ellipsis">
       
         An unusable source warns; one you cannot decrypt is fatal
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ansible-how-a-is-parsed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ansible: how -a is parsed
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="ansible: how -a is parsed">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#two-lists-and-they-are-not-the-same-list" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Two lists, and they are not the same list
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#what-still-differs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What still differs
       
     </span>
   </a>
@@ -1339,6 +1417,72 @@ than silently receiving JSON.</p>
 which real reports for the implicit localhost. It is a path to a Python this
 port never runs, so stating one would be a claim about the target that is not
 true here.</p>
+<h2 id="ansible-how-a-is-parsed">ansible: how <code>-a</code> is parsed<a class="headerlink" href="#ansible-how-a-is-parsed" title="Permanent link">&para;</a></h2>
+<p>The <code>-a</code> string goes through <code>playbook.ParseModuleArgs</code>, which is this stack's
+port of real's <code>parse_kv</code>/<code>split_args</code>: quote state, nested <code>{{ }}</code> and <code>{% %}</code>
+blocks, escaped equals, and <code>_raw_params</code>. It is the same parser the <code>k=v</code> task
+form uses, deliberately — ad-hoc had its own <code>strings.Fields</code> loop until
+<code>cli v0.140.0</code>, and it was wrong in a way that did not announce itself.</p>
+<table>
+<thead>
+<tr>
+<th><code>-a</code></th>
+<th>result</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>msg=hello</code></td>
+<td><code>msg="hello"</code></td>
+</tr>
+<tr>
+<td><code>msg="hello world"</code></td>
+<td><code>msg="hello world"</code> — the quotes hold it together</td>
+</tr>
+<tr>
+<td><code>msg="a=b"</code></td>
+<td><code>msg="a=b"</code> — only the <strong>first</strong> equals splits</td>
+</tr>
+<tr>
+<td><code>msg=hello world</code></td>
+<td><strong>refused</strong>: <code>world</code> is a raw param and <code>debug</code> cannot take one</td>
+</tr>
+<tr>
+<td><code>{"msg": "a b"}</code></td>
+<td>decoded as JSON, which real's ad-hoc tries first</td>
+</tr>
+<tr>
+<td><code>command: echo hi</code></td>
+<td><code>_raw_params="echo hi"</code></td>
+</tr>
+</tbody>
+</table>
+<p>A stray token used to be <strong>silently dropped</strong>: <code>-a 'msg=hello world'</code> ran with
+<code>msg="hello"</code>, and <code>-a 'src=/a badtoken dest=/b'</code> ran as if <code>badtoken</code> had never
+been typed. Real refuses both, and so does this now — <code>[ERROR]: Task failed:
+Action 'ansible.builtin.copy' does not support raw params.</code>, exit 2.</p>
+<h3 id="two-lists-and-they-are-not-the-same-list">Two lists, and they are not the same list<a class="headerlink" href="#two-lists-and-they-are-not-the-same-list" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong><code>MODULE_REQUIRE_ARGS</code></strong> — <code>command</code>, <code>raw</code>, <code>script</code>, <code>shell</code>,
+  <code>win_command</code>, <code>win_shell</code> — decides whether a <code>k=v</code> is an <em>option</em> or part of
+  the free-form text. The old ad-hoc parser knew only <code>command</code> and <code>shell</code>, so
+  the other four were parsed as pairs.</li>
+<li><strong><code>RAW_PARAM_MODULES</code></strong>, which is wider, decides whether a module may receive
+  <code>_raw_params</code> <strong>at all</strong>.</li>
+</ul>
+<p>Reading the first off the second would make <code>set_fact a=1</code> a raw param, so there
+is a test for exactly that case.</p>
+<h3 id="what-still-differs">What still differs<a class="headerlink" href="#what-still-differs" title="Permanent link">&para;</a></h3>
+<p>Ad-hoc does not <strong>template</strong> the parsed arguments. <code>-a 'msg={{ v }}'</code> now parses
+as one token, correctly, and is then passed through literally where real prints
+the variable's value. Doing it faithfully needs <code>inventory_hostname</code>, <code>groups</code>,
+<code>group_names</code> and the rest, which <a href="../playbook/"><code>playbook</code></a> already builds; a
+second place deciding which variables exist is the duplication that change
+removed, so it waits for ad-hoc to route through playbook's own var
+construction.</p>
+<p>Real also exits <strong>250</strong> with <code>Unexpected Exception</code> on a string that merely
+looks like JSON (<code>-a '{not json}'</code>). That is a traceback rather than a
+behaviour, so this falls through to the <code>k=v</code> parser instead.</p>
 <h2 id="ansible-galaxy-list-and-remove">ansible-galaxy list and remove<a class="headerlink" href="#ansible-galaxy-list-and-remove" title="Permanent link">&para;</a></h2>
 <p>Neither needs the Galaxy API — they read and delete directories — so both are
 implemented, and match real across the eight invocations they were measured
