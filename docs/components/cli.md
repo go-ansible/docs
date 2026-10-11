@@ -223,6 +223,54 @@ which real reports for the implicit localhost. It is a path to a Python this
 port never runs, so stating one would be a claim about the target that is not
 true here.
 
+## ansible: how `-a` is parsed
+
+The `-a` string goes through `playbook.ParseModuleArgs`, which is this stack's
+port of real's `parse_kv`/`split_args`: quote state, nested `{{ }}` and `{% %}`
+blocks, escaped equals, and `_raw_params`. It is the same parser the `k=v` task
+form uses, deliberately — ad-hoc had its own `strings.Fields` loop until
+`cli v0.140.0`, and it was wrong in a way that did not announce itself.
+
+| `-a` | result |
+|---|---|
+| `msg=hello` | `msg="hello"` |
+| `msg="hello world"` | `msg="hello world"` — the quotes hold it together |
+| `msg="a=b"` | `msg="a=b"` — only the **first** equals splits |
+| `msg=hello world` | **refused**: `world` is a raw param and `debug` cannot take one |
+| `{"msg": "a b"}` | decoded as JSON, which real's ad-hoc tries first |
+| `command: echo hi` | `_raw_params="echo hi"` |
+
+A stray token used to be **silently dropped**: `-a 'msg=hello world'` ran with
+`msg="hello"`, and `-a 'src=/a badtoken dest=/b'` ran as if `badtoken` had never
+been typed. Real refuses both, and so does this now — `[ERROR]: Task failed:
+Action 'ansible.builtin.copy' does not support raw params.`, exit 2.
+
+### Two lists, and they are not the same list
+
+- **`MODULE_REQUIRE_ARGS`** — `command`, `raw`, `script`, `shell`,
+  `win_command`, `win_shell` — decides whether a `k=v` is an *option* or part of
+  the free-form text. The old ad-hoc parser knew only `command` and `shell`, so
+  the other four were parsed as pairs.
+- **`RAW_PARAM_MODULES`**, which is wider, decides whether a module may receive
+  `_raw_params` **at all**.
+
+Reading the first off the second would make `set_fact a=1` a raw param, so there
+is a test for exactly that case.
+
+### What still differs
+
+Ad-hoc does not **template** the parsed arguments. `-a 'msg={{ v }}'` now parses
+as one token, correctly, and is then passed through literally where real prints
+the variable's value. Doing it faithfully needs `inventory_hostname`, `groups`,
+`group_names` and the rest, which [`playbook`](playbook.md) already builds; a
+second place deciding which variables exist is the duplication that change
+removed, so it waits for ad-hoc to route through playbook's own var
+construction.
+
+Real also exits **250** with `Unexpected Exception` on a string that merely
+looks like JSON (`-a '{not json}'`). That is a traceback rather than a
+behaviour, so this falls through to the `k=v` parser instead.
+
 ## ansible-galaxy list and remove
 
 Neither needs the Galaxy API — they read and delete directories — so both are
