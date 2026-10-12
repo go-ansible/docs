@@ -751,6 +751,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#the-arguments-are-templated-per-host" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The arguments are templated, per host
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#what-still-differs" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1039,6 +1050,17 @@
     <span class="md-ellipsis">
       
         Two lists, and they are not the same list
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-arguments-are-templated-per-host" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The arguments are templated, per host
       
     </span>
   </a>
@@ -1472,17 +1494,55 @@ Action 'ansible.builtin.copy' does not support raw params.</code>, exit 2.</p>
 </ul>
 <p>Reading the first off the second would make <code>set_fact a=1</code> a raw param, so there
 is a test for exactly that case.</p>
+<h3 id="the-arguments-are-templated-per-host">The arguments are templated, per host<a class="headerlink" href="#the-arguments-are-templated-per-host" title="Permanent link">&para;</a></h3>
+<p>Since <code>cli v0.141.0</code>, the parsed arguments are rendered against the variables a
+play would give that host — <code>playbook.AdHocHostVars</code>, the same construction the
+play path uses, so there is <strong>one</strong> place deciding which variables exist rather
+than two. All of these resolve, and were measured against real:</p>
+<table>
+<thead>
+<tr>
+<th><code>-a</code></th>
+<th>result</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>msg={{ inventory_hostname }}</code></td>
+<td><code>"h1"</code></td>
+</tr>
+<tr>
+<td><code>msg={{ group_names }}</code></td>
+<td><code>["web"]</code></td>
+</tr>
+<tr>
+<td><code>msg={{ groups.web \| length }}</code></td>
+<td><code>2</code></td>
+</tr>
+<tr>
+<td><code>msg={{ hostvars["h2"].wv }}</code></td>
+<td>the other host's value</td>
+</tr>
+<tr>
+<td><code>msg={{ wv }}</code></td>
+<td>a <code>group_vars</code> value</td>
+</tr>
+<tr>
+<td><code>msg={{ 1 + 1 }}</code></td>
+<td><code>2</code> — <strong>unquoted</strong>, a whole-expression template keeps its native type</td>
+</tr>
+</tbody>
+</table>
+<p><code>inventory_dir</code> and <code>playbook_dir</code> are <em>not</em> the same thing here, which an
+inventory in a subdirectory shows: <code>-i sub/inv2</code> gives <code>inventory_dir</code> <code>…/sub</code>
+while <code>playbook_dir</code> is the working directory, there being no playbook.</p>
+<p>The template engine is built per host goroutine rather than shared, because
+gonja's filter registration is not atomic and an engine costs little beside
+opening a connection.</p>
 <h3 id="what-still-differs">What still differs<a class="headerlink" href="#what-still-differs" title="Permanent link">&para;</a></h3>
-<p>Ad-hoc does not <strong>template</strong> the parsed arguments. <code>-a 'msg={{ v }}'</code> now parses
-as one token, correctly, and is then passed through literally where real prints
-the variable's value. Doing it faithfully needs <code>inventory_hostname</code>, <code>groups</code>,
-<code>group_names</code> and the rest, which <a href="../playbook/"><code>playbook</code></a> already builds; a
-second place deciding which variables exist is the duplication that change
-removed, so it waits for ad-hoc to route through playbook's own var
-construction.</p>
-<p>Real also exits <strong>250</strong> with <code>Unexpected Exception</code> on a string that merely
-looks like JSON (<code>-a '{not json}'</code>). That is a traceback rather than a
-behaviour, so this falls through to the <code>k=v</code> parser instead.</p>
+<p>Real exits <strong>250</strong> with <code>Unexpected Exception</code> on a string that merely looks
+like JSON (<code>-a '{not json}'</code>). That is a traceback rather than a behaviour, so
+this falls through to the <code>k=v</code> parser instead.</p>
 <h2 id="ansible-galaxy-list-and-remove">ansible-galaxy list and remove<a class="headerlink" href="#ansible-galaxy-list-and-remove" title="Permanent link">&para;</a></h2>
 <p>Neither needs the Galaxy API — they read and delete directories — so both are
 implemented, and match real across the eight invocations they were measured
