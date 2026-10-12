@@ -257,19 +257,35 @@ Action 'ansible.builtin.copy' does not support raw params.`, exit 2.
 Reading the first off the second would make `set_fact a=1` a raw param, so there
 is a test for exactly that case.
 
+### The arguments are templated, per host
+
+Since `cli v0.141.0`, the parsed arguments are rendered against the variables a
+play would give that host — `playbook.AdHocHostVars`, the same construction the
+play path uses, so there is **one** place deciding which variables exist rather
+than two. All of these resolve, and were measured against real:
+
+| `-a` | result |
+|---|---|
+| `msg={{ inventory_hostname }}` | `"h1"` |
+| `msg={{ group_names }}` | `["web"]` |
+| `msg={{ groups.web \| length }}` | `2` |
+| `msg={{ hostvars["h2"].wv }}` | the other host's value |
+| `msg={{ wv }}` | a `group_vars` value |
+| `msg={{ 1 + 1 }}` | `2` — **unquoted**, a whole-expression template keeps its native type |
+
+`inventory_dir` and `playbook_dir` are *not* the same thing here, which an
+inventory in a subdirectory shows: `-i sub/inv2` gives `inventory_dir` `…/sub`
+while `playbook_dir` is the working directory, there being no playbook.
+
+The template engine is built per host goroutine rather than shared, because
+gonja's filter registration is not atomic and an engine costs little beside
+opening a connection.
+
 ### What still differs
 
-Ad-hoc does not **template** the parsed arguments. `-a 'msg={{ v }}'` now parses
-as one token, correctly, and is then passed through literally where real prints
-the variable's value. Doing it faithfully needs `inventory_hostname`, `groups`,
-`group_names` and the rest, which [`playbook`](playbook.md) already builds; a
-second place deciding which variables exist is the duplication that change
-removed, so it waits for ad-hoc to route through playbook's own var
-construction.
-
-Real also exits **250** with `Unexpected Exception` on a string that merely
-looks like JSON (`-a '{not json}'`). That is a traceback rather than a
-behaviour, so this falls through to the `k=v` parser instead.
+Real exits **250** with `Unexpected Exception` on a string that merely looks
+like JSON (`-a '{not json}'`). That is a traceback rather than a behaviour, so
+this falls through to the `k=v` parser instead.
 
 ## ansible-galaxy list and remove
 
