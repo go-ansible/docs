@@ -1181,6 +1181,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#play-keywords-honoured-accepted-refused" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Play keywords: honoured, accepted, refused
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#what-is-not-implemented" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1906,6 +1917,17 @@
     <span class="md-ellipsis">
       
         Warnings
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#play-keywords-honoured-accepted-refused" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Play keywords: honoured, accepted, refused
       
     </span>
   </a>
@@ -3164,6 +3186,59 @@ once for the run, and the duplicate lines are suppressed instead of printed.</p>
 the Warner it uses for its own inventory warnings — should assign that one, so
 the whole process shares a single deduplication set. A nil <code>Warn</code> is silent
 rather than a panic.</p>
+<h2 id="play-keywords-honoured-accepted-refused">Play keywords: honoured, accepted, refused<a class="headerlink" href="#play-keywords-honoured-accepted-refused" title="Permanent link">&para;</a></h2>
+<p>Three states, and the difference between the last two is the one that used to
+bite. Counted against the reference: <code>ansible-doc -t keyword -l</code> in ansible-core
+2.21.4 lists 60 keywords, <strong>41</strong> of which <code>applies_to</code> a Play.</p>
+<p><strong>Refused.</strong> A key in neither real's set nor this port's is a typo, and it now
+fails the way real fails:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a>$ ansible-playbook -i inv play.yml      # the play says `serail: 1`
+<a id="__codelineno-19-2" name="__codelineno-19-2" href="#__codelineno-19-2"></a>ERROR!  "serail" is not a valid attribute for a Play        # exit 4
+</code></pre></div>
+<p>Until <code>playbook v0.140.0</code> that play ran — against <em>every</em> host at once, exiting
+0, printing neither an error nor a warning. A typo turning a rolling update into
+a simultaneous one, silently, is the kind of divergence a drop-in replacement
+cannot have. The allow-list is real's own 41, and a test re-derives it from the
+installed <code>ansible-doc</code> and fails in <strong>both</strong> directions, so it cannot drift
+from the reference in either.</p>
+<p>The <strong>task</strong> level was already safe, for an accidental reason worth recording:
+an unknown task key reads as a second action, so both implementations already
+refused it with <em>"conflicting action statements"</em>. Only the play level lacked a
+check.</p>
+<p><strong>Accepted and not honoured</strong> — three, named rather than smoothed over:</p>
+<table>
+<thead>
+<tr>
+<th>keyword</th>
+<th>why</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>gather_subset</code></td>
+<td><code>facts.Gather</code> collects one fixed, portable set; it has no subsetting or filtering</td>
+</tr>
+<tr>
+<td><code>gather_timeout</code></td>
+<td>nothing bounds the gather separately from the connection timeout</td>
+</tr>
+<tr>
+<td><code>force_handlers</code></td>
+<td>handlers do not yet run for a host whose play aborted</td>
+</tr>
+</tbody>
+</table>
+<p>They are accepted because real accepts them, and refusing them would reject
+playbooks real runs — a worse failure than ignoring them. They are listed here
+because an ignored keyword that nobody wrote down is indistinguishable from a
+working one.</p>
+<p><code>fact_path</code> was a fourth until <code>playbook v0.141.0</code>. It is now honoured, and the
+way it failed is worth keeping: the <code>facts</code> package had implemented it all
+along, so wiring the keyword through changed nothing — the local facts were
+published under <code>ansible_local</code>, which <code>vars.InjectFacts</code> prefixed again into
+<code>ansible_ansible_local</code>. The data was collected correctly the whole time, under
+a name no playbook would ask for. Fixed in <code>facts v0.19.0</code>, where the test is
+now the contract (<em>every</em> key is bare) rather than that one key.</p>
 <h2 id="what-is-not-implemented">What is not implemented<a class="headerlink" href="#what-is-not-implemented" title="Permanent link">&para;</a></h2>
 <p><code>include_tasks</code>/<code>import_tasks</code>/<code>include_role</code>/<code>import_role</code> resolve
 <strong>statically at parse time</strong>, not real Ansible's dynamic, per-host,
@@ -3176,9 +3251,9 @@ implements it as <code>free</code> plus one rule, that a host does not start unt
 fork slot is free and holds it until the play is done, and the difference
 shows at <code>-f 1</code>, where <code>free</code> collapses to <code>linear</code> and <code>host_pinned</code>
 does not:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a>linear       one[h1 h2] two[h1 h2] three[h1 h2]
-<a id="__codelineno-19-2" name="__codelineno-19-2" href="#__codelineno-19-2"></a>free         one[h1 h2] two[h1 h2] three[h1 h2]
-<a id="__codelineno-19-3" name="__codelineno-19-3" href="#__codelineno-19-3"></a>host_pinned  one[h1] two[h1] three[h1] one[h2] two[h2] three[h2]
+<div class="highlight"><pre><span></span><code><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a>linear       one[h1 h2] two[h1 h2] three[h1 h2]
+<a id="__codelineno-20-2" name="__codelineno-20-2" href="#__codelineno-20-2"></a>free         one[h1 h2] two[h1 h2] three[h1 h2]
+<a id="__codelineno-20-3" name="__codelineno-20-3" href="#__codelineno-20-3"></a>host_pinned  one[h1] two[h1] three[h1] one[h2] two[h2] three[h2]
 </code></pre></div>
 <p><code>debug</code> and any strategy plugin are still rejected with an explicit parse
 error rather than silently treated as <code>linear</code>. <code>debug</code> is refused for a
