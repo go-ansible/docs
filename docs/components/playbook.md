@@ -1329,6 +1329,53 @@ the Warner it uses for its own inventory warnings — should assign that one, so
 the whole process shares a single deduplication set. A nil `Warn` is silent
 rather than a panic.
 
+## Play keywords: honoured, accepted, refused
+
+Three states, and the difference between the last two is the one that used to
+bite. Counted against the reference: `ansible-doc -t keyword -l` in ansible-core
+2.21.4 lists 60 keywords, **41** of which `applies_to` a Play.
+
+**Refused.** A key in neither real's set nor this port's is a typo, and it now
+fails the way real fails:
+
+```
+$ ansible-playbook -i inv play.yml      # the play says `serail: 1`
+ERROR!  "serail" is not a valid attribute for a Play        # exit 4
+```
+
+Until `playbook v0.140.0` that play ran — against *every* host at once, exiting
+0, printing neither an error nor a warning. A typo turning a rolling update into
+a simultaneous one, silently, is the kind of divergence a drop-in replacement
+cannot have. The allow-list is real's own 41, and a test re-derives it from the
+installed `ansible-doc` and fails in **both** directions, so it cannot drift
+from the reference in either.
+
+The **task** level was already safe, for an accidental reason worth recording:
+an unknown task key reads as a second action, so both implementations already
+refused it with *"conflicting action statements"*. Only the play level lacked a
+check.
+
+**Accepted and not honoured** — three, named rather than smoothed over:
+
+| keyword | why |
+|---|---|
+| `gather_subset` | `facts.Gather` collects one fixed, portable set; it has no subsetting or filtering |
+| `gather_timeout` | nothing bounds the gather separately from the connection timeout |
+| `force_handlers` | handlers do not yet run for a host whose play aborted |
+
+They are accepted because real accepts them, and refusing them would reject
+playbooks real runs — a worse failure than ignoring them. They are listed here
+because an ignored keyword that nobody wrote down is indistinguishable from a
+working one.
+
+`fact_path` was a fourth until `playbook v0.141.0`. It is now honoured, and the
+way it failed is worth keeping: the `facts` package had implemented it all
+along, so wiring the keyword through changed nothing — the local facts were
+published under `ansible_local`, which `vars.InjectFacts` prefixed again into
+`ansible_ansible_local`. The data was collected correctly the whole time, under
+a name no playbook would ask for. Fixed in `facts v0.19.0`, where the test is
+now the contract (*every* key is bare) rather than that one key.
+
 ## What is not implemented
 
 `include_tasks`/`import_tasks`/`include_role`/`import_role` resolve
