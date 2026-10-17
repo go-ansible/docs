@@ -3205,33 +3205,33 @@ from the reference in either.</p>
 an unknown task key reads as a second action, so both implementations already
 refused it with <em>"conflicting action statements"</em>. Only the play level lacked a
 check.</p>
-<p><strong>Accepted and not honoured</strong> — three, named rather than smoothed over:</p>
-<table>
-<thead>
-<tr>
-<th>keyword</th>
-<th>why</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>gather_subset</code></td>
-<td><code>facts.Gather</code> collects one fixed, portable set; it has no subsetting or filtering</td>
-</tr>
-<tr>
-<td><code>gather_timeout</code></td>
-<td>nothing bounds the gather separately from the connection timeout</td>
-</tr>
-<tr>
-<td><code>force_handlers</code></td>
-<td>handlers do not yet run for a host whose play aborted</td>
-</tr>
-</tbody>
-</table>
-<p>They are accepted because real accepts them, and refusing them would reject
+<p><strong>Accepted and not honoured</strong> — two now, each with the reason it is still open:</p>
+<p><code>gather_subset</code>. <code>facts.Gather</code> collects one fixed, portable set in a single
+probe, and it has no subsetting. The reason this is not a small change is the
+size of the taxonomy: real rejects an unknown subset by listing the legal ones,
+and there are <strong>71</strong> of them — the coarse aggregates (<code>all</code>, <code>min</code>, <code>hardware</code>,
+<code>network</code>, <code>virtual</code>) alongside per-group names like <code>default_ipv4</code>, <code>mounts</code>,
+<code>iscsi</code>, <code>ssh_host_key_ed25519_public</code>, plus <code>!name</code> negation. Honouring it
+honestly needs a measured key-to-subset mapping over all 71, because a partial
+map would silently return the <em>wrong</em> set of facts — worse than today's no-op,
+which at least fails in a predictable direction.</p>
+<p><code>gather_timeout</code>. Bounding the gather is easy; knowing what to match is not.
+Gathering against a local connection finishes far inside any plausible timeout,
+so the path that matters — <strong>timeout exceeded</strong> — cannot be observed from the
+reference here, and <code>gather_timeout: 0</code> turns out not to mean "fail
+immediately" (real gathers normally and exits 0). Implementing it would mean
+implementing to the documentation alone, and a behaviour this port cannot
+measure is one it should not claim.</p>
+<p>Both are accepted because real accepts them, and refusing them would reject
 playbooks real runs — a worse failure than ignoring them. They are listed here
 because an ignored keyword that nobody wrote down is indistinguishable from a
 working one.</p>
+<p><code>force_handlers</code> was the third until <code>playbook v0.142.0</code>. The flag
+(<code>--force-handlers</code>) had always worked; the keyword was the part being dropped.
+It is a <code>*bool</code> on the play, because the keyword overrides the flag in <strong>both</strong>
+directions — measured, <code>force_handlers: false</code> with <code>--force-handlers</code> on the
+command line still does not run the handler, which a plain <code>bool</code> could not
+express.</p>
 <p><code>fact_path</code> was a fourth until <code>playbook v0.141.0</code>. It is now honoured, and the
 way it failed is worth keeping: the <code>facts</code> package had implemented it all
 along, so wiring the keyword through changed nothing — the local facts were
