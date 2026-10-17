@@ -1355,18 +1355,37 @@ an unknown task key reads as a second action, so both implementations already
 refused it with *"conflicting action statements"*. Only the play level lacked a
 check.
 
-**Accepted and not honoured** — three, named rather than smoothed over:
+**Accepted and not honoured** — two now, each with the reason it is still open:
 
-| keyword | why |
-|---|---|
-| `gather_subset` | `facts.Gather` collects one fixed, portable set; it has no subsetting or filtering |
-| `gather_timeout` | nothing bounds the gather separately from the connection timeout |
-| `force_handlers` | handlers do not yet run for a host whose play aborted |
+`gather_subset`. `facts.Gather` collects one fixed, portable set in a single
+probe, and it has no subsetting. The reason this is not a small change is the
+size of the taxonomy: real rejects an unknown subset by listing the legal ones,
+and there are **71** of them — the coarse aggregates (`all`, `min`, `hardware`,
+`network`, `virtual`) alongside per-group names like `default_ipv4`, `mounts`,
+`iscsi`, `ssh_host_key_ed25519_public`, plus `!name` negation. Honouring it
+honestly needs a measured key-to-subset mapping over all 71, because a partial
+map would silently return the *wrong* set of facts — worse than today's no-op,
+which at least fails in a predictable direction.
 
-They are accepted because real accepts them, and refusing them would reject
+`gather_timeout`. Bounding the gather is easy; knowing what to match is not.
+Gathering against a local connection finishes far inside any plausible timeout,
+so the path that matters — **timeout exceeded** — cannot be observed from the
+reference here, and `gather_timeout: 0` turns out not to mean "fail
+immediately" (real gathers normally and exits 0). Implementing it would mean
+implementing to the documentation alone, and a behaviour this port cannot
+measure is one it should not claim.
+
+Both are accepted because real accepts them, and refusing them would reject
 playbooks real runs — a worse failure than ignoring them. They are listed here
 because an ignored keyword that nobody wrote down is indistinguishable from a
 working one.
+
+`force_handlers` was the third until `playbook v0.142.0`. The flag
+(`--force-handlers`) had always worked; the keyword was the part being dropped.
+It is a `*bool` on the play, because the keyword overrides the flag in **both**
+directions — measured, `force_handlers: false` with `--force-handlers` on the
+command line still does not run the handler, which a plain `bool` could not
+express.
 
 `fact_path` was a fourth until `playbook v0.141.0`. It is now honoured, and the
 way it failed is worth keeping: the `facts` package had implemented it all
