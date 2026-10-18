@@ -888,6 +888,34 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#a-reference-behaviour-this-port-refuses-to-reproduce" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        A reference behaviour this port refuses to reproduce
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="A reference behaviour this port refuses to reproduce">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#the-same-shape-for-every-module-that-reaches-an-http-service" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The same shape, for every module that reaches an HTTP service
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#vault-the-crypto-was-right-the-property-was-untested" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1360,6 +1388,34 @@
       
     </span>
   </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#a-reference-behaviour-this-port-refuses-to-reproduce" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        A reference behaviour this port refuses to reproduce
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="A reference behaviour this port refuses to reproduce">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#the-same-shape-for-every-module-that-reaches-an-http-service" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The same shape, for every module that reaches an HTTP service
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -1921,6 +1977,62 @@ worth stating plainly rather than leaving for someone to find.</p>
   thirteen <code>ansible_winrm_*</code> variables were found missing from it. A
   reviewer asking "what can redirect a task?" has one list to read.</li>
 </ul>
+<h2 id="a-reference-behaviour-this-port-refuses-to-reproduce">A reference behaviour this port refuses to reproduce<a class="headerlink" href="#a-reference-behaviour-this-port-refuses-to-reproduce" title="Permanent link">&para;</a></h2>
+<p>Matching the reference is this project's rule, bugs included — a playbook may
+already depend on one. The rule stops where the behaviour writes a secret to an
+output stream.</p>
+<p>Real <code>community.general.telegram</code> builds its endpoint as
+<code>https://&lt;api_host&gt;/bot&lt;token&gt;/&lt;api_method&gt;</code>, and its failure path is:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="n">module</span><span class="o">.</span><span class="n">fail_json</span><span class="p">(</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>    <span class="n">msg</span><span class="o">=</span><span class="sa">f</span><span class="s2">"Failed to send message, return status = </span><span class="si">{</span><span class="n">info</span><span class="p">[</span><span class="s1">'status'</span><span class="p">]</span><span class="si">}</span><span class="se">\n</span><span class="s2">"</span>
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>        <span class="sa">f</span><span class="s2">"url = </span><span class="si">{</span><span class="n">url</span><span class="si">}</span><span class="se">\n</span><span class="s2">api_args = </span><span class="si">{</span><span class="n">api_args</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a>    <span class="n">telegram_error</span><span class="o">=</span><span class="n">body</span><span class="p">[</span><span class="s2">"description"</span><span class="p">],</span>
+<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a><span class="p">)</span>
+</code></pre></div>
+<p><code>token</code> is <code>no_log=True</code> in that module's own <code>argument_spec</code>, so Ansible will
+redact it from a task's <em>arguments</em> — and then the module prints it anyway,
+inside <code>url</code>, as part of the failure message. Any failed Telegram task puts the
+bot token in the playbook output, the job log, and whatever collects that.</p>
+<p>This port reports the status and <code>api_args</code> and omits the url. The deviation is
+recorded in the module's own doc comment, which <code>ansible-doc telegram</code> prints,
+rather than being silently different.</p>
+<p><code>TestTelegramFailureDoesNotLeakTheToken</code> holds the line, and was confirmed to
+hold it by putting real's sentence back: the test then fails printing the whole
+leaking string, token and all.</p>
+<h3 id="the-same-shape-for-every-module-that-reaches-an-http-service">The same shape, for every module that reaches an HTTP service<a class="headerlink" href="#the-same-shape-for-every-module-that-reaches-an-http-service" title="Permanent link">&para;</a></h3>
+<p>These services have no official CLI to shell out to, so this port posts to the
+same endpoints through <code>curl</code> <strong>on the target</strong> — where real's own module runs
+and calls <code>fetch_url</code> from. A credential then has three places it can hide, and
+all three are places a naive implementation puts on the command line:</p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>example</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>a form field</td>
+<td><code>pushover</code>'s <code>app_token</code> and <code>user_key</code></td>
+</tr>
+<tr>
+<td>the <strong>URL path</strong></td>
+<td><code>grove</code>'s <code>channel_token</code>, <code>telegram</code>'s bot token</td>
+</tr>
+<tr>
+<td>the <strong>query string</strong></td>
+<td><code>nexmo</code>'s <code>api_key</code> <em>and</em> <code>api_secret</code></td>
+</tr>
+</tbody>
+</table>
+<p><code>curlDo</code> sends the url, the query string and the body on <strong>stdin</strong>, through
+curl's own <code>-K -</code> config — the same mechanism <code>infinityCurl</code> has used for its
+HTTP Basic credentials, and the one the <code>Connection</code> interface documents for
+reaching <code>sudo</code> without a password in <code>argv</code>.</p>
+<p><code>assertSecretsOffArgv</code> asserts it per module, and carries its own control: each
+secret must appear on <strong>stdin</strong>. Without that half, the check passes just as
+well on a module that never sent the credential at all.</p>
 <h2 id="vault-the-crypto-was-right-the-property-was-untested"><code>vault</code>: the crypto was right, the property was untested<a class="headerlink" href="#vault-the-crypto-was-right-the-property-was-untested" title="Permanent link">&para;</a></h2>
 <p>The audit of <code>vault</code> found nothing wrong with the cryptography:</p>
 <ul>
@@ -1946,7 +2058,7 @@ authentic".</p>
 <p>A tampered-ciphertext test that passes because the flip was a no-op proves
 nothing, so the control does what an attacker cannot — recomputes a valid HMAC
 over the tampered ciphertext — and shows the edit landing:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>permit_root_login: 0   becomes   permit_root_login: 1
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>permit_root_login: 0   becomes   permit_root_login: 1
 </code></pre></div>
 <p>one flipped bit, because <code>'0'</code> is <code>0x30</code> and <code>'1'</code> is <code>0x31</code>. It fails loudly if
 the flip turns out to be ineffective.</p>
@@ -1956,7 +2068,7 @@ ciphertext.</p>
 <p>Verified by neutering — and the neuter was written to keep <strong>compiling</strong>, so
 that a build failure could not be mistaken for evidence. Discarding the
 comparison's <em>result</em> makes the flipped-ciphertext case decrypt cleanly:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>tampering was not refused: err=&lt;nil&gt;, plaintext="permit_root_login: 1\n"
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>tampering was not refused: err=&lt;nil&gt;, plaintext="permit_root_login: 1\n"
 </code></pre></div>
 <p>All four shapes fail under the neuter while the untampered round trip keeps
 passing, so they are not passing by refusing everything.</p>
@@ -1996,7 +2108,7 @@ the one the decision acts on.</p>
 </table>
 <p>Real <strong>ansible-core 2.21.4</strong>, given that identical setup, runs the file it was
 pointed at, and names it absolutely in its own diagnostics:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>Origin: &lt;inventory script output from '.../work/inv.sh'&gt;
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>Origin: &lt;inventory script output from '.../work/inv.sh'&gt;
 </code></pre></div>
 <p>so this was a parity divergence as well as a security defect. Fixed in
 <code>go-ansible/inventory v0.19.3</code> with <code>filepath.Abs</code> in <code>ParseScript</code>, at the
