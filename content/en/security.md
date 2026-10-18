@@ -1,4 +1,9 @@
-# Security
+---
+title: "Security"
+weight: 110
+---
+
+# Security {#security}
 
 This port executes shell commands on remote targets, so a value that reaches a
 command string is a value that reaches a shell. Two kinds of defect follow from
@@ -18,7 +23,7 @@ library, and they are on this page because they have the same consequence:
 - **Partial application** — a run that was going to be refused doing part of its
   work first. Not a secret at all; it changes machines, which is worse.
 
-## Injection: quoting is the control, not care
+## Injection: quoting is the control, not care {#injection-quoting-is-the-control-not-care}
 
 Every value interpolated into a command string goes through this package's
 `shellQuote` — single quotes with `'\''` for an embedded quote, which no shell
@@ -27,7 +32,7 @@ library. The rule is mechanical on purpose: *being careful* does not scale to
 608 files, and a missed site is indistinguishable from a deliberate one until
 somebody looks.
 
-### What the audit found
+### What the audit found {#what-the-audit-found}
 
 `async_status`'s `jid` arrives from a playbook argument
 (`async_status: {jid: ...}`) and was interpolated **unquoted** — including into
@@ -48,7 +53,7 @@ own behaviour, and a value that never reaches a shell. **A security fix that
 changes what a caller sees is not finished**, because the next person's workaround
 is to turn it off.
 
-## Exposure: where a credential may and may not go
+## Exposure: where a credential may and may not go {#exposure-where-a-credential-may-and-may-not-go}
 
 A module that needs a secret at the target end puts it in the **environment**,
 through [`transport`](https://github.com/go-remoteexec/transport)'s
@@ -59,7 +64,7 @@ through [`transport`](https://github.com/go-remoteexec/transport)'s
 environment is unavailable the call reports which path it took rather than
 failing silently.
 
-### The boundary, measured
+### The boundary, measured {#the-boundary-measured}
 
 An environment assignment written as a command prefix is **not** always visible.
 Which shape it is decides it, and both were measured rather than reasoned about:
@@ -75,7 +80,7 @@ that the shell which had *written the probe file* still carried in its own
 invisible case carries a **mandatory positive control** using the visible shape:
 if the control cannot fire, the test fails rather than passing for free.
 
-### What the audit found
+### What the audit found {#what-the-audit-found_1}
 
 24 modules build a `CREDENTIAL=` assignment into a command string. 23 are the
 lone-command shape, which is safe. **`keyring` was not**: it built
@@ -102,7 +107,7 @@ Two things that fix taught, both kept here because they generalise:
   no secret in no commands at all. What surfaced the gap was the detector that
   found the original exposure still naming `keyring.go` after the fix merged.
 
-## Disclosure: `no_log` has to cover every output path
+## Disclosure: `no_log` has to cover every output path {#disclosure-no_log-has-to-cover-every-output-path}
 
 `no_log: true` is the author saying *this task's result is a secret*. The
 default callback honours it in the printed result, the verbose dump and every
@@ -131,7 +136,7 @@ failed — four output paths, and `--diff` is a fifth. Under the neuter it stays
 that path. The same shape as the `keyring` gap above. Also measured, so the next
 reader need not wonder: real does **not** reveal a `no_log` result at `-vvv`.
 
-## A secret belongs in a file, not a variable
+## A secret belongs in a file, not a variable {#a-secret-belongs-in-a-file-not-a-variable}
 
 This port honoured `ANSIBLE_VAULT_PASSWORD`, carrying the vault password
 **itself**. Real Ansible has no such variable — only
@@ -149,7 +154,7 @@ Real's own variable, and `[defaults] vault_password_file` in `ansible.cfg`, were
 password. Both work as of
 [`cli` v0.127.0](https://github.com/go-ansible/cli/releases/tag/v0.127.0).
 
-## Partial application: a refused run that ran anyway
+## Partial application: a refused run that ran anyway {#partial-application-a-refused-run-that-ran-anyway}
 
 Not a secret, and the most consequential finding on this page. Real refuses a
 playbook naming a module it cannot resolve and **touches no host**. This port ran
@@ -173,7 +178,7 @@ looked for the first task's output in real's stdout and **found it**, because
 real's error message quotes the offending source lines — including the
 neighbouring one. A file witness is what settled it.
 
-## ⛔ Untrusted data reaching the template engine
+## ⛔ Untrusted data reaching the template engine {#untrusted-data-reaching-the-template-engine}
 
 The most serious defect this audit found, and the one with the widest
 blast radius.
@@ -205,7 +210,7 @@ merged variables and re-renders strings until they settle — this port's
 own emulation of lazy variables, and the only place a value is rendered
 twice.
 
-### Three routes, and a proof of concept that kept firing
+### Three routes, and a proof of concept that kept firing {#three-routes-and-a-proof-of-concept-that-kept-firing}
 
 The payload was a `touch` into a temporary directory, run after each
 attempted fix. It kept firing until all three were closed, which is the
@@ -222,7 +227,7 @@ argument for having one rather than reasoning about coverage:
    and it was added by the `hostvars` work a few hours earlier. A security
    brake is only as good as its least-covered caller.
 
-### The brake keys on provenance, not on appearance
+### The brake keys on provenance, not on appearance {#the-brake-keys-on-provenance-not-on-appearance}
 
 It asks whether a template **references an untrusted name**. The first
 attempt asked whether *the result still looks like a template*, which is
@@ -231,14 +236,14 @@ is still a template simply because `b` has not been resolved yet, and that
 version stopped resolving it. Provenance is the distinction real draws
 too.
 
-### What this does not cover
+### What this does not cover {#what-this-does-not-cover}
 
 A playbook's **own** text is trusted, as it is in real: if an author
 writes `{{ lookup('pipe', ...) }}`, it runs. The boundary is where data
 from a host, a file or an API becomes a variable — not what the author
 wrote.
 
-### A second source: a lookup's result
+### A second source: a lookup's result {#a-second-source-a-lookups-result}
 
 The brake above keys on *untrusted names*, and that is not enough on its
 own:
@@ -272,7 +277,7 @@ It was found by asking where *else* untrusted data enters rather than
 waiting for it — the first fix covered data arriving through a module
 result, this is the same data arriving through a function call.
 
-### Provenance is per key, not per layer — and getting that wrong broke something
+### Provenance is per key, not per layer — and getting that wrong broke something {#provenance-is-per-key-not-per-layer-and-getting-that-wrong-broke-something}
 
 The first version inferred provenance from the **layer** a variable sits
 in, and that is an approximation which is wrong in **both** directions.
@@ -295,7 +300,7 @@ this is worth as much attention as the hole itself.
 evaluates a payload there too, because that file is named by the author
 as well. We match.
 
-### Storing and marking happen in one statement
+### Storing and marking happen in one statement {#storing-and-marking-happen-in-one-statement}
 
 Marking "the three obvious entry points" by hand left **five** other
 stores into the registered layer unmarked — including the main
@@ -314,7 +319,7 @@ Two details of that test earned their place:
   since "no raw stores" would otherwise be satisfied by an engine that
   stores nothing.
 
-### Where the hole was, and where it was not
+### Where the hole was, and where it was not {#where-the-hole-was-and-where-it-was-not}
 
 The vulnerable mechanism was *repeated variable resolution* — and only
 that. The other places a value meets an evaluator render **once** and do
@@ -328,7 +333,7 @@ That is a boundary, not a reassurance: it says the fix had one mechanism
 to cover, and that the single-pass paths are safe by construction rather
 than by luck.
 
-## A fact a target injects is inert
+## A fact a target injects is inert {#a-fact-a-target-injects-is-inert}
 
 A fact *value* can contain a newline, and the probe's output is parsed
 line by line — so a managed host can make the parser see an extra
@@ -354,7 +359,7 @@ test (`facts` v0.18.1) that fails if the parsed map is ever copied
 wholesale. The env-variable route is guarded the same way, by cutting the
 stream before the first `ENV ` line — a guard that was already there.
 
-## A fact can now redirect where later tasks run
+## A fact can now redirect where later tasks run {#a-fact-can-now-redirect-where-later-tasks-run}
 
 As of `playbook` v0.128.0 a task's own variables decide which connection
 it gets — which is real Ansible's behaviour, and is what makes
@@ -383,7 +388,7 @@ What it means in practice:
   thirteen `ansible_winrm_*` variables were found missing from it. A
   reviewer asking "what can redirect a task?" has one list to read.
 
-## A leak I reported that was not one — and the gap underneath it
+## A leak I reported that was not one — and the gap underneath it {#a-leak-i-reported-that-was-not-one-and-the-gap-underneath-it}
 
 This section said real `community.general.telegram` leaked its bot token,
 because its failure message embeds the endpoint:
@@ -407,7 +412,7 @@ claim was published here without checking for one. The modules page's own
 description of `_return_formatted` — *"runs on EVERY result, from `exit_json`
 and `fail_json` alike"* — was already in this documentation.
 
-### The finding is real, and it is about this port
+### The finding is real, and it is about this port {#the-finding-is-real-and-it-is-about-this-port}
 
 ⛔ **There is no equivalent of `remove_values` here.** Task-level `no_log: true`
 is honoured, and suppresses a whole result — that mechanism and the bug once
@@ -431,7 +436,7 @@ It also means the discipline has to hold at the point a message is *composed*,
 not at the point it is printed. Every module that reaches an HTTP service
 interpolates something; a credential must not be part of it.
 
-### Where a credential can hide in these modules
+### Where a credential can hide in these modules {#where-a-credential-can-hide-in-these-modules}
 
 These services have no official CLI, so this port posts to the same endpoints
 through `curl` **on the target** — where real's own module runs and calls
@@ -461,7 +466,7 @@ flags that take credentials will pass all four.
 secret must appear on **stdin**. Without that half, the check passes just as
 well on a module that never sent the credential at all.
 
-## `vault`: the crypto was right, the property was untested
+## `vault`: the crypto was right, the property was untested {#vault-the-crypto-was-right-the-property-was-untested}
 
 The audit of `vault` found nothing wrong with the cryptography:
 
@@ -475,7 +480,7 @@ The audit of `vault` found nothing wrong with the cryptography:
 
 What no test asserted was the property all of that exists to provide.
 
-### AES-CTR is malleable, and that is the whole point of the HMAC
+### AES-CTR is malleable, and that is the whole point of the HMAC {#aes-ctr-is-malleable-and-that-is-the-whole-point-of-the-hmac}
 
 Ciphertext is plaintext XOR a keystream, so flipping a ciphertext bit flips
 exactly the corresponding plaintext bit. Nothing about the cipher stops someone
@@ -487,7 +492,7 @@ The existing tests covered a **wrong password** and malformed **shapes**. A
 different properties: "the wrong key is rejected" is not "the data is
 authentic".
 
-### The control re-authenticates the tamper
+### The control re-authenticates the tamper {#the-control-re-authenticates-the-tamper}
 
 A tampered-ciphertext test that passes because the flip was a no-op proves
 nothing, so the control does what an attacker cannot — recomputes a valid HMAC
@@ -515,7 +520,7 @@ tampering was not refused: err=<nil>, plaintext="permit_root_login: 1\n"
 All four shapes fail under the neuter while the untampered round trip keeps
 passing, so they are not passing by refusing everything.
 
-### The judge cannot be allowed to skip
+### The judge cannot be allowed to skip {#the-judge-cannot-be-allowed-to-skip}
 
 The interop tests measure this package against the real `ansible-vault`, and a
 skipped judge reads exactly like a passing one. The CI lane installs
@@ -523,7 +528,7 @@ skipped judge reads exactly like a passing one. The CI lane installs
 installed" skip into a **failure**. A comment claiming CI did not install
 Python had gone stale against that and was corrected.
 
-## The file we examined and the file we ran were not the same file
+## The file we examined and the file we ran were not the same file {#the-file-we-examined-and-the-file-we-ran-were-not-the-same-file}
 
 `Load` stats the inventory path and reads its mode to decide the file is a
 dynamic inventory script — real Ansible's own detection, any executable bit
@@ -535,7 +540,7 @@ it was a script, and then executed a different `inv.sh` found somewhere on
 `$PATH`. A check is worth nothing when it is applied to a different object than
 the one the decision acts on.
 
-### Measured, with an impostor of the same basename earlier on `$PATH`
+### Measured, with an impostor of the same basename earlier on `$PATH` {#measured-with-an-impostor-of-the-same-basename-earlier-on-path}
 
 | | `Load("inv.sh")` runs |
 |---|---|
@@ -553,7 +558,7 @@ so this was a parity divergence as well as a security defect. Fixed in
 `go-ansible/inventory v0.19.3` with `filepath.Abs` in `ParseScript`, at the
 **exported** entry point, so a caller that bypasses `Load` is covered too.
 
-### A command name and a file are different things
+### A command name and a file are different things {#a-command-name-and-a-file-are-different-things}
 
 The stack's only other `exec.Command` on a variable is `ansible-vault`'s
 `$EDITOR`, and that one is **correct as it stands**: a command *name* is
@@ -562,7 +567,7 @@ Only a path we have already stat'd must not be. The audit question is therefore
 not "does this do a `$PATH` lookup?" but "did something already decide this
 string names a particular file?"
 
-### The test carries a control, because the trap can disarm itself
+### The test carries a control, because the trap can disarm itself {#the-test-carries-a-control-because-the-trap-can-disarm-itself}
 
 `TestTheImpostorIsReachableOnPath` resolves the bare name itself and **fails if
 the impostor is not reachable**. Without it, the real test would pass whenever
@@ -571,7 +576,7 @@ neutering: removing `filepath.Abs` fails only the one test, with
 `FROM-SOMEWHERE-ON-PATH`, while the control and the explicit-`./` case stay
 green.
 
-## Resource exhaustion: a malformed expression leaked a goroutine per evaluation
+## Resource exhaustion: a malformed expression leaked a goroutine per evaluation {#resource-exhaustion-a-malformed-expression-leaked-a-goroutine-per-evaluation}
 
 `gonja`'s `tokens.Lex` runs the lexer in a goroutine feeding an **unbuffered**
 channel. The expression evaluator drove that stream with `ParseExpressionNode`,
@@ -584,7 +589,7 @@ malformed condition therefore leaked a goroutine on **every** evaluation —
 unbounded growth in goroutines and memory for as long as the run lasts, out of
 one typo in a playbook.
 
-### Measured — and the first measurement said there was nothing
+### Measured — and the first measurement said there was nothing {#measured-and-the-first-measurement-said-there-was-nothing}
 
 200 evaluations of an expression that fails to parse:
 
@@ -604,7 +609,7 @@ goroutine at all; `NewStream` accepts either a channel or a slice, so it is a
 drop-in. Removing a goroutine handoff per token also made that hot path about
 **2.05×** faster — ~9728 → ~4748 ns/op, 169 → 149 allocs/op.
 
-### The test carries its own positive control
+### The test carries its own positive control {#the-test-carries-its-own-positive-control}
 
 A leak probe that has gone blind reports zero just as loudly as a fixed engine
 does. `TestLeakProbeCanSeeALeak` abandons lexer streams on purpose and **fails**
@@ -615,7 +620,7 @@ It was found in a `ppc64le` CI timeout dump — a lexer goroutine parked on
 `chan send` for nine minutes, beside a test that had timed out for an unrelated
 reason.
 
-## What remains, named rather than smoothed over
+## What remains, named rather than smoothed over {#what-remains-named-rather-than-smoothed-over}
 
 - **`security`'s own `argv` on macOS.** `keyring` on macOS runs
   `security add-generic-password … -w "$USER_PASSWORD"`, and the value is in
@@ -632,13 +637,13 @@ reason.
   and this port's `Connection` abstraction deliberately gives a module no way to
   read a target's host, port or credentials.
 
-## Reporting
+## Reporting {#reporting}
 
 Open an issue on the repository the defect is in. There is no embargo process
 and no private channel; this is a parity port maintained in the open, and a
 proof-of-concept in an issue is more useful than a description.
 
-## How these were found
+## How these were found {#how-these-were-found}
 
 A detector per class, run over the whole stack, and **each one shown capable of
 reporting a violation before its zero was believed** — the statement-aware

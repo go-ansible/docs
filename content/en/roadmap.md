@@ -1,25 +1,30 @@
-# Roadmap
+---
+title: "Roadmap"
+weight: 120
+---
 
-## Shipped
+# Roadmap {#roadmap}
+
+## Shipped {#shipped}
 
 All eight planned components are real, tested Go libraries with CI running
 on every push and pull request:
 
-- [`vault`](components/vault.md) — Ansible Vault 1.1 compatible AES-256
+- [`vault`]({{< relref "components/vault.md" >}}) — Ansible Vault 1.1 compatible AES-256
   encryption
-- [`inventory`](components/inventory.md) — INI/YAML inventory parsing, group
+- [`inventory`]({{< relref "components/inventory.md" >}}) — INI/YAML inventory parsing, group
   ancestry, host-pattern matching
-- [`vars`](components/vars.md) — the variable precedence ladder
-- [`template`](components/template.md) — Jinja2-compatible templating with
+- [`vars`]({{< relref "components/vars.md" >}}) — the variable precedence ladder
+- [`template`]({{< relref "components/template.md" >}}) — Jinja2-compatible templating with
   Ansible's filter library and 30 of its tests (the regex family,
   truthiness, set theory, result status), plus 17 lookup plugins
   reachable as the real `lookup()`/`query()`/`q()` Jinja globals
-- [`facts`](components/facts.md) — fact gathering, the `setup` module
+- [`facts`]({{< relref "components/facts.md" >}}) — fact gathering, the `setup` module
   equivalent
-- [`modules`](components/modules.md) — the module execution protocol plus
+- [`modules`]({{< relref "components/modules.md" >}}) — the module execution protocol plus
   **576 registered modules** (all of `ansible.builtin` and `ansible.posix`,
   and a curated 500 of `community.general`)
-- [`playbook`](components/playbook.md) — the playbook/role/task/handler
+- [`playbook`]({{< relref "components/playbook.md" >}}) — the playbook/role/task/handler
   engine driving all of the above against a real play: loops, conditionals,
   blocks with genuine per-host recovery, `become`, roles (nested variable
   scoping composes to any depth), both the `linear` and `free` execution
@@ -29,7 +34,7 @@ on every push and pull request:
   `ansible.cfg` file support, `become_exe`/`become_flags`, a swappable
   `Callback` interface with the default stdout callback implemented
   against it, and `local`/`ssh`/`winrm` connections
-- [`cli`](components/cli.md) — 9 of real's 10 `ansible-*` binaries (all but
+- [`cli`]({{< relref "components/cli.md" >}}) — 9 of real's 10 `ansible-*` binaries (all but
   `ansible-test`), plus a multi-arch `FROM scratch` OCI image on every
   version tag
 
@@ -39,7 +44,7 @@ enough (clone a role from a git URL via `go-git`) to fold directly into
 `cli`'s `ansible-galaxy` binary instead, so that repository was never
 developed further and is not part of the current architecture.
 
-## What's still ahead
+## What's still ahead {#whats-still-ahead}
 
 - **~87 more `community.general` modules.** The remainder is dominated by
   named flagship platforms confirmed to have no comparable official CLI
@@ -106,7 +111,7 @@ directive, and the [org profile](https://github.com/go-ansible) for the full,
 itemized list of `community.general` inclusions and exclusions with their
 reasons.
 
-## Design principles carried through every component
+## Design principles carried through every component {#design-principles-carried-through-every-component}
 
 - **Byte/wire compatible, not merely similar.** `vault` reproduces
   `ansible.parsing.vault.VaultAES256`'s exact format; a file it writes

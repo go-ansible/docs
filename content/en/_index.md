@@ -1,4 +1,9 @@
-# go-ansible documentation
+---
+title: "Home"
+weight: 10
+---
+
+# go-ansible documentation {#go-ansible-documentation}
 
 **A pure-Go, `CGO_ENABLED=0`, functional-parity port of [Ansible](https://www.ansible.com/).**
 
@@ -8,29 +13,29 @@ extensions, no `pip install` — each component is an importable Go package that
 compiles into your own static binary, and the wire formats it reads and writes
 are byte-compatible with the real `ansible-core` tooling.
 
-## What exists today
+## What exists today {#what-exists-today}
 
 All eight components are real, tested Go libraries with CI running on every
 push and pull request:
 
 | Component | What it does |
 |---|---|
-| [`vault`](components/vault.md) | Reads and writes [Ansible Vault](https://docs.ansible.com/ansible/latest/vault_guide/index.html) 1.1 files — AES-256-CTR with a PBKDF2-HMAC-SHA256 key and an encrypt-then-MAC tag, byte-compatible with `ansible-vault` |
-| [`inventory`](components/inventory.md) | Parses Ansible-compatible INI and YAML inventories into the group/host graph, including `group_vars`/`host_vars` and host-pattern matching |
-| [`vars`](components/vars.md) | Ansible's variable precedence ladder — the fixed merge order from role defaults up through `-e`/`--extra-vars` |
-| [`template`](components/template.md) | Jinja2-compatible templating with Ansible's filter and test library layered on top, including Ansible's native-type rendering rule for a bare `{{ expr }}` |
-| [`facts`](components/facts.md) | Fact gathering — the `setup` module equivalent — in one shell round trip, no Python required |
-| [`modules`](components/modules.md) | The Ansible module execution protocol plus **576 modules**: all of `ansible.builtin` and `ansible.posix`, and a curated 500 of `community.general` |
-| [`playbook`](components/playbook.md) | The playbook/role/task/handler engine tying all of the above together against a real play — loops, conditionals, blocks, `become`, roles, both execution strategies, retries, `run_once`, forks, `vars_prompt`, `async`/`poll`, dynamic inventory, `ansible.cfg` |
-| [`cli`](components/cli.md) | 9 of real's 10 `ansible-*` binaries — everything but `ansible-test` — each a thin wrapper over `playbook`/`vault`/`inventory` |
+| [`vault`]({{< relref "components/vault.md" >}}) | Reads and writes [Ansible Vault](https://docs.ansible.com/ansible/latest/vault_guide/index.html) 1.1 files — AES-256-CTR with a PBKDF2-HMAC-SHA256 key and an encrypt-then-MAC tag, byte-compatible with `ansible-vault` |
+| [`inventory`]({{< relref "components/inventory.md" >}}) | Parses Ansible-compatible INI and YAML inventories into the group/host graph, including `group_vars`/`host_vars` and host-pattern matching |
+| [`vars`]({{< relref "components/vars.md" >}}) | Ansible's variable precedence ladder — the fixed merge order from role defaults up through `-e`/`--extra-vars` |
+| [`template`]({{< relref "components/template.md" >}}) | Jinja2-compatible templating with Ansible's filter and test library layered on top, including Ansible's native-type rendering rule for a bare `{{ expr }}` |
+| [`facts`]({{< relref "components/facts.md" >}}) | Fact gathering — the `setup` module equivalent — in one shell round trip, no Python required |
+| [`modules`]({{< relref "components/modules.md" >}}) | The Ansible module execution protocol plus **576 modules**: all of `ansible.builtin` and `ansible.posix`, and a curated 500 of `community.general` |
+| [`playbook`]({{< relref "components/playbook.md" >}}) | The playbook/role/task/handler engine tying all of the above together against a real play — loops, conditionals, blocks, `become`, roles, both execution strategies, retries, `run_once`, forks, `vars_prompt`, `async`/`poll`, dynamic inventory, `ansible.cfg` |
+| [`cli`]({{< relref "components/cli.md" >}}) | 9 of real's 10 `ansible-*` binaries — everything but `ansible-test` — each a thin wrapper over `playbook`/`vault`/`inventory` |
 
-See the [component overview](components/index.md) for how these fit together,
-[Roadmap](roadmap.md) for what's still ahead beyond today's module/collection
+See the [component overview]({{< relref "components/_index.md" >}}) for how these fit together,
+[Roadmap]({{< relref "roadmap.md" >}}) for what's still ahead beyond today's module/collection
 surface, and the **[engine feature matrix](https://go-ansible.github.io/)**
 on the landing page for exactly which playbook directives are implemented,
 re-checked against the code rather than assumed.
 
-## Why pure Go
+## Why pure Go {#why-pure-go}
 
 Being pure Go buys three things Ansible's own Python implementation cannot:
 
@@ -50,11 +55,11 @@ Being pure Go buys three things Ansible's own Python implementation cannot:
   reads" — verified against a real installed `ansible-core`, not just internal
   review.
 
-## Security
+## Security {#security}
 
 A port that runs shell commands on remote targets has two defect classes to
 answer for: a playbook value changing a command's *structure*, and a credential
-landing where `ps` can read it. [Security](security.md) states the control for
+landing where `ps` can read it. [Security]({{< relref "security.md" >}}) states the control for
 each, and what an audit of the whole stack found — most seriously, that a
 **managed host's own data was evaluated as a template on the control node**, so
 one compromised target could run commands where the vault password and the
@@ -66,7 +71,7 @@ four tasks for real before failing on the fifth. It also records the
 `ps`-visibility boundary as **measured** rather than reasoned about, and the one
 exposure that remains, named, with why it cannot be closed without cgo.
 
-## Repositories
+## Repositories {#repositories}
 
 | Repo | Role |
 |---|---|

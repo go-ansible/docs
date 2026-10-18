@@ -1,4 +1,9 @@
-# cli
+---
+title: "cli — the 8 ansible-* binaries"
+weight: 100
+---
+
+# cli {#cli}
 
 [![CI](https://github.com/go-ansible/cli/actions/workflows/ci.yml/badge.svg)](https://github.com/go-ansible/cli/actions/workflows/ci.yml)
 
@@ -6,23 +11,23 @@
 tools** — every one but `ansible-test`, which drives the collection test
 suites and is out of scope — each a thin `run(args []string) int` wired
 directly onto
-[`playbook`](playbook.md), [`inventory`](inventory.md), [`vault`](vault.md)
-and [`modules`](modules.md) — no shelling out to a Python `ansible-core`
+[`playbook`]({{< relref "playbook.md" >}}), [`inventory`]({{< relref "inventory.md" >}}), [`vault`]({{< relref "vault.md" >}})
+and [`modules`]({{< relref "modules.md" >}}) — no shelling out to a Python `ansible-core`
 underneath, no subprocess boundary at all.
 
 | Binary | What it does |
 |---|---|
 | `ansible` | Ad-hoc module execution against a pattern (`ansible all -m ping`) |
-| `ansible-playbook` | Runs a playbook via [`playbook.Engine`](playbook.md); `-f`/`--forks` sets the concurrency cap, and `vars_prompt:` prompts at a real terminal (masked input for `private` vars, falling back to defaults when not a TTY); `--check`/`-C` predicts changes without making them and `--diff`/`-D` shows them as unified diffs |
+| `ansible-playbook` | Runs a playbook via [`playbook.Engine`]({{< relref "playbook.md" >}}); `-f`/`--forks` sets the concurrency cap, and `vars_prompt:` prompts at a real terminal (masked input for `private` vars, falling back to defaults when not a TTY); `--check`/`-C` predicts changes without making them and `--diff`/`-D` shows them as unified diffs |
 | `ansible-inventory` | Dumps the parsed inventory: `--list` (JSON), `--host` (one host's merged vars), `--graph` (tree), with `--export`, `--vars`, `--limit`, `--output` and the vault options — see [below](#ansible-inventory) |
-| `ansible-vault` | Encrypt/decrypt/view/edit/rekey — wraps [`vault`](vault.md) |
+| `ansible-vault` | Encrypt/decrypt/view/edit/rekey — wraps [`vault`]({{< relref "vault.md" >}}) |
 | `ansible-galaxy` | `install` a role from a git URL via [`go-git`](https://github.com/go-git/go-git), plus `list` and `remove` of installed roles — **no galaxy.ansible.com HTTP API**, out of scope |
 | `ansible-pull` | Clones/pulls a git repo and runs a playbook from it against **this machine only** — see [below](#ansible-pull) |
 | `ansible-doc` | Prints each module's own Go doc comment via a build-time codegen tool — real content, not real Ansible's structured `DOCUMENTATION` YAML |
 | `ansible-config` | `list`/`dump`/`view` — reads real `ANSIBLE_*` environment variables and, for the settings this port supports, an actual `ansible.cfg` `[defaults]` section (host var > env var > `ansible.cfg` > compiled default; `$ANSIBLE_CONFIG` > `./ansible.cfg` > `~/.ansible.cfg` > `/etc/ansible/ansible.cfg`, first found wins outright) |
 | `ansible-console` | Interactive REPL with real's prompt and banner: `cd`, `list`, `become`/`nobecome`, `forks`, `remote_user`, `verbosity`, and any registered module by name or a bare shell command — see [below](#ansible-console) |
 
-## Building
+## Building {#building}
 
 Each binary lives at `cmd/<name>` and builds the ordinary way:
 
@@ -38,7 +43,7 @@ preprocessor in `cmd/ansible/main.go` pulls the one non-flag token out before
 handing the rest to `flag`, so both argument orderings work as they do with
 real `ansible`.
 
-## Container image
+## Container image {#container-image}
 
 `cli` also publishes a multi-arch `FROM scratch` OCI image,
 [`ghcr.io/go-ansible/cli`](https://github.com/go-ansible/cli/pkgs/container/cli),
@@ -67,7 +72,7 @@ in a scratch image. `debug`/`copy`/`template`/`set_fact` and friends work; a
 playbook that also targets a real host over SSH is unaffected either way,
 since the shell requirement is the *target's*, not this image's.
 
-## Diagnostics, and an inventory that cannot be read
+## Diagnostics, and an inventory that cannot be read {#diagnostics-and-an-inventory-that-cannot-be-read}
 
 Diagnostics use real Ansible's prefixes on **stderr**: `[ERROR]: ` for
 something that stops the run, `[WARNING]: ` for something that does not.
@@ -115,7 +120,7 @@ one-line cause where real prints a nine-line block naming the plugin it tried,
 a source position and an excerpt, which needs per-node positions this port's
 parsers do not record.
 
-## Verbosity, and the status it exits with
+## Verbosity, and the status it exits with {#verbosity-and-the-status-it-exits-with}
 
 `-v` is the flag a reader reaches for first, and `ansible-playbook` had
 **none**: it exited 2 with `flag provided but not defined`. The forms
@@ -129,7 +134,7 @@ single-line form a `fatal:` line uses rather than the pretty block. A
 module that dumps at every verbosity (`debug`) keeps its pretty block;
 at `-v` real shows both side by side, and so does this.
 
-`no_log` still wins at every level — see [Security](../security.md).
+`no_log` still wins at every level — see [Security]({{< relref "../security.md" >}}).
 
 **Accepted but adding nothing beyond `-v`:** the higher levels. Real's
 `-vv` prefixes `task path: <file>:<line>`, which needs source positions
@@ -138,7 +143,7 @@ and connection tracing. The flag's own help text says so. Refusing `-vv`
 outright would break every habitual invocation, which is worse than
 accepting it with less output.
 
-### Exit statuses
+### Exit statuses {#exit-statuses}
 
 Real distinguishes cases this port used to collapse into one. Measured
 against ansible-core 2.21.4, case by case:
@@ -161,7 +166,7 @@ sentinels (`ErrNoPassword`, `ErrHMACMismatch`) rather than message text.
 An unresolvable module name exits 4 under `--syntax-check` and
 `--list-tasks` too, which is what real does.
 
-## ansible-inventory
+## ansible-inventory {#ansible-inventory}
 
 `--list`, `--host` and `--graph`, with `--export`, `--vars`, `--limit`,
 `--output`, and `--vault-password-file` / `--vault-pass-file` /
@@ -186,7 +191,7 @@ they look:
   ["ungrouped", "prod"]}`, `"prod": {"children": ["web", "db"]}` for a
   `[prod:children]` section written web-then-db.
 
-### An unusable source warns; one you cannot decrypt is fatal
+### An unusable source warns; one you cannot decrypt is fatal {#an-unusable-source-warns-one-you-cannot-decrypt-is-fatal}
 
 These are different failures and real separates them. An inventory source that
 cannot be *parsed* means "carry on with what you have"; one that is encrypted
@@ -225,7 +230,7 @@ which real reports for the implicit localhost. It is a path to a Python this
 port never runs, so stating one would be a claim about the target that is not
 true here.
 
-## ansible: how `-a` is parsed
+## ansible: how `-a` is parsed {#ansible-how-a-is-parsed}
 
 The `-a` string goes through `playbook.ParseModuleArgs`, which is this stack's
 port of real's `parse_kv`/`split_args`: quote state, nested `{{ }}` and `{% %}`
@@ -247,7 +252,7 @@ A stray token used to be **silently dropped**: `-a 'msg=hello world'` ran with
 been typed. Real refuses both, and so does this now — `[ERROR]: Task failed:
 Action 'ansible.builtin.copy' does not support raw params.`, exit 2.
 
-### Two lists, and they are not the same list
+### Two lists, and they are not the same list {#two-lists-and-they-are-not-the-same-list}
 
 - **`MODULE_REQUIRE_ARGS`** — `command`, `raw`, `script`, `shell`,
   `win_command`, `win_shell` — decides whether a `k=v` is an *option* or part of
@@ -259,7 +264,7 @@ Action 'ansible.builtin.copy' does not support raw params.`, exit 2.
 Reading the first off the second would make `set_fact a=1` a raw param, so there
 is a test for exactly that case.
 
-### The arguments are templated, per host
+### The arguments are templated, per host {#the-arguments-are-templated-per-host}
 
 Since `cli v0.141.0`, the parsed arguments are rendered against the variables a
 play would give that host — `playbook.AdHocHostVars`, the same construction the
@@ -283,13 +288,13 @@ The template engine is built per host goroutine rather than shared, because
 gonja's filter registration is not atomic and an engine costs little beside
 opening a connection.
 
-### What still differs
+### What still differs {#what-still-differs}
 
 Real exits **250** with `Unexpected Exception` on a string that merely looks
 like JSON (`-a '{not json}'`). That is a traceback rather than a behaviour, so
 this falls through to the `k=v` parser instead.
 
-## ansible-galaxy list and remove
+## ansible-galaxy list and remove {#ansible-galaxy-list-and-remove}
 
 Neither needs the Galaxy API — they read and delete directories — so both are
 implemented, and match real across the eight invocations they were measured
@@ -308,7 +313,7 @@ on. Three rules are worth knowing because they are not what you would guess:
 Roles are listed in the order the filesystem returns them, not sorted, because
 that is what real does.
 
-## ansible-console
+## ansible-console {#ansible-console}
 
 The prompt is real's, and carries four things — the user the console would
 connect as, the current pattern, how many hosts it matches, and the fork
@@ -336,7 +341,7 @@ Two differences from real remain: its `help` lists every module alongside the
 built-in commands, and a failing command prints the structured `[ERROR]` block
 this port cannot reproduce without per-node source positions.
 
-## ansible-pull
+## ansible-pull {#ansible-pull}
 
 Two behaviours are worth stating because a pull agent runs unattended:
 
@@ -359,7 +364,7 @@ so prints one more `Could not match supplied host pattern` warning than this
 single-process design does. Emitting it here would mean warning about an
 inventory this port never loads.
 
-## What is not implemented
+## What is not implemented {#what-is-not-implemented}
 
 `ansible-galaxy` here only clones a role from a git URL — no
 galaxy.ansible.com API client, no collection installs (a standalone `galaxy`
@@ -368,7 +373,7 @@ out simple enough to fold directly into `cli` instead, and the standalone
 repository was never developed further). `ansible-doc` prints this port's own
 Go doc comments, not real Ansible's structured `DOCUMENTATION`/`EXAMPLES`/
 `RETURN` YAML blocks. `ansible-config`'s `ansible.cfg` support covers only the
-settings this port itself reads (see [`ConfigDefaults`](playbook.md)) — an
+settings this port itself reads (see [`ConfigDefaults`]({{< relref "playbook.md" >}})) — an
 unrecognized-but-valid Ansible setting in the file is silently ignored rather
 than surfaced, matching how unset environment variables were already
 treated.

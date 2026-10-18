@@ -1,4 +1,9 @@
-# vault
+---
+title: "vault — Vault-compatible encryption"
+weight: 30
+---
+
+# vault {#vault}
 
 [![CI](https://github.com/go-ansible/vault/actions/workflows/ci.yml/badge.svg)](https://github.com/go-ansible/vault/actions/workflows/ci.yml)
 
@@ -12,7 +17,7 @@ The wire format is fixed by the reference implementation
 byte-for-byte, so a file written by this package decrypts with the real
 `ansible-vault` command, and vice versa.
 
-## API
+## API {#api}
 
 ```go
 func IsVault(data []byte) bool
@@ -64,25 +69,25 @@ func UnmarshalYAML(data []byte, password string, out any) error
   value and never sees the ciphertext. A missing password is an error
   only if something actually needs decrypting.
 
-## Interoperable with real Ansible, in both directions
+## Interoperable with real Ansible, in both directions {#interoperable-with-real-ansible-in-both-directions}
 
 Verified rather than assumed, against real ansible-core 2.21.4: each tool
 decrypts and views what the other encrypted, for both `decrypt` and `view`.
 That matters because a vault format that is *almost* right is worse than
 none — it would encrypt secrets nobody else can ever read back.
 
-## Where it is wired in
+## Where it is wired in {#where-it-is-wired-in}
 
 Every YAML file the ecosystem loads goes through `MaybeDecrypt`, so an
 encrypted one works anywhere a plaintext one does:
 
-- [`inventory`](inventory.md): `LoadWithVault` — the inventory file itself,
+- [`inventory`]({{< relref "inventory.md" >}}): `LoadWithVault` — the inventory file itself,
   and any `group_vars`/`host_vars` merged alongside it. `group_vars/*/vault.yml`
   is the canonical place real Ansible users keep secrets.
-- [`playbook`](playbook.md): `ParseFileWithVault` for what a parse pulls in
+- [`playbook`]({{< relref "playbook.md" >}}): `ParseFileWithVault` for what a parse pulls in
   (the playbook, `vars_files`, a role's own `defaults`/`vars`/`tasks`/`meta`),
   and `Engine.VaultPassword` for `include_vars`, which is read at run time.
-- [`cli`](cli.md): `ansible-playbook --vault-password-file`, plus
+- [`cli`]({{< relref "cli.md" >}}): `ansible-playbook --vault-password-file`, plus
   `--ask-vault-password` and the `--vault-pass-file`/`--ask-vault-pass`
   spellings. The password is resolved before anything is read, since the
   inventory itself may be encrypted, and only when the caller says one
@@ -91,7 +96,7 @@ encrypted one works anywhere a plaintext one does:
 `Load` and `ParseFile` are the same calls with an empty password, so
 plaintext loading is unchanged.
 
-## Example
+## Example {#example}
 
 ```go
 package main
@@ -118,7 +123,7 @@ func main() {
 }
 ```
 
-## What is not implemented
+## What is not implemented {#what-is-not-implemented}
 
 Only cipher `AES256` (Vault format 1.1) is implemented — that has been the
 only cipher `ansible-vault` writes since Ansible 2.3, so it is also the only

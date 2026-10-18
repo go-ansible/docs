@@ -1,4 +1,9 @@
-# Component overview
+---
+title: "Components"
+weight: 20
+---
+
+# Component overview {#component-overview}
 
 Ansible's own engine wires several distinct concerns together at run time: it
 reads an inventory, gathers facts, resolves variables through a fixed
@@ -44,16 +49,16 @@ playbook engine it will never call.
 
 | Component | Depends on | Status |
 |---|---|---|
-| [`vault`](vault.md) | — | Real, tested, CI |
-| [`inventory`](inventory.md) | — | Real, tested, CI |
-| [`vars`](vars.md) | — (consumes `inventory`'s output, but has no import dependency on it) | Real, tested, CI |
-| [`template`](template.md) | `go-regexp/engine`, `nikolalohinski/gonja/v2` | Real, tested, CI |
-| [`facts`](facts.md) | `go-remoteexec/transport` | Real, tested, CI |
-| [`modules`](modules.md) | `go-remoteexec/transport` | Real, tested, CI — 576 modules |
-| [`playbook`](playbook.md) | `inventory`, `vars`, `template`, `modules`, `facts`, `go-remoteexec/transport` | Real, tested, CI — the engine tying the rest together |
-| [`cli`](cli.md) | `playbook`, `vault`, `inventory`, `go-git` | Real, tested, CI — 9 `ansible-*` binaries |
+| [`vault`]({{< relref "vault.md" >}}) | — | Real, tested, CI |
+| [`inventory`]({{< relref "inventory.md" >}}) | — | Real, tested, CI |
+| [`vars`]({{< relref "vars.md" >}}) | — (consumes `inventory`'s output, but has no import dependency on it) | Real, tested, CI |
+| [`template`]({{< relref "template.md" >}}) | `go-regexp/engine`, `nikolalohinski/gonja/v2` | Real, tested, CI |
+| [`facts`]({{< relref "facts.md" >}}) | `go-remoteexec/transport` | Real, tested, CI |
+| [`modules`]({{< relref "modules.md" >}}) | `go-remoteexec/transport` | Real, tested, CI — 576 modules |
+| [`playbook`]({{< relref "playbook.md" >}}) | `inventory`, `vars`, `template`, `modules`, `facts`, `go-remoteexec/transport` | Real, tested, CI — the engine tying the rest together |
+| [`cli`]({{< relref "cli.md" >}}) | `playbook`, `vault`, `inventory`, `go-git` | Real, tested, CI — 9 `ansible-*` binaries |
 
-All eight are shipped and tagged. See [Roadmap](../roadmap.md) for what's
+All eight are shipped and tagged. See [Roadmap]({{< relref "../roadmap.md" >}}) for what's
 still ahead beyond the current module/collection surface, and the
 [engine feature matrix](https://go-ansible.github.io/) on the landing page
 for exactly which playbook directives are implemented today.

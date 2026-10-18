@@ -1,4 +1,9 @@
-# facts
+---
+title: "facts — fact gathering"
+weight: 70
+---
+
+# facts {#facts}
 
 [![CI](https://github.com/go-ansible/facts/actions/workflows/ci.yml/badge.svg)](https://github.com/go-ansible/facts/actions/workflows/ci.yml)
 
@@ -7,7 +12,7 @@ module: it gathers a target's facts — OS family, distribution, architecture,
 hostname, and more — in a **single shell round trip**, not by shipping and
 running a Python fact-gathering script the way real Ansible does.
 
-## API
+## API {#api}
 
 ```go
 func Gather(ctx context.Context, conn remoteexec.Connection) (map[string]any, error)
@@ -15,11 +20,11 @@ func Gather(ctx context.Context, conn remoteexec.Connection) (map[string]any, er
 
 `Gather` runs one composed shell command over `conn` and parses its output
 into a flat `map[string]any` of fact names to values — the same shape
-[`playbook`](playbook.md) merges via `vars.InjectFacts` into both
+[`playbook`]({{< relref "playbook.md" >}}) merges via `vars.InjectFacts` into both
 `ansible_facts.<name>` and the flattened `ansible_<name>` convention real
 Ansible playbooks rely on.
 
-## Example
+## Example {#example}
 
 ```go
 package main
@@ -43,7 +48,7 @@ func main() {
 }
 ```
 
-## What is not implemented
+## What is not implemented {#what-is-not-implemented}
 
 Real Ansible's `setup` module gathers hundreds of facts via a `facter`/`ohai`-
 style plugin system with configurable `gather_subset:` filtering. This

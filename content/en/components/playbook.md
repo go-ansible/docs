@@ -1,11 +1,16 @@
-# playbook
+---
+title: "playbook — the playbook engine"
+weight: 90
+---
+
+# playbook {#playbook}
 
 [![CI](https://github.com/go-ansible/playbook/actions/workflows/ci.yml/badge.svg)](https://github.com/go-ansible/playbook/actions/workflows/ci.yml)
 
 `github.com/go-ansible/playbook` is the engine that drives
-[`inventory`](inventory.md), [`vars`](vars.md), [`template`](template.md),
-[`modules`](modules.md) and [`facts`](facts.md) together against a real play
-— the piece the original [Roadmap](../roadmap.md) once described as "not yet
+[`inventory`]({{< relref "inventory.md" >}}), [`vars`]({{< relref "vars.md" >}}), [`template`]({{< relref "template.md" >}}),
+[`modules`]({{< relref "modules.md" >}}) and [`facts`]({{< relref "facts.md" >}}) together against a real play
+— the piece the original [Roadmap]({{< relref "../roadmap.md" >}}) once described as "not yet
 built." It now implements real per-host execution: `when`/`loop`/`register`,
 `block`/`rescue`/`always` with genuine per-host recovery, `notify`/handlers,
 `become`, roles, `include_tasks`/`import_tasks`/`include_role`/`import_role`/
@@ -20,7 +25,7 @@ directive — that table is regenerated from `engine.go`/`playbook.go`
 directly, so it stays authoritative in a way a second, hand-maintained copy
 here would not.
 
-## API
+## API {#api}
 
 ```go
 type Engine struct {
@@ -71,13 +76,13 @@ func (rr *RunResult) Summary() map[string]*HostSummary // real Ansible's PLAY RE
 ```
 
 `New` returns an `Engine` pre-wired with the built-in module registry
-([`modules.Default()`](modules.md)), a fresh template engine, and
+([`modules.Default()`]({{< relref "modules.md" >}})), a fresh template engine, and
 `DefaultConnect` — real SSH/local/become connections via
 [`go-remoteexec/transport`](https://github.com/go-remoteexec/transport). Set
 `Connect` to a custom `Connector` to run against a fake or instrumented
 connection in tests.
 
-## Callback plugins
+## Callback plugins {#callback-plugins}
 
 Real Ansible reports a run through **callback plugins**
 (`ansible.plugins.callback.CallbackBase` and its `v2_*` hooks), loading one
@@ -89,7 +94,7 @@ methods it needs.
 
 `DefaultCallback` is this port's `ansible.builtin.default`: PLAY and TASK
 banners, a colored line per result, and a PLAY RECAP. It is what
-[`cli`](cli.md)'s `ansible-playbook` and `ansible-pull` install, and it
+[`cli`]({{< relref "cli.md" >}})'s `ansible-playbook` and `ansible-pull` install, and it
 serializes its own hooks — results genuinely arrive from one goroutine per
 host, so an implementation that keeps state or writes to a shared stream
 must do the same. Its banners are not padded out with asterisks the way
@@ -129,7 +134,7 @@ plain red.
 `Engine.OnResult` remains as the one-hook shorthand for a caller that only
 wants results and no play or recap events.
 
-## Measured against real Ansible
+## Measured against real Ansible {#measured-against-real-ansible}
 
 The engine's control flow has been run side by side with **real
 ansible-core 2.21.4**: the same playbook through both, across two hosts,
@@ -196,7 +201,7 @@ fatal: [h1]: FAILED! => {"changed": true, "cmd": "...", "rc": 3, "stderr": "to-s
 fatal: [nope]: UNREACHABLE! => {..., "unreachable": true}
 ```
 
-That JSON comes from [`template`](template.md)'s exported `ToJSON` rather
+That JSON comes from [`template`]({{< relref "template.md" >}})'s exported `ToJSON` rather
 than a second emitter, so a failure line and the `to_json` filter cannot
 drift apart. **Sharing it immediately found three defects that had
 nothing to do with failure lines**, each invisible until a real command's
@@ -258,7 +263,7 @@ That second finding nearly shipped wrong. A first probe ran
 `include_role`'s variables persisting; splitting them apart showed it was
 the *static* `import_role` injecting them play-wide from the start.
 
-## Check mode
+## Check mode {#check-mode}
 
 `Engine.CheckMode` — `ansible-playbook --check` — runs a playbook without
 changing anything. How real Ansible does it was measured before any of it
@@ -280,7 +285,7 @@ and worth stating plainly.
 
 The flag reaches a module through its own arguments, under real Ansible's
 wire name `_ansible_check_mode`, so adding check mode changed no
-signature anywhere in [`modules`](modules.md).
+signature anywhere in [`modules`]({{< relref "modules.md" >}}).
 
 **Supported today**:
 
@@ -310,7 +315,7 @@ signature anywhere in [`modules`](modules.md).
 writing module does *not* claim support — it failed, correctly, on the
 change that added the four editing modules, until their tests existed.
 
-### The cost of an opt-in list
+### The cost of an opt-in list {#the-cost-of-an-opt-in-list}
 
 The default — skip rather than run — is the safe one, and it has a price
 that went unpaid for a while: a module can grow a **correct** check-mode
@@ -336,7 +341,7 @@ requires it to be registered. It can only flag what it can *name* —
 positive control that fails if the scan stops seeing, because a scan
 that cannot read reports zero just as cheerfully as a clean one.
 
-## Diff mode
+## Diff mode {#diff-mode}
 
 `Engine.DiffMode` — `ansible-playbook --diff` / `-D` — shows what each
 task changed, as a unified diff printed before the line saying what
@@ -361,7 +366,7 @@ report a diff simply prints nothing extra, so turning the flag on can
 never fail a run. `copy`, `template`, `lineinfile`, `blockinfile` and
 `replace` report one today.
 
-### Why the renderer is a port, not a reimplementation
+### Why the renderer is a port, not a reimplementation {#why-the-renderer-is-a-port-not-a-reimplementation}
 
 Go has no unified diff in its standard library, and writing "a" unified
 diff is not enough: the output has to be the one real Ansible prints.
@@ -414,7 +419,7 @@ whose stdout is not a terminal gets exactly 79 — so a pipe, a redirect
 or a CI job sees 80-character lines, and `COLUMNS=200` does not change
 it, because real reads the ioctl rather than the environment.
 
-### One disclosed divergence
+### One disclosed divergence {#one-disclosed-divergence}
 
 Real Ansible has no single convention for the `---`/`+++` headers — each
 module names its sides its own way, and each is reproduced: `(content)`
@@ -428,7 +433,7 @@ a path that differs between two runs on the same machine. This port
 renders in memory and has no such file, so it names the destination
 instead.
 
-## Tags
+## Tags {#tags}
 
 Tag selection is a port of real Ansible's `evaluate_tags`
 (`ansible/playbook/taggable.py`), which is more than an intersection
@@ -458,7 +463,7 @@ as the second, which also made the recap's own `skipped` count wrong.
 Tag *inheritance* — play tags and block tags reaching the tasks inside —
 was already correct, and is covered by its own measured table.
 
-## Host selection
+## Host selection {#host-selection}
 
 `hosts:` and `--limit` share one pattern language, and its terms are
 applied by **kind** rather than left to right, which is what real
@@ -481,7 +486,7 @@ checked once before any play runs and against `all` — which is why a
 play whose own `hosts:` matches nothing is not an error while a
 `--limit` matching nothing is.
 
-### serial
+### serial {#serial}
 
 `serial:` accepts a count, a percentage, or a list of either, matching
 real Ansible's own list-typed attribute — `serial: 2` and `serial: [2]`
@@ -499,7 +504,7 @@ Only the plain-integer form worked before; a percentage or a list parsed
 as zero and the play ran **every host at once, in silence** — the exact
 opposite of what `serial` is for.
 
-## Rolling updates and reporting
+## Rolling updates and reporting {#rolling-updates-and-reporting}
 
 `serial:` batching was already correct; what was missing was that real
 Ansible **re-banners the play and the task for each batch**, which is
@@ -521,7 +526,7 @@ Other reporting details, each measured rather than assumed:
 - The recap ends with a blank line, and an **ignored failure that
   changed something counts under `changed`**.
 
-## Inspecting a playbook without running it
+## Inspecting a playbook without running it {#inspecting-a-playbook-without-running-it}
 
 `--list-tasks`, `--list-tags`, `--list-hosts` and `--syntax-check` print
 what a playbook would do and run nothing. The listings apply the run's
@@ -536,7 +541,7 @@ though they will run. Role tasks are listed and bannered alike as
 ansible-core's own order is non-deterministic — three runs of one
 playbook gave three different orders — so only the set is.
 
-## Resuming and forcing
+## Resuming and forcing {#resuming-and-forcing}
 
 `--start-at-task` skips until a task whose name matches, then runs from
 there. The match is exact or a shell glob, case-sensitive, and the
@@ -553,7 +558,7 @@ cache. It is accepted so a command line written for real
 ansible-playbook still runs, and says so rather than implying a cache
 exists.
 
-## Connections
+## Connections {#connections}
 
 `ansible_connection` takes `local`, `ssh` (the default, and what `smart`
 resolves to) or `winrm`.
@@ -579,7 +584,7 @@ What this does **not** give you is a working Windows run. The
 connection is there; the `ansible.windows` module family is not, and
 326 of the 576 modules here compose POSIX shell.
 
-## no_log, and the keywords this port refuses
+## no_log, and the keywords this port refuses {#no_log-and-the-keywords-this-port-refuses}
 
 `no_log: true` is honoured: the outcome of a task is still reported,
 its contents are not, and a **failing** task — the case where a result
@@ -656,7 +661,7 @@ They are refused rather than ignored on purpose. Silently accepting a
 keyword this port does not honour would run the task differently from
 what the playbook says, which is worse than saying no.
 
-## hostvars is live
+## hostvars is live {#hostvars-is-live}
 
 `hostvars['web1']['ansible_default_ipv4']` is how a playbook templates one
 host's configuration from another's facts, and it is one of the most
@@ -670,7 +675,7 @@ against ansible-core 2.21.4:
 | `hostvars['h2']['my_mark']` (a `set_fact`) | `mark-of-h2` | `<MISSING>` |
 | `hostvars['h2']['ansible_system']` (gathered) | `Darwin` | `<MISSING>` |
 
-### How, and why not the obvious way
+### How, and why not the obvious way {#how-and-why-not-the-obvious-way}
 
 Each host **publishes an immutable snapshot** of its own variables and
 reads everyone else's. It does not read another host's `vars.Context`
@@ -685,7 +690,7 @@ tasks and reads at the **start** of the next, so under `linear` — which
 has a per-task barrier — `hostvars` reflects exactly the tasks that have
 finished.
 
-### What that means under `free`
+### What that means under `free` {#what-that-means-under-free}
 
 `free` gives **no cross-host ordering**; that is what it is for. So a host
 can reach a task that reads `hostvars['other']` before `other` has
@@ -698,7 +703,7 @@ this machine always won.)
 A host **outside the play** still resolves, from the inventory's own view
 — real's `hostvars` covers the whole inventory, not the batch.
 
-### `groups` and `group_names` follow the inventory too
+### `groups` and `group_names` follow the inventory too {#groups-and-group_names-follow-the-inventory-too}
 
 `add_host` and `group_by` **change the inventory while the play runs**,
 and `groups`, `group_names` and `hostvars` were all derived from it once
@@ -722,20 +727,20 @@ mutate it bump a counter, and the derived view is rebuilt only when the
 number a reader last saw has changed. The common case is one atomic load.
 
 The lock for that lives in the engine rather than in
-[`inventory`](inventory.md), and deliberately: `Inventory`'s maps are
+[`inventory`]({{< relref "inventory.md" >}}), and deliberately: `Inventory`'s maps are
 **exported fields**, so an internal mutex could not guard
 `inv.Hosts[name]` and hiding them would break every caller. What it
 guards is the engine's own concurrent access — which also closes a race
 that predates all of this, since two hosts calling `add_host` under
 `free` were already writing the same map.
 
-### Cost
+### Cost {#cost}
 
 Measured rather than assumed, on a 50-task play: 0.04s against 0.02s at
 50 hosts, 0.21s against 0.09s at 150 — about 2×, with the same growth
 rate, because the refresh copies pointers rather than variable maps.
 
-## environment
+## environment {#environment}
 
 `environment:` sets variables in the environment of the command a task
 runs, at play and task level. A play's entries reach every task; a
@@ -757,7 +762,7 @@ A YAML `true` becomes the string `True`, capitalised, because that is
 what Python's `str()` produces and what a script testing
 `[ "$FLAG" = "True" ]` expects.
 
-## An undefined variable is an error
+## An undefined variable is an error {#an-undefined-variable-is-an-error}
 
 Real Ansible fails on an undefined variable — in a module argument, in
 a string with one interpolated into it, in a `when:`. This port
@@ -782,7 +787,7 @@ but not its whole chain: real names the module and the argument
 Error while resolving value for 'msg'"*), which this port does not
 reproduce.
 
-## with_* loops
+## with_* loops {#with-loops}
 
 `with_<name>` is the `<name>` **lookup plugin**, which is exactly how
 real implements it: `with_dict` *is* the `dict` lookup, run with
@@ -805,7 +810,7 @@ measured rather than assumed: `list` does **not** flatten while
 `items` flattens one level; `together` pads short lists with `null`
 (`zip_longest`, not `zip`); and `sequence` yields **strings**.
 
-### Loop labels
+### Loop labels {#loop-labels}
 
 Each iteration prints `(item=...)` using Python's `str()` — a dict
 shows as `{'k': 'v'}`, `None` rather than `<nil>`. `loop_control.label`
@@ -819,7 +824,7 @@ loop_control:
 The label changes only the printing: `register:` and the result dict
 still carry the real item.
 
-### One disclosed divergence
+### One disclosed divergence {#one-disclosed-divergence_1}
 
 `dict2items`, the `dict` lookup and a printed dict all iterate in
 **key order**, where real preserves the mapping's document order. This
@@ -829,7 +834,7 @@ already in key order. (Before this, a Go map's randomised iteration
 made `loop: "{{ d | dict2items }}"` print in a different order on
 about one run in eight.)
 
-## How a failure reads
+## How a failure reads {#how-a-failure-reads}
 
 A failure names the module and the argument it could not resolve, as
 real's does:
@@ -862,7 +867,7 @@ error — the delimiters sit inside a larger expression. It used to be
 rendered as an ordinary argument, which turned an undefined name into
 an args-finalization failure.
 
-### Loops
+### Loops {#loops}
 
 A failing **iteration** reads differently from a failing task:
 
@@ -878,7 +883,7 @@ with real's `One or more items failed` summary and counts the task
 once; a loop whose items merely failed in the module does not — both
 measured.
 
-### What is not reproduced
+### What is not reproduced {#what-is-not-reproduced}
 
 Real prints a structured block before each failure line, giving every
 cause in the chain a source position and a three-line excerpt of the
@@ -886,7 +891,7 @@ playbook. Reproducing it needs per-node source positions, which this
 port's parser does not record. The final message is the same; the
 block above it is absent.
 
-## What a rescue can see
+## What a rescue can see {#what-a-rescue-can-see}
 
 `ansible_failed_task` and `ansible_failed_result` are set the moment a
 block starts **rescuing**, which is how a rescue says what it caught:
@@ -912,7 +917,7 @@ is accurate rather than invented. An **unset** attribute reports
 `null`, as it does there, not a Go zero — and `register` is not the
 name but real's own map-to-sentinel shape.
 
-## Handlers: names and listen topics
+## Handlers: names and listen topics {#handlers-names-and-listen-topics}
 
 A `notify:` resolves through two separate matches:
 
@@ -935,7 +940,7 @@ running it shows the **first** one winning — the reversal that comment
 describes is over handler *blocks*, and a play's handlers are one
 block.
 
-## action, local_action and args
+## action, local_action and args {#action-local_action-and-args}
 
 Three ways to name a module, or its arguments, somewhere other than
 the module's own key. All three are honoured:
@@ -958,7 +963,7 @@ Real emits a `[DEPRECATION WARNING]` for the **mapping** form of
 `action`/`local_action` (removed in 2.23). This port has no
 deprecation-warning mechanism at all, named here rather than faked.
 
-## become
+## become {#become}
 
 Privilege escalation resolves the same way `connection:` does, and the
 middle term is the one worth stating plainly:
@@ -984,7 +989,7 @@ program directly and reports what it said. The **user resolved** is
 identical — that is what the measurement checks — but the wording of a
 failure is not.
 
-## yes and no are booleans
+## yes and no are booleans {#yes-and-no-are-booleans}
 
 Real Ansible parses with PyYAML, a **YAML 1.1** implementation.
 `gopkg.in/yaml.v3`, which this port uses, implements YAML 1.2. The two
@@ -1019,7 +1024,7 @@ differ in their first group — an int may not start with `0`, so
 `0:59` stays a string, while a float may, so `0:30.5` is `30.5` — and
 no group may exceed 59, which leaves `1:60` a string.
 
-## Variables on a block and on an include
+## Variables on a block and on an include {#variables-on-a-block-and-on-an-include}
 
 `vars:` on a `block:` reaches every task inside it and goes out of
 scope with it, sitting between the play's variables and the task's
@@ -1041,7 +1046,7 @@ banner and an `included: <absolute path> for <host>` line, counted as
 ok in the recap. A static import announces nothing. `include_tasks:`
 takes either a bare path or the mapping form `{file: path}`.
 
-## Unreachable hosts, and connecting per task
+## Unreachable hosts, and connecting per task {#unreachable-hosts-and-connecting-per-task}
 
 Real Ansible establishes a connection when a task needs one, not once
 before the play. Six things follow from that, and this port now does the
@@ -1084,7 +1089,7 @@ combining: one failed host plus one unreachable host exits 4, not 6.
 This port returned 2 for both, so a caller telling them apart — a retry
 loop, a deployment gate — could not.
 
-### A task may change the connection, and that is the sixth
+### A task may change the connection, and that is the sixth {#a-task-may-change-the-connection-and-that-is-the-sixth}
 
 `hostState`'s own comment in this engine said *"Real Ansible connects per
 TASK"* for a long time while the connection was built once at play start
@@ -1124,7 +1129,7 @@ Three things make it work, and each took a measurement to get right:
 The signature ignores the dozens of `ansible_*` variables fact gathering
 adds, or every gather would look like a change.
 
-### One named divergence
+### One named divergence {#one-named-divergence}
 
 A task asking for a *different* connection than the one that failed gets
 a fresh attempt. A task asking for the **same** unreachable endpoint does
@@ -1133,7 +1138,7 @@ task, which on a host that is simply down costs a full SSH timeout per
 task. The difference is visible only in timing, and it has a test of its
 own rather than being left to be discovered.
 
-## meta
+## meta {#meta}
 
 `meta:` is not a module. Real Ansible's strategy executes it directly:
 it prints a TASK header with **nothing underneath**, and counts toward
@@ -1141,7 +1146,7 @@ nothing in the recap. `meta: flush_handlers` banners *before* its
 handlers run. `noop`, `flush_handlers` and `clear_facts` are supported;
 any other action is refused by name.
 
-## module_defaults
+## module_defaults {#module_defaults}
 
 `module_defaults:` gives a module its arguments once, for every task in
 scope, at play, block or task level:
@@ -1174,7 +1179,7 @@ another one.
 A `group/...` key names an action group, which this port has no concept
 of, and is refused by name rather than dropped.
 
-## check_mode on a play or a task
+## check_mode on a play or a task {#check_mode-on-a-play-or-a-task}
 
 `check_mode: true` puts a play or a task into a dry run without
 `--check`, and `check_mode: false` takes a task **out** of one — which
@@ -1188,7 +1193,7 @@ A play saying `check_mode: true` used to write the file anyway. That is
 the worst shape this class of defect takes — the keyword whose entire
 purpose is to not touch anything was the one being ignored.
 
-## order
+## order {#order}
 
 `order:` sets the order hosts run in within a play: `inventory` (the
 default), `reverse_inventory`, `sorted`, `reverse_sorted` and `shuffle`.
@@ -1199,7 +1204,7 @@ The order is only observable when one host runs at a time, so at
 goroutine each — with five forks, five hosts interleave in whatever
 order they finish, there as here.
 
-## Loops
+## Loops {#loops_1}
 
 A `when:` on a looping task is evaluated **per item**, with `item`
 bound. It used to be evaluated once before the loop, where `item` does
@@ -1220,7 +1225,7 @@ before counting — changed if any changed, skipped only if every one
 was. Each line carries its item, `=> (item=x)`, and a skipped one keeps
 the trailing space real Ansible leaves there.
 
-## Stopping a rolling update
+## Stopping a rolling update {#stopping-a-rolling-update}
 
 `any_errors_fatal:` stops the whole play the moment any host fails, and
 `max_fail_percentage:` stops it once more than that share of the batch
@@ -1239,7 +1244,7 @@ Both **parsed and were ignored** until this was measured, which is the
 worst shape for a safety brake: a play saying *if any host fails, stop*
 carried on deploying to the rest of the fleet, silently.
 
-## Connection settings on a play
+## Connection settings on a play {#connection-settings-on-a-play}
 
 `connection:`, `remote_user:` and `port:` apply to every host in the
 play. A **host variable wins over them** — a host declaring
@@ -1254,7 +1259,7 @@ The same three keywords on a *task* are still refused by name: a
 per-task connection needs its own connection, the way `delegate_to`
 already builds one.
 
-### Known gaps
+### Known gaps {#known-gaps}
 
 - Real ansible-core 2.21 prints a structured `[ERROR]` block naming the
   playbook file, line, column and a source excerpt. This port has no
@@ -1269,7 +1274,7 @@ already builds one.
   an exec-versus-shell distinction at the transport, and keying off
   `rc == 127` would misfire on a program that legitimately exits 127.
 
-## Conditionals
+## Conditionals {#conditionals}
 
 A conditional must evaluate to a **boolean**. A `when:` yielding a
 string, number, list, dict or null is an error, as it is in real
@@ -1293,7 +1298,7 @@ in `{{ }}`, so one already wrapped became `{{ {{ flag }} }}`. Only a
 conditional that is entirely one expression is unwrapped; `{{ a }} and
 {{ b }}` is left as written.
 
-## Example
+## Example {#example}
 
 ```go
 package main
@@ -1335,7 +1340,7 @@ all:
 }
 ```
 
-## Warnings
+## Warnings {#warnings}
 
 ```go
 type Warner func(msg string)
@@ -1362,7 +1367,7 @@ the Warner it uses for its own inventory warnings — should assign that one, so
 the whole process shares a single deduplication set. A nil `Warn` is silent
 rather than a panic.
 
-## Play keywords: honoured, accepted, refused
+## Play keywords: honoured, accepted, refused {#play-keywords-honoured-accepted-refused}
 
 Three states, and the difference between the last two is the one that used to
 bite. Counted against the reference: `ansible-doc -t keyword -l` in ansible-core
@@ -1428,7 +1433,7 @@ published under `ansible_local`, which `vars.InjectFacts` prefixed again into
 a name no playbook would ask for. Fixed in `facts v0.19.0`, where the test is
 now the contract (*every* key is bare) rather than that one key.
 
-## What is not implemented
+## What is not implemented {#what-is-not-implemented}
 
 `include_tasks`/`import_tasks`/`include_role`/`import_role` resolve
 **statically at parse time**, not real Ansible's dynamic, per-host,
@@ -1436,7 +1441,7 @@ possibly-templated resolution — documented as narrower, not silently
 different. The namespace/collection metadata system, Python-style inventory
 *plugins*, and lookup/callback plugins are out of scope entirely (executable
 inventory *scripts* — the `--list`/`--host` protocol — are supported; see
-[inventory](inventory.md)). `host_pinned` joined `linear` and `free` in v0.130.0 — real
+[inventory]({{< relref "inventory.md" >}})). `host_pinned` joined `linear` and `free` in v0.130.0 — real
 implements it as `free` plus one rule, that a host does not start until a
 fork slot is free and holds it until the play is done, and the difference
 shows at `-f 1`, where `free` collapses to `linear` and `host_pinned`
