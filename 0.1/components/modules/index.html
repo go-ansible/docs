@@ -925,11 +925,21 @@
 <h1 id="modules">modules<a class="headerlink" href="#modules" title="Permanent link">&para;</a></h1>
 <p><a href="https://github.com/go-ansible/modules/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/go-ansible/modules/actions/workflows/ci.yml/badge.svg" /></a></p>
 <p><code>github.com/go-ansible/modules</code> implements Ansible's module execution model
-and the core module library: <strong>566 modules registered</strong> — all 62 of
-<code>ansible.builtin</code>, all 14 of <code>ansible.posix</code>, and 490 curated from
+and the core module library: <strong>576 modules registered</strong> — 62 of
+<code>ansible.builtin</code>, all 14 of <code>ansible.posix</code>, and 500 curated from
 <code>community.general</code> (577 real modules in that collection; the remainder is
 deliberately excluded, each with a real, checked reason — see the
 <a href="https://github.com/go-ansible">org profile</a> for the full list).</p>
+<p><code>ansible.builtin</code> has 71 modules, and the nine this registry does not hold
+are not remote modules at all: <code>add_host</code>, <code>group_by</code>, <code>meta</code> and the
+<code>import_*</code>/<code>include_*</code> family are playbook constructs, implemented in
+<a href="../playbook/"><code>playbook</code></a> — which is where real Ansible puts them too, as
+action plugins and strategy behaviour rather than modules. The collection
+is covered; the <em>registry</em> holds the 62 that are modules.</p>
+<p>The counts were measured on 2026-10-18 against real <code>ansible-core 2.21.4</code>
+by intersecting <code>Default().Names()</code> with <code>ansible-doc -l &lt;collection&gt;
+-t module</code>, not by adding up batches — a sum of batch sizes says how many
+were written, never which names are there.</p>
 <p>Unlike real Ansible, which copies a Python script to the target and runs it
 there, a module here runs its logic on the <strong>control node</strong> and reaches the
 target only through a <a href="https://github.com/go-remoteexec/transport"><code>go-remoteexec/transport</code></a>
@@ -956,7 +966,7 @@ installed on the target at all.</p>
 <a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a><span class="kd">type</span><span class="w"> </span><span class="nx">Registry</span><span class="w"> </span><span class="kd">struct</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="cm">/* ... */</span><span class="w"> </span><span class="p">}</span>
 <a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a>
 <a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a><span class="kd">func</span><span class="w"> </span><span class="nx">NewRegistry</span><span class="p">()</span><span class="w"> </span><span class="o">*</span><span class="nx">Registry</span>
-<a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a><span class="kd">func</span><span class="w"> </span><span class="nx">Default</span><span class="p">()</span><span class="w"> </span><span class="o">*</span><span class="nx">Registry</span><span class="w"> </span><span class="c1">// pre-populated with all 566 built-in modules</span>
+<a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a><span class="kd">func</span><span class="w"> </span><span class="nx">Default</span><span class="p">()</span><span class="w"> </span><span class="o">*</span><span class="nx">Registry</span><span class="w"> </span><span class="c1">// pre-populated with all 576 built-in modules</span>
 <a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a><span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">r</span><span class="w"> </span><span class="o">*</span><span class="nx">Registry</span><span class="p">)</span><span class="w"> </span><span class="nx">Register</span><span class="p">(</span><span class="nx">name</span><span class="w"> </span><span class="kt">string</span><span class="p">,</span><span class="w"> </span><span class="nx">fn</span><span class="w"> </span><span class="nx">Func</span><span class="p">)</span>
 <a id="__codelineno-0-21" name="__codelineno-0-21" href="#__codelineno-0-21"></a><span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">r</span><span class="w"> </span><span class="o">*</span><span class="nx">Registry</span><span class="p">)</span><span class="w"> </span><span class="nx">Get</span><span class="p">(</span><span class="nx">name</span><span class="w"> </span><span class="kt">string</span><span class="p">)</span><span class="w"> </span><span class="p">(</span><span class="nx">Func</span><span class="p">,</span><span class="w"> </span><span class="kt">bool</span><span class="p">)</span>
 <a id="__codelineno-0-22" name="__codelineno-0-22" href="#__codelineno-0-22"></a><span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">r</span><span class="w"> </span><span class="o">*</span><span class="nx">Registry</span><span class="p">)</span><span class="w"> </span><span class="nx">Names</span><span class="p">()</span><span class="w"> </span><span class="p">[]</span><span class="kt">string</span>

@@ -2026,13 +2026,18 @@ behaviour is this project's default, and here it would be unsafe: real can
 afford to put a credential in a message because a scrubber stands behind it, and
 this port cannot. So <code>telegram</code> reports the status and <code>api_args</code> and omits the
 url — the same code either way, for the opposite reason.</p>
+<p><code>bigpanda</code> is the second instance, and it is a plainer one: real <em>returns</em> the
+token, as a field of its own deployment object, and gets away with it for the
+same reason. Here the field is omitted. Both divergences are in the module's
+doc comment next to real's line that justifies it, and both are held by a test
+rather than by the comment.</p>
 <p>It also means the discipline has to hold at the point a message is <em>composed</em>,
 not at the point it is printed. Every module that reaches an HTTP service
 interpolates something; a credential must not be part of it.</p>
 <h3 id="where-a-credential-can-hide-in-these-modules">Where a credential can hide in these modules<a class="headerlink" href="#where-a-credential-can-hide-in-these-modules" title="Permanent link">&para;</a></h3>
 <p>These services have no official CLI, so this port posts to the same endpoints
 through <code>curl</code> <strong>on the target</strong> — where real's own module runs and calls
-<code>fetch_url</code> from. A credential then has four places to sit, and all four are
+<code>fetch_url</code> from. A credential then has five places to sit, and all five are
 places a naive implementation puts on the command line:</p>
 <table>
 <thead>
@@ -2048,7 +2053,7 @@ places a naive implementation puts on the command line:</p>
 </tr>
 <tr>
 <td>the <strong>URL path</strong></td>
-<td><code>grove</code>'s <code>channel_token</code>, <code>telegram</code>'s and <code>discord</code>'s tokens</td>
+<td><code>grove</code>'s <code>channel_token</code>, <code>telegram</code>'s and <code>discord</code>'s tokens, <code>rocketchat</code>'s token — which is <em>two</em> path segments and refuses to be anything else</td>
 </tr>
 <tr>
 <td>the <strong>query string</strong></td>
@@ -2056,14 +2061,23 @@ places a naive implementation puts on the command line:</p>
 </tr>
 <tr>
 <td>a <strong>header</strong></td>
-<td><code>cisco_webex</code>'s bearer token</td>
+<td><code>cisco_webex</code>'s and <code>bigpanda</code>'s bearer tokens</td>
+</tr>
+<tr>
+<td>the <strong>basic-auth user</strong></td>
+<td><code>campfire</code>'s token, sent as <code>&lt;token&gt;:X</code> — <code>curl -u</code> would put it in <code>argv</code></td>
 </tr>
 </tbody>
 </table>
-<p><code>curlDo</code> sends the url, the query string, the headers and the body on <strong>stdin</strong>,
-through curl's own <code>-K -</code> config — the mechanism <code>infinityCurl</code> already used for
-HTTP Basic credentials, and the one the <code>Connection</code> interface documents for
-reaching <code>sudo</code> without a password in <code>argv</code>.</p>
+<p><code>curlDo</code> sends the url, the query string, the headers, the body and any
+basic-auth pair on <strong>stdin</strong>, through curl's own <code>-K -</code> config — the mechanism
+<code>infinityCurl</code> already used for HTTP Basic credentials, and the one the
+<code>Connection</code> interface documents for reaching <code>sudo</code> without a password in
+<code>argv</code>.</p>
+<p>The URL row is the one worth dwelling on. <code>-u</code> and <code>-H</code> are the obvious
+mistakes; a webhook url looks like an address rather than a secret, and for
+four of these modules it <em>is</em> the secret. A review that only looks for the
+flags that take credentials will pass all four.</p>
 <p><code>assertSecretsOffArgv</code> asserts it per module, and carries its own control: each
 secret must appear on <strong>stdin</strong>. Without that half, the check passes just as
 well on a module that never sent the credential at all.</p>

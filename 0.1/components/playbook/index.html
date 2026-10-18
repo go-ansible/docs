@@ -652,6 +652,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Check mode">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#the-cost-of-an-opt-in-list" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The cost of an opt-in list
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -1394,6 +1411,23 @@
       
     </span>
   </a>
+  
+    <nav class="md-nav" aria-label="Check mode">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#the-cost-of-an-opt-in-list" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The cost of an opt-in list
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -2262,13 +2296,69 @@ signature anywhere in <a href="../modules/"><code>modules</code></a>.</p>
 <li><code>command</code> and <code>shell</code> decline with real Ansible's own <em>"Command would
   have run if not in check mode"</em> and report <strong>skipped</strong>, since neither
   can know what the command would have done.</li>
-<li><code>debug</code>, <code>fail</code>, <code>stat</code>, <code>find</code> and <code>slurp</code> change nothing either way,
+<li>
+<p><code>debug</code>, <code>fail</code>, <code>stat</code>, <code>find</code> and <code>slurp</code> change nothing either way,
   so a check run executes them — real Ansible reports <code>debug</code> as <code>ok</code> in
-  a check run, not <code>skipping</code>.</li>
+  a check run, not <code>skipping</code>.</p>
+</li>
+<li>
+<p><code>bigpanda</code>, <code>cisco_webex</code>, <code>discord</code>, <code>google_chat</code> and <code>telegram</code> —
+  the notification senders, and they do <strong>not</strong> all do the same thing.
+  <code>bigpanda</code> and <code>google_chat</code> report <code>changed=True</code> and send nothing;
+  <code>cisco_webex</code> GETs <code>/people/me</code> and <code>discord</code> GETs its webhook, which
+  are real's own <strong>read-only probes</strong>, not skips. Each was ported from
+  real's own branch rather than declared supported.</p>
+</li>
 </ul>
 <p><strong>Everything else is skipped</strong>, and a test asserts that an unported
 writing module does <em>not</em> claim support — it failed, correctly, on the
 change that added the four editing modules, until their tests existed.</p>
+<h3 id="the-cost-of-an-opt-in-list">The cost of an opt-in list<a class="headerlink" href="#the-cost-of-an-opt-in-list" title="Permanent link">&para;</a></h3>
+<p>The default — skip rather than run — is the safe one, and it has a price
+that went unpaid for a while: a module can grow a <strong>correct</strong> check-mode
+branch and still be skipped, because nothing connects the implementation
+to the list. Five had. All five implemented real's behaviour faithfully
+and were absent from <code>checkModeSupport</code>, so the gate answered <em>"remote
+module (X) does not support check mode"</em> and never reached the branch.</p>
+<p>Measured against real <code>ansible-core 2.21.4</code> with <code>google_chat</code>, whose dry
+run needs no network at all:</p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>ok</th>
+<th>changed</th>
+<th>skipped</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>real 2.21.4</td>
+<td>1</td>
+<td>1</td>
+<td>0</td>
+</tr>
+<tr>
+<td>ours before</td>
+<td>0</td>
+<td>0</td>
+<td><strong>1</strong></td>
+</tr>
+<tr>
+<td>ours after</td>
+<td>1</td>
+<td>1</td>
+<td>0</td>
+</tr>
+</tbody>
+</table>
+<p>Both failures were silent, so the fix is not the five entries but the
+test that finds the sixth: <code>TestEveryCheckModeImplementationIsRegistered</code>
+scans <code>modules</code>' own sources for anything branching on check mode and
+requires it to be registered. It can only flag what it can <em>name</em> —
+<code>shell</code> lives in <code>command.go</code> and is invisible to it — so it carries a
+positive control that fails if the scan stops seeing, because a scan
+that cannot read reports zero just as cheerfully as a clean one.</p>
 <h2 id="diff-mode">Diff mode<a class="headerlink" href="#diff-mode" title="Permanent link">&para;</a></h2>
 <p><code>Engine.DiffMode</code> — <code>ansible-playbook --diff</code> / <code>-D</code> — shows what each
 task changed, as a unified diff printed before the line saying what
@@ -2471,7 +2561,7 @@ and a third value is an error — read as <code>ignore</code> by accident, a typ
 there would stop certificates being checked.</p>
 <p>What this does <strong>not</strong> give you is a working Windows run. The
 connection is there; the <code>ansible.windows</code> module family is not, and
-326 of the 566 modules here compose POSIX shell.</p>
+326 of the 576 modules here compose POSIX shell.</p>
 <h2 id="no_log-and-the-keywords-this-port-refuses">no_log, and the keywords this port refuses<a class="headerlink" href="#no_log-and-the-keywords-this-port-refuses" title="Permanent link">&para;</a></h2>
 <p><code>no_log: true</code> is honoured: the outcome of a task is still reported,
 its contents are not, and a <strong>failing</strong> task — the case where a result
@@ -2508,8 +2598,8 @@ others: it is <strong>accepted and has no effect</strong>, and that is not the
 silent-ignore this list exists to prevent. The module registry is one
 flat namespace by construction — <code>NormalizeName</code> strips every known
 collection prefix, so <code>community.general.ufw</code> and a bare <code>ufw</code> are the
-same entry — and no two modules share a bare name (566 registrations,
-566 distinct, pinned by <code>TestNoDuplicateRegistrations</code> in <code>modules</code>). A
+same entry — and no two modules share a bare name (576 registrations,
+576 distinct, pinned by <code>TestNoDuplicateRegistrations</code> in <code>modules</code>). A
 search path has nothing to search. It was already accepted on a <strong>play</strong>
 while being refused on a <strong>task</strong>, so the rule was only half applied.</p>
 <p><code>debugger: never</code> left it too, and only that value: it asks for nothing,

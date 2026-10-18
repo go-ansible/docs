@@ -859,8 +859,8 @@ on every push and pull request:</p>
 <li><a href="../components/facts/"><code>facts</code></a> — fact gathering, the <code>setup</code> module
   equivalent</li>
 <li><a href="../components/modules/"><code>modules</code></a> — the module execution protocol plus
-  <strong>566 registered modules</strong> (all of <code>ansible.builtin</code> and <code>ansible.posix</code>,
-  and a curated 490 of <code>community.general</code>)</li>
+  <strong>576 registered modules</strong> (all of <code>ansible.builtin</code> and <code>ansible.posix</code>,
+  and a curated 500 of <code>community.general</code>)</li>
 <li><a href="../components/playbook/"><code>playbook</code></a> — the playbook/role/task/handler
   engine driving all of the above against a real play: loops, conditionals,
   blocks with genuine per-host recovery, <code>become</code>, roles (nested variable
@@ -871,8 +871,9 @@ on every push and pull request:</p>
   <code>ansible.cfg</code> file support, <code>become_exe</code>/<code>become_flags</code>, a swappable
   <code>Callback</code> interface with the default stdout callback implemented
   against it, and <code>local</code>/<code>ssh</code>/<code>winrm</code> connections</li>
-<li><a href="../components/cli/"><code>cli</code></a> — all 8 real <code>ansible-*</code> binaries, plus a
-  multi-arch <code>FROM scratch</code> OCI image on every version tag</li>
+<li><a href="../components/cli/"><code>cli</code></a> — 9 of real's 10 <code>ansible-*</code> binaries (all but
+  <code>ansible-test</code>), plus a multi-arch <code>FROM scratch</code> OCI image on every
+  version tag</li>
 </ul>
 <p>A standalone <code>galaxy</code> repository was planned early on for a role/collection
 installer with its own Galaxy API client; the actual need turned out simple
@@ -915,6 +916,12 @@ developed further and is not part of the current architecture.</p>
   REST API, not shell composition over a CLI the way the rest of this port
   works — a fundamentally different kind of work, not yet started, and not
   scoped without a fresh decision to take it on.</li>
+<li><strong><code>ansible-test</code>.</strong> Real ansible-core ships ten <code>ansible-*</code> entry points;
+  this port ships nine. The tenth drives collection test suites — sanity,
+  units, integration, in containers — against collections this port does
+  not host, so it has nothing here to run. Named rather than quietly
+  rounded away: "all the binaries" was in this documentation for a while
+  when the measured answer was nine of ten.</li>
 <li><strong>Real Ansible's structured module documentation</strong> (<code>DOCUMENTATION</code>/
   <code>EXAMPLES</code>/<code>RETURN</code> YAML) — <code>ansible-doc</code> here prints this port's own Go
   doc comments instead, real content in a different shape.</li>
@@ -924,7 +931,7 @@ developed further and is not part of the current architecture.</p>
 <li><strong>The <code>ansible.windows</code> module family.</strong> <code>ansible_connection: winrm</code>
   reaches a Windows target over WS-Management, using the real plugin's
   own <code>ansible_winrm_*</code> variables, but the modules that would run there
-  are not ported: 326 of the 566 compose POSIX shell. The transport half
+  are not ported: 326 of the 576 compose POSIX shell. The transport half
   is done and the module half is not, which is why a Windows target is
   listed here rather than under Shipped. (A Windows <em>control node</em> is
   shipped: all nine binaries build for <code>windows/amd64</code> and

@@ -757,7 +757,7 @@ reimplementation.</p>
 <a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>              using Ansible's filter and test library
 <a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>                        │
 <a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a>                        ▼
-<a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a> modules   →  executes a task's module (566 registered) against a
+<a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a> modules   →  executes a task's module (576 registered) against a
 <a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a>              real target connection, using the rendered arguments
 <a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a>                        │
 <a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a>                        ▼
@@ -765,7 +765,7 @@ reimplementation.</p>
 <a id="__codelineno-0-21" name="__codelineno-0-21" href="#__codelineno-0-21"></a>              execution, blocks/rescue/handlers/roles/strategies
 <a id="__codelineno-0-22" name="__codelineno-0-22" href="#__codelineno-0-22"></a>                        │
 <a id="__codelineno-0-23" name="__codelineno-0-23" href="#__codelineno-0-23"></a>                        ▼
-<a id="__codelineno-0-24" name="__codelineno-0-24" href="#__codelineno-0-24"></a>   cli     →  all 8 real ansible-* binaries, thin wrappers over playbook
+<a id="__codelineno-0-24" name="__codelineno-0-24" href="#__codelineno-0-24"></a>   cli     →  9 of real's 10 ansible-* binaries, thin wrappers over playbook
 </code></pre></div>
 <p>Each component is still usable on its own — <code>vault</code> has no dependency on the
 other seven, and <code>inventory</code>/<code>vars</code>/<code>template</code> can be exercised together
@@ -809,7 +809,7 @@ playbook engine it will never call.</p>
 <tr>
 <td><a href="modules/"><code>modules</code></a></td>
 <td><code>go-remoteexec/transport</code></td>
-<td>Real, tested, CI — 566 modules</td>
+<td>Real, tested, CI — 576 modules</td>
 </tr>
 <tr>
 <td><a href="playbook/"><code>playbook</code></a></td>
@@ -819,7 +819,7 @@ playbook engine it will never call.</p>
 <tr>
 <td><a href="cli/"><code>cli</code></a></td>
 <td><code>playbook</code>, <code>vault</code>, <code>inventory</code>, <code>go-git</code></td>
-<td>Real, tested, CI — all 8 <code>ansible-*</code> binaries</td>
+<td>Real, tested, CI — 9 <code>ansible-*</code> binaries</td>
 </tr>
 </tbody>
 </table>

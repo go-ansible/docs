@@ -1146,8 +1146,10 @@
 
 <h1 id="cli">cli<a class="headerlink" href="#cli" title="Permanent link">&para;</a></h1>
 <p><a href="https://github.com/go-ansible/cli/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/go-ansible/cli/actions/workflows/ci.yml/badge.svg" /></a></p>
-<p><code>github.com/go-ansible/cli</code> ships all <strong>8 real Ansible command-line tools</strong>,
-each a thin <code>run(args []string) int</code> wired directly onto
+<p><code>github.com/go-ansible/cli</code> ships <strong>9 of real Ansible's 10 command-line
+tools</strong> — every one but <code>ansible-test</code>, which drives the collection test
+suites and is out of scope — each a thin <code>run(args []string) int</code> wired
+directly onto
 <a href="../playbook/"><code>playbook</code></a>, <a href="../inventory/"><code>inventory</code></a>, <a href="../vault/"><code>vault</code></a>
 and <a href="../modules/"><code>modules</code></a> — no shelling out to a Python <code>ansible-core</code>
 underneath, no subprocess boundary at all.</p>
