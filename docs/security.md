@@ -421,6 +421,12 @@ afford to put a credential in a message because a scrubber stands behind it, and
 this port cannot. So `telegram` reports the status and `api_args` and omits the
 url — the same code either way, for the opposite reason.
 
+`bigpanda` is the second instance, and it is a plainer one: real *returns* the
+token, as a field of its own deployment object, and gets away with it for the
+same reason. Here the field is omitted. Both divergences are in the module's
+doc comment next to real's line that justifies it, and both are held by a test
+rather than by the comment.
+
 It also means the discipline has to hold at the point a message is *composed*,
 not at the point it is printed. Every module that reaches an HTTP service
 interpolates something; a credential must not be part of it.
@@ -429,20 +435,27 @@ interpolates something; a credential must not be part of it.
 
 These services have no official CLI, so this port posts to the same endpoints
 through `curl` **on the target** — where real's own module runs and calls
-`fetch_url` from. A credential then has four places to sit, and all four are
+`fetch_url` from. A credential then has five places to sit, and all five are
 places a naive implementation puts on the command line:
 
 | | example |
 |---|---|
 | a form field | `pushover`'s `app_token` and `user_key` |
-| the **URL path** | `grove`'s `channel_token`, `telegram`'s and `discord`'s tokens |
+| the **URL path** | `grove`'s `channel_token`, `telegram`'s and `discord`'s tokens, `rocketchat`'s token — which is *two* path segments and refuses to be anything else |
 | the **query string** | `nexmo`'s `api_key` *and* `api_secret`, `google_chat`'s `key` and `token` |
-| a **header** | `cisco_webex`'s bearer token |
+| a **header** | `cisco_webex`'s and `bigpanda`'s bearer tokens |
+| the **basic-auth user** | `campfire`'s token, sent as `<token>:X` — `curl -u` would put it in `argv` |
 
-`curlDo` sends the url, the query string, the headers and the body on **stdin**,
-through curl's own `-K -` config — the mechanism `infinityCurl` already used for
-HTTP Basic credentials, and the one the `Connection` interface documents for
-reaching `sudo` without a password in `argv`.
+`curlDo` sends the url, the query string, the headers, the body and any
+basic-auth pair on **stdin**, through curl's own `-K -` config — the mechanism
+`infinityCurl` already used for HTTP Basic credentials, and the one the
+`Connection` interface documents for reaching `sudo` without a password in
+`argv`.
+
+The URL row is the one worth dwelling on. `-u` and `-H` are the obvious
+mistakes; a webhook url looks like an address rather than a secret, and for
+four of these modules it *is* the secret. A review that only looks for the
+flags that take credentials will pass all four.
 
 `assertSecretsOffArgv` asserts it per module, and carries its own control: each
 secret must appear on **stdin**. Without that half, the check passes just as

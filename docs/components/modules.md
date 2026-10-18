@@ -3,11 +3,23 @@
 [![CI](https://github.com/go-ansible/modules/actions/workflows/ci.yml/badge.svg)](https://github.com/go-ansible/modules/actions/workflows/ci.yml)
 
 `github.com/go-ansible/modules` implements Ansible's module execution model
-and the core module library: **566 modules registered** — all 62 of
-`ansible.builtin`, all 14 of `ansible.posix`, and 490 curated from
+and the core module library: **576 modules registered** — 62 of
+`ansible.builtin`, all 14 of `ansible.posix`, and 500 curated from
 `community.general` (577 real modules in that collection; the remainder is
 deliberately excluded, each with a real, checked reason — see the
 [org profile](https://github.com/go-ansible) for the full list).
+
+`ansible.builtin` has 71 modules, and the nine this registry does not hold
+are not remote modules at all: `add_host`, `group_by`, `meta` and the
+`import_*`/`include_*` family are playbook constructs, implemented in
+[`playbook`](playbook.md) — which is where real Ansible puts them too, as
+action plugins and strategy behaviour rather than modules. The collection
+is covered; the *registry* holds the 62 that are modules.
+
+The counts were measured on 2026-10-18 against real `ansible-core 2.21.4`
+by intersecting `Default().Names()` with `ansible-doc -l <collection>
+-t module`, not by adding up batches — a sum of batch sizes says how many
+were written, never which names are there.
 
 Unlike real Ansible, which copies a Python script to the target and runs it
 there, a module here runs its logic on the **control node** and reaches the
@@ -38,7 +50,7 @@ type Func func(ctx context.Context, conn remoteexec.Connection, args map[string]
 type Registry struct { /* ... */ }
 
 func NewRegistry() *Registry
-func Default() *Registry // pre-populated with all 566 built-in modules
+func Default() *Registry // pre-populated with all 576 built-in modules
 func (r *Registry) Register(name string, fn Func)
 func (r *Registry) Get(name string) (Func, bool)
 func (r *Registry) Names() []string
