@@ -2,8 +2,10 @@
 
 [![CI](https://github.com/go-ansible/cli/actions/workflows/ci.yml/badge.svg)](https://github.com/go-ansible/cli/actions/workflows/ci.yml)
 
-`github.com/go-ansible/cli` ships all **8 real Ansible command-line tools**,
-each a thin `run(args []string) int` wired directly onto
+`github.com/go-ansible/cli` ships **9 of real Ansible's 10 command-line
+tools** — every one but `ansible-test`, which drives the collection test
+suites and is out of scope — each a thin `run(args []string) int` wired
+directly onto
 [`playbook`](playbook.md), [`inventory`](inventory.md), [`vault`](vault.md)
 and [`modules`](modules.md) — no shelling out to a Python `ansible-core`
 underneath, no subprocess boundary at all.

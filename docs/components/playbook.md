@@ -299,9 +299,42 @@ signature anywhere in [`modules`](modules.md).
   so a check run executes them — real Ansible reports `debug` as `ok` in
   a check run, not `skipping`.
 
+- `bigpanda`, `cisco_webex`, `discord`, `google_chat` and `telegram` —
+  the notification senders, and they do **not** all do the same thing.
+  `bigpanda` and `google_chat` report `changed=True` and send nothing;
+  `cisco_webex` GETs `/people/me` and `discord` GETs its webhook, which
+  are real's own **read-only probes**, not skips. Each was ported from
+  real's own branch rather than declared supported.
+
 **Everything else is skipped**, and a test asserts that an unported
 writing module does *not* claim support — it failed, correctly, on the
 change that added the four editing modules, until their tests existed.
+
+### The cost of an opt-in list
+
+The default — skip rather than run — is the safe one, and it has a price
+that went unpaid for a while: a module can grow a **correct** check-mode
+branch and still be skipped, because nothing connects the implementation
+to the list. Five had. All five implemented real's behaviour faithfully
+and were absent from `checkModeSupport`, so the gate answered *"remote
+module (X) does not support check mode"* and never reached the branch.
+
+Measured against real `ansible-core 2.21.4` with `google_chat`, whose dry
+run needs no network at all:
+
+| | ok | changed | skipped |
+|---|---|---|---|
+| real 2.21.4 | 1 | 1 | 0 |
+| ours before | 0 | 0 | **1** |
+| ours after | 1 | 1 | 0 |
+
+Both failures were silent, so the fix is not the five entries but the
+test that finds the sixth: `TestEveryCheckModeImplementationIsRegistered`
+scans `modules`' own sources for anything branching on check mode and
+requires it to be registered. It can only flag what it can *name* —
+`shell` lives in `command.go` and is invisible to it — so it carries a
+positive control that fails if the scan stops seeing, because a scan
+that cannot read reports zero just as cheerfully as a clean one.
 
 ## Diff mode
 
@@ -544,7 +577,7 @@ there would stop certificates being checked.
 
 What this does **not** give you is a working Windows run. The
 connection is there; the `ansible.windows` module family is not, and
-326 of the 566 modules here compose POSIX shell.
+326 of the 576 modules here compose POSIX shell.
 
 ## no_log, and the keywords this port refuses
 
@@ -590,8 +623,8 @@ others: it is **accepted and has no effect**, and that is not the
 silent-ignore this list exists to prevent. The module registry is one
 flat namespace by construction — `NormalizeName` strips every known
 collection prefix, so `community.general.ufw` and a bare `ufw` are the
-same entry — and no two modules share a bare name (566 registrations,
-566 distinct, pinned by `TestNoDuplicateRegistrations` in `modules`). A
+same entry — and no two modules share a bare name (576 registrations,
+576 distinct, pinned by `TestNoDuplicateRegistrations` in `modules`). A
 search path has nothing to search. It was already accepted on a **play**
 while being refused on a **task**, so the rule was only half applied.
 
