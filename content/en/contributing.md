@@ -1,6 +1,11 @@
-# Contributing
+---
+title: "Contributing"
+weight: 130
+---
 
-## Standards
+# Contributing {#contributing}
+
+## Standards {#standards}
 
 - **Pure Go, `CGO_ENABLED=0`.** No dependency on a C library or an external
   interpreter, anywhere in the module graph.
@@ -14,7 +19,7 @@
   amd64/arm64 and a QEMU-emulated riscv64/loong64/ppc64le/s390x matrix, on
   every pull request. A change that doesn't pass CI doesn't merge.
 
-## Working on the docs
+## Working on the docs {#working-on-the-docs}
 
 This site is built with [MkDocs Material](https://squidfunk.github.io/mkdocs-material/)
 and versioned with [mike](https://github.com/jimporter/mike). Locally:
@@ -33,7 +38,7 @@ Pushes to `main` publish automatically via `.github/workflows/docs.yml`,
 which runs `mike deploy --push --update-aliases 0.1 latest` — no need to run
 `mike` by hand.
 
-## Working on a library
+## Working on a library {#working-on-a-library}
 
 Each component (`vault`, `inventory`, `vars`, `template`) is its own
 repository with its own `go.mod`, so it can be developed and tested in

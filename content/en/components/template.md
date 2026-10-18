@@ -1,4 +1,9 @@
-# template
+---
+title: "template — Jinja2-compatible templating"
+weight: 60
+---
+
+# template {#template}
 
 [![CI](https://github.com/go-ansible/template/actions/workflows/ci.yml/badge.svg)](https://github.com/go-ansible/template/actions/workflows/ci.yml)
 
@@ -11,7 +16,7 @@ that a value which is a **single** `{{ expr }}` with nothing else around it
 renders to the expression's *native type* (list, dict, int, bool…), not a
 string.
 
-## API
+## API {#api}
 
 ```go
 func New() *Engine
@@ -62,7 +67,7 @@ func IsTemplate(s string) bool
   package. A bare top-level `omit` result (nothing to drop it from) is an
   error, matching real Ansible's own `AnsibleValueOmittedError`.
 
-## Filter and test library
+## Filter and test library {#filter-and-test-library}
 
 Filters and tests are registered on top of gonja's Jinja2 built-ins, not
 instead of them. As of this writing the Ansible-specific set includes:
@@ -195,7 +200,7 @@ caller-supplied `Engine.OnWarning` hook, since this package has no
 display layer of its own; with no hook installed it degrades to
 `errors=ignore`.
 
-## Adding a filter or a test of your own
+## Adding a filter or a test of your own {#adding-a-filter-or-a-test-of-your-own}
 
 Real Ansible extends Jinja2 with **filter plugins** and **test plugins**.
 This engine assembled both sets inside `New()` behind unexported fields,
@@ -224,7 +229,7 @@ Three properties, each pinned by a test:
   registration is visible to later renders. Register before rendering
   begins; see the caveat below.
 
-### Two asymmetries worth knowing
+### Two asymmetries worth knowing {#two-asymmetries-worth-knowing}
 
 `RegisterTest` is **not** a copy of `RegisterFilter`, because gonja's two
 sets are not alike. `exec.FilterFunction` is a real func type, so the
@@ -241,7 +246,7 @@ lock again to write. Two goroutines registering the same name can both
 pass that check. Registering from one goroutine, before rendering starts,
 is the contract rather than merely the advice.
 
-## String literals are raw
+## String literals are raw {#string-literals-are-raw}
 
 A backslash in a Jinja string literal is an ordinary character, and
 `\'` or `\"` keeps **both** the backslash and the quote while not
@@ -271,7 +276,7 @@ either fails outright or turns a literal backslash-n into a newline.
 Only literals with a backslash are touched, so nothing that parsed
 correctly before changes.
 
-## Measured against real Ansible
+## Measured against real Ansible {#measured-against-real-ansible}
 
 The filter and lookup surface has been run side by side with **real
 ansible-core 2.21.4**: one playbook through both engines, each writing
@@ -307,7 +312,7 @@ than papered over:
   sequence under its key where PyYAML puts the dashes at the key's own
   indentation. The two parse identically.
 
-## Example
+## Example {#example}
 
 ```go
 package main
@@ -339,10 +344,10 @@ func main() {
 }
 ```
 
-## Where this fits
+## Where this fits {#where-this-fits}
 
 `template.Engine.Render`/`RenderValue` take a `map[string]any` — that's
-[`vars.Context.Merged()`](vars.md)'s return type, so the variable context
-built from an [`inventory`](inventory.md) plus the precedence ladder in
+[`vars.Context.Merged()`]({{< relref "vars.md" >}})'s return type, so the variable context
+built from an [`inventory`]({{< relref "inventory.md" >}}) plus the precedence ladder in
 `vars` is exactly what a caller hands to this engine to render a task's
 arguments.

@@ -1,4 +1,9 @@
-# modules
+---
+title: "modules — 566-module execution library"
+weight: 80
+---
+
+# modules {#modules}
 
 [![CI](https://github.com/go-ansible/modules/actions/workflows/ci.yml/badge.svg)](https://github.com/go-ansible/modules/actions/workflows/ci.yml)
 
@@ -12,7 +17,7 @@ deliberately excluded, each with a real, checked reason — see the
 `ansible.builtin` has 71 modules, and the nine this registry does not hold
 are not remote modules at all: `add_host`, `group_by`, `meta` and the
 `import_*`/`include_*` family are playbook constructs, implemented in
-[`playbook`](playbook.md) — which is where real Ansible puts them too, as
+[`playbook`]({{< relref "playbook.md" >}}) — which is where real Ansible puts them too, as
 action plugins and strategy behaviour rather than modules. The collection
 is covered; the *registry* holds the 62 that are modules.
 
@@ -29,7 +34,7 @@ same — the target ends up in the same state — but the difference is
 architectural: a module needs no Go toolchain, no interpreter, nothing
 installed on the target at all.
 
-## API
+## API {#api}
 
 ```go
 type Result struct {
@@ -88,7 +93,7 @@ the printed output: real's own `_dump_results` pops `exception`,
 `warnings` and `deprecations` before printing, so `r.exception`
 templates and registers while no failure line shows it.
 
-### The result-key census
+### The result-key census {#the-result-key-census}
 
 `Run`'s finalization is only half the story: each module's own key set
 is real's too, and comparing **values** rather than **key sets** hid
@@ -170,7 +175,7 @@ and succeeds. Levelling down to match would be a regression, not
 parity — the same reasoning that leaves `getent` working here while
 real requires a `getent` binary macOS does not ship.
 
-## Measured against real Ansible
+## Measured against real Ansible {#measured-against-real-ansible}
 
 The module surface has been run side by side with **real ansible-core
 2.21.4**: the same playbook through both engines, **twice**, comparing the
@@ -205,12 +210,12 @@ had caught:
   failed with "did not evaluate to a boolean". This package's own
   documentation already stated that the playbook engine would evaluate
   those expressions before calling the module, and nothing did; the
-  engine now does, in [`playbook`](playbook.md)'s `runDirective`, for the
+  engine now does, in [`playbook`]({{< relref "playbook.md" >}})'s `runDirective`, for the
   same reason real Ansible makes `assert` an action plugin rather than a
   module — the conditions are Jinja2 expressions over the host's own
   variables, and only the engine holds those.
 
-## Example
+## Example {#example}
 
 ```go
 package main
@@ -239,7 +244,7 @@ func main() {
 }
 ```
 
-## `command` expands variables; it still does not glob
+## `command` expands variables; it still does not glob {#command-expands-variables-it-still-does-not-glob}
 
 Real's `command` runs no shell, yet `command: echo $HOME *` prints the
 home directory and a **literal asterisk**: `run_command` applies
@@ -271,16 +276,16 @@ Named rather than papered over: real's `expanduser` consults the
 password database when `HOME` is unset, where this falls back to a
 literal `~`.
 
-## What is not implemented
+## What is not implemented {#what-is-not-implemented}
 
 Every architectural substitution and disclosed gap is documented in the
 module's own Go doc comment, not hidden — `ansible-doc <module>` (via the
-[`cli`](cli.md) package) prints it. The recurring patterns: a module whose
+[`cli`]({{< relref "cli.md" >}}) package) prints it. The recurring patterns: a module whose
 real Python implementation calls a SaaS/cloud API directly instead shells out
 to that platform's own official CLI when one exists (`gh`/`glab`/`scw`/
 `aliyun`/`ilorest`/... — never a secret in argv, always an environment
 variable or a pre-existing authenticated session; see
-[Security](../security.md), which records where that rule was *broken* and
+[Security]({{< relref "../security.md" >}}), which records where that rule was *broken* and
 what the audit that found it measured); a service with **no** CLI at all —
 most of the notification senders, and the vendor REST APIs — is reached with
 `curl` **on the target**, where real's own module runs and calls `fetch_url`

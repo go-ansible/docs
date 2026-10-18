@@ -1,4 +1,9 @@
-# inventory
+---
+title: "inventory — INI/YAML inventory"
+weight: 40
+---
+
+# inventory {#inventory}
 
 [![CI](https://github.com/go-ansible/inventory/actions/workflows/ci.yml/badge.svg)](https://github.com/go-ansible/inventory/actions/workflows/ci.yml)
 
@@ -7,7 +12,7 @@ both **YAML** and **INI** — into the group/host graph, including
 `group_vars`/`host_vars` directories, and matches Ansible's host-pattern
 syntax against it.
 
-## Data model
+## Data model {#data-model}
 
 ```go
 type Host struct {
@@ -34,7 +39,7 @@ has: `all` (every host) and `ungrouped` (every host in no other group) —
 computed the way Ansible computes it: a host only reaches `ungrouped` (and
 `all`) if it belongs to no group other than those two.
 
-## Loading
+## Loading {#loading}
 
 ```go
 func Load(path string) (*Inventory, error)
@@ -54,7 +59,7 @@ treating it as an empty inventory, and a caller reporting to a user needs to
 tell it apart from a parse failure: real names the directory but gives no
 cause for it, never having reached a parser.
 
-## Dynamic inventory scripts
+## Dynamic inventory scripts {#dynamic-inventory-scripts}
 
 `Load` detects an executable `path` (`IsScript`, checking the file mode's
 executable bit) and runs it as a dynamic inventory script instead of parsing
@@ -66,7 +71,7 @@ hostnames or the full `{hosts, vars, children}` object form — both parse.
 `group_vars`/`host_vars` directories are not consulted for a script-backed
 inventory, matching real Ansible.
 
-## Group ancestry and merge order
+## Group ancestry and merge order {#group-ancestry-and-merge-order}
 
 ```go
 func (inv *Inventory) GroupsForHost(hostName string) []*Group
@@ -77,7 +82,7 @@ ordered `all` first and the most specific group last — the order Ansible
 merges group vars in, so that a child group's value for a key overrides its
 parent's.
 
-## Ordering
+## Ordering {#ordering}
 
 A Go map has no order, so the inventory keeps the orders that are observable
 in real's output separately: the order hosts were first seen (`HostIndex`,
@@ -95,7 +100,7 @@ caller sorting the result cannot reorder the inventory itself.
 an inventory has been parsed: an inventory that parsed nothing still has that
 pair in real.
 
-## Host-pattern matching
+## Host-pattern matching {#host-pattern-matching}
 
 ```go
 func (inv *Inventory) Match(pattern string) ([]*Host, error)
@@ -123,9 +128,9 @@ because a term naming an *empty group* matches nothing yet is not a typo, and
 real says nothing for it. Terms come back without their `!`/`&` operator and
 in real's evaluation order, so `all:!zzz` reports `zzz`.
 
-## What this does not do
+## What this does not do {#what-this-does-not-do}
 
 `inventory` only builds and queries the graph — it does not itself decide
 variable precedence between a host's group vars, its own vars, and anything
 from a play or the command line. That ladder lives in
-[`vars`](vars.md), which consumes `inventory`'s output as one of its layers.
+[`vars`]({{< relref "vars.md" >}}), which consumes `inventory`'s output as one of its layers.

@@ -1,4 +1,9 @@
-# vars
+---
+title: "vars — variable precedence"
+weight: 50
+---
+
+# vars {#vars}
 
 [![CI](https://github.com/go-ansible/vars/actions/workflows/ci.yml/badge.svg)](https://github.com/go-ansible/vars/actions/workflows/ci.yml)
 
@@ -10,7 +15,7 @@ This package does not itself know about roles, plays, or tasks — a playbook
 engine assigns each layer's content as it walks the play; `vars` only owns
 the merge order.
 
-## The precedence ladder
+## The precedence ladder {#the-precedence-ladder}
 
 ```go
 const (
@@ -34,7 +39,7 @@ layer they resolve to before a task runs — for example `vars_prompt:` and
 `vars_files:` both fold into `PlayVars`, since both end up as play-scoped
 variables by the time a task sees them.
 
-## API
+## API {#api}
 
 ```go
 func New() *Context
@@ -58,7 +63,7 @@ func (c *Context) Child() *Context
   task inside a block, one iteration of a loop) so mutating the child's
   `TaskVars`/`BlockVars`/`Registered` layers never leaks back to the parent.
 
-## Fact injection
+## Fact injection {#fact-injection}
 
 ```go
 func InjectFacts(facts map[string]any) map[string]any
@@ -70,9 +75,9 @@ Ansible exposes gathered facts two ways at once: nested under
 `ansible_os_family` resolve in a template. `InjectFacts` produces both forms
 from one fact map, ready to hand to `Set(Facts, ...)`.
 
-## Where this fits
+## Where this fits {#where-this-fits}
 
 `vars.Context.Merged()` is the map a templating pass renders `{{ }}`
-expressions against — see [`template`](template.md) — and `Inventory` is
-populated from [`inventory`](inventory.md)'s `GroupsForHost`/host-vars
+expressions against — see [`template`]({{< relref "template.md" >}}) — and `Inventory` is
+populated from [`inventory`]({{< relref "inventory.md" >}})'s `GroupsForHost`/host-vars
 output before a task ever runs.
