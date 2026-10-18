@@ -383,6 +383,58 @@ What it means in practice:
   thirteen `ansible_winrm_*` variables were found missing from it. A
   reviewer asking "what can redirect a task?" has one list to read.
 
+## A reference behaviour this port refuses to reproduce
+
+Matching the reference is this project's rule, bugs included — a playbook may
+already depend on one. The rule stops where the behaviour writes a secret to an
+output stream.
+
+Real `community.general.telegram` builds its endpoint as
+`https://<api_host>/bot<token>/<api_method>`, and its failure path is:
+
+```python
+module.fail_json(
+    msg=f"Failed to send message, return status = {info['status']}\n"
+        f"url = {url}\napi_args = {api_args}",
+    telegram_error=body["description"],
+)
+```
+
+`token` is `no_log=True` in that module's own `argument_spec`, so Ansible will
+redact it from a task's *arguments* — and then the module prints it anyway,
+inside `url`, as part of the failure message. Any failed Telegram task puts the
+bot token in the playbook output, the job log, and whatever collects that.
+
+This port reports the status and `api_args` and omits the url. The deviation is
+recorded in the module's own doc comment, which `ansible-doc telegram` prints,
+rather than being silently different.
+
+`TestTelegramFailureDoesNotLeakTheToken` holds the line, and was confirmed to
+hold it by putting real's sentence back: the test then fails printing the whole
+leaking string, token and all.
+
+### The same shape, for every module that reaches an HTTP service
+
+These services have no official CLI to shell out to, so this port posts to the
+same endpoints through `curl` **on the target** — where real's own module runs
+and calls `fetch_url` from. A credential then has three places it can hide, and
+all three are places a naive implementation puts on the command line:
+
+| | example |
+|---|---|
+| a form field | `pushover`'s `app_token` and `user_key` |
+| the **URL path** | `grove`'s `channel_token`, `telegram`'s bot token |
+| the **query string** | `nexmo`'s `api_key` *and* `api_secret` |
+
+`curlDo` sends the url, the query string and the body on **stdin**, through
+curl's own `-K -` config — the same mechanism `infinityCurl` has used for its
+HTTP Basic credentials, and the one the `Connection` interface documents for
+reaching `sudo` without a password in `argv`.
+
+`assertSecretsOffArgv` asserts it per module, and carries its own control: each
+secret must appear on **stdin**. Without that half, the check passes just as
+well on a module that never sent the credential at all.
+
 ## `vault`: the crypto was right, the property was untested
 
 The audit of `vault` found nothing wrong with the cryptography:
