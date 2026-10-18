@@ -269,7 +269,14 @@ to that platform's own official CLI when one exists (`gh`/`glab`/`scw`/
 `aliyun`/`ilorest`/... — never a secret in argv, always an environment
 variable or a pre-existing authenticated session; see
 [Security](../security.md), which records where that rule was *broken* and
-what the audit that found it measured); a module real Ansible runs
+what the audit that found it measured); a service with **no** CLI at all —
+most of the notification senders, and the vendor REST APIs — is reached with
+`curl` **on the target**, where real's own module runs and calls `fetch_url`
+from, through one `curlDo` primitive that sends the url, the query string and
+the body on **stdin** via curl's own `-K -` config, because a credential hides
+in all three of those places (a form field, a URL path, a query parameter) and
+every one of them is somewhere a naive implementation would put on the command
+line; a module real Ansible runs
 *from the controller* against the target's own SSH endpoint directly
 (`ansible.posix.synchronize`) fails loud rather than silently approximating,
 since this port's `Connection` abstraction has no way to expose a target's
