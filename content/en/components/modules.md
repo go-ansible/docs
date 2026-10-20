@@ -62,7 +62,25 @@ func (r *Registry) Names() []string
 func (r *Registry) Run(ctx context.Context, name string, conn remoteexec.Connection, args map[string]any) (Result, error)
 
 func NormalizeName(name string) string // strips a known collection prefix
+
+func Collection(name string) string // "ansible.builtin" | "ansible.posix" | "community.general"
+func FQCN(name string) string       // the name real ansible-doc prints
 ```
+
+`Collection` and `FQCN` exist because `NormalizeName` makes the registry a
+flat namespace, and a flat namespace cannot say where a name came from. A
+consumer printing a qualified name had to guess, and `cli`'s `ansible-doc`
+guessed `ansible.builtin.` for all of them — true when it was written, wrong
+for 514 of the 576 registered today. That is not cosmetic: because
+`NormalizeName` strips any known prefix, `ansible.builtin.rocketchat` **ran
+here** and real Ansible rejects it, so the documentation was handing out a
+name that works nowhere else and nothing local could catch it.
+
+The three lists behind `Collection` were measured on 2026-10-18 by
+intersecting `Default().Names()` with `ansible-doc -l <collection> -t module`
+from real ansible-core 2.21.4 — 62, 14 and 500 names. They are **disjoint**
+and their union is **exactly** the registry, both asserted, so a module added
+without an entry fails rather than silently becoming `ansible.builtin`.
 
 `Get` falls back to `NormalizeName(name)`, so a fully-qualified collection
 name (`ansible.builtin.copy`, `community.general.ufw`, and the other three
