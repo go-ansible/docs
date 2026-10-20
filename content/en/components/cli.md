@@ -372,7 +372,23 @@ repository was planned early on for this; the actual implementation turned
 out simple enough to fold directly into `cli` instead, and the standalone
 repository was never developed further). `ansible-doc` prints this port's own
 Go doc comments, not real Ansible's structured `DOCUMENTATION`/`EXAMPLES`/
-`RETURN` YAML blocks. `ansible-config`'s `ansible.cfg` support covers only the
+`RETURN` YAML blocks — but it names the module's **own** collection in the
+header and in `-l`, as real does:
+
+```
+> MODULE community.general.rocketchat
+> MODULE ansible.posix.synchronize
+> MODULE ansible.builtin.copy
+```
+
+Until v0.143.0 it printed `ansible.builtin.` for every module, from a premise
+stated in its own comment: *"Every module this port implements is one of
+ansible-core's own."* True when written, wrong for 514 of the 576 registered
+today — and wrong in a way nothing local could catch, since
+`modules.NormalizeName` strips any known prefix, so `ansible.builtin.rocketchat`
+ran here while real Ansible rejects it. The attribution comes from
+[`modules.Collection`]({{< relref "modules.md" >}}), measured against real's own doc
+index rather than assigned by hand. `ansible-config`'s `ansible.cfg` support covers only the
 settings this port itself reads (see [`ConfigDefaults`]({{< relref "playbook.md" >}})) — an
 unrecognized-but-valid Ansible setting in the file is silently ignored rather
 than surfaced, matching how unset environment variables were already
