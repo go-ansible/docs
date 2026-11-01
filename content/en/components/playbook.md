@@ -582,7 +582,7 @@ there would stop certificates being checked.
 
 What this does **not** give you is a working Windows run. The
 connection is there; the `ansible.windows` module family is not, and
-325 of the 579 modules here compose POSIX shell (measured 2026-11-01;
+325 of the 587 modules here compose POSIX shell (measured 2026-11-01;
 the criterion and its 8-module blind spot are in
 [`modules`]({{< relref "modules.md" >}})).
 
@@ -630,8 +630,8 @@ others: it is **accepted and has no effect**, and that is not the
 silent-ignore this list exists to prevent. The module registry is one
 flat namespace by construction — `NormalizeName` strips every known
 collection prefix, so `community.general.ufw` and a bare `ufw` are the
-same entry — and no two modules share a bare name (579 registrations,
-579 distinct, pinned by `TestNoDuplicateRegistrations` in `modules`). A
+same entry — and no two modules share a bare name (587 registrations,
+587 distinct, pinned by `TestNoDuplicateRegistrations` in `modules`). A
 search path has nothing to search. It was already accepted on a **play**
 while being refused on a **task**, so the rule was only half applied.
 
