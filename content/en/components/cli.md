@@ -384,7 +384,7 @@ header and in `-l`, as real does:
 Until v0.143.0 it printed `ansible.builtin.` for every module, from a premise
 stated in its own comment: *"Every module this port implements is one of
 ansible-core's own."* True when written, wrong for 514 of the 576 registered
-today — and wrong in a way nothing local could catch, since
+when it was fixed — and wrong in a way nothing local could catch, since
 `modules.NormalizeName` strips any known prefix, so `ansible.builtin.rocketchat`
 ran here while real Ansible rejects it. The attribution comes from
 [`modules.Collection`]({{< relref "modules.md" >}}), measured against real's own doc

@@ -8,11 +8,22 @@ weight: 80
 [![CI](https://github.com/go-ansible/modules/actions/workflows/ci.yml/badge.svg)](https://github.com/go-ansible/modules/actions/workflows/ci.yml)
 
 `github.com/go-ansible/modules` implements Ansible's module execution model
-and the core module library: **576 modules registered** — 62 of
-`ansible.builtin`, all 14 of `ansible.posix`, and 500 curated from
-`community.general` (577 real modules in that collection; the remainder is
-deliberately excluded, each with a real, checked reason — see the
-[org profile](https://github.com/go-ansible) for the full list).
+and the core module library: **579 modules registered** — 62 of
+`ansible.builtin`, all 14 of `ansible.posix`, and 503 curated from
+`community.general` (577 real modules in that collection, so 74 remain; the
+rest of the remainder is deliberately excluded, each with a real, checked
+reason — see the [org profile](https://github.com/go-ansible) for the full
+list).
+
+A module is sometimes left out for how it is *written* rather than for what
+it does. `pagerduty_user` is the clearest case: three of PagerDuty's four
+modules talk plain REST through `fetch_url` and are ported, while that one
+is built on the **pdpyras** SDK — `APISession.iter_all` to page the user
+list, `APISession.persist` to upsert by email — so a faithful port has to
+reproduce a library's pagination and idempotency rule rather than one
+documented endpoint. It is named in `pagerduty.go` and in `registry.go`,
+because a module missing for a reason and a module nobody noticed look
+identical from outside.
 
 `ansible.builtin` has 71 modules, and the nine this registry does not hold
 are not remote modules at all: `add_host`, `group_by`, `meta` and the
@@ -21,7 +32,7 @@ are not remote modules at all: `add_host`, `group_by`, `meta` and the
 action plugins and strategy behaviour rather than modules. The collection
 is covered; the *registry* holds the 62 that are modules.
 
-The counts were measured on 2026-10-18 against real `ansible-core 2.21.4`
+The counts were measured on 2026-11-01 against real `ansible-core 2.21.4`
 by intersecting `Default().Names()` with `ansible-doc -l <collection>
 -t module`, not by adding up batches — a sum of batch sizes says how many
 were written, never which names are there.
@@ -55,7 +66,7 @@ type Func func(ctx context.Context, conn remoteexec.Connection, args map[string]
 type Registry struct { /* ... */ }
 
 func NewRegistry() *Registry
-func Default() *Registry // pre-populated with all 576 built-in modules
+func Default() *Registry // pre-populated with all 579 built-in modules
 func (r *Registry) Register(name string, fn Func)
 func (r *Registry) Get(name string) (Func, bool)
 func (r *Registry) Names() []string
@@ -71,7 +82,8 @@ func FQCN(name string) string       // the name real ansible-doc prints
 flat namespace, and a flat namespace cannot say where a name came from. A
 consumer printing a qualified name had to guess, and `cli`'s `ansible-doc`
 guessed `ansible.builtin.` for all of them — true when it was written, wrong
-for 514 of the 576 registered today. That is not cosmetic: because
+for 514 of the 576 registered when it was fixed on 2026-10-18. That is not
+cosmetic: because
 `NormalizeName` strips any known prefix, `ansible.builtin.rocketchat` **ran
 here** and real Ansible rejects it, so the documentation was handing out a
 name that works nowhere else and nothing local could catch it.
