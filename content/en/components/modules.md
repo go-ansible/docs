@@ -8,22 +8,42 @@ weight: 80
 [![CI](https://github.com/go-ansible/modules/actions/workflows/ci.yml/badge.svg)](https://github.com/go-ansible/modules/actions/workflows/ci.yml)
 
 `github.com/go-ansible/modules` implements Ansible's module execution model
-and the core module library: **579 modules registered** — 62 of
-`ansible.builtin`, all 14 of `ansible.posix`, and 503 curated from
-`community.general` (577 real modules in that collection, so 74 remain; the
-rest of the remainder is deliberately excluded, each with a real, checked
-reason — see the [org profile](https://github.com/go-ansible) for the full
-list).
+and the core module library: **587 modules registered** — 62 of
+`ansible.builtin`, all 14 of `ansible.posix`, and 511 curated from
+`community.general` (577 real modules in that collection, so 66 remain).
 
-A module is sometimes left out for how it is *written* rather than for what
-it does. `pagerduty_user` is the clearest case: three of PagerDuty's four
-modules talk plain REST through `fetch_url` and are ported, while that one
-is built on the **pdpyras** SDK — `APISession.iter_all` to page the user
-list, `APISession.persist` to upsert by email — so a faithful port has to
-reproduce a library's pagination and idempotency rule rather than one
-documented endpoint. It is named in `pagerduty.go` and in `registry.go`,
-because a module missing for a reason and a module nobody noticed look
-identical from outside.
+## What the remaining 66 are made of {#what-remains}
+
+"66 left" says how many, not what kind, and the kind is what decides
+whether any of them could be written this week. Each was classified on
+2026-11-01 by reading its real source **and the collection `module_utils`
+helper it inherits from** — the first pass read only the module files and
+put 53 of 74 in an `other` bucket, which is a blind spot wearing a
+label:
+
+| | | |
+|---|---|---|
+| **24** | `fetch_url` | one or more documented HTTP calls — portable under the pattern the ported HTTP modules already use. `slack`, `office_365_connector_card`, the four `bitbucket`, `dnsmadeeasy`, `gandi_livedns`, `statusio_maintenance`, `librato_annotation` and the five remaining `utm` write modules |
+| **38** | SDK | behaviour defined by a Python library rather than an endpoint: `oneview` (14, hpOneView), `manageiq` (10, manageiq_client), `datadog` (3), plus `pagerduty_user`, `lxca`, `matrix`, `pubnub_blocks`, `rhevm`, `taiga_issue`, `pingdom`, `netcup_dns`, `vexata` |
+| **1** | vendor CLI | `logentries`, which drives the `le` command — the easiest of the lot |
+| **3** | protocol | `irc`, `jabber`, `logentries_msg` speak something other than HTTP |
+
+The SDK group is the real boundary. Porting one means reproducing a
+library's pagination, defaulting and idempotency rules, not calling a
+documented endpoint — and reproducing a library nobody has read is how a
+port fakes parity. `pagerduty_user` is the clearest case: three of
+PagerDuty's four modules talk plain REST through `fetch_url` and are
+ported, while that one is built on **pdpyras** (`APISession.iter_all` to
+page the user list, `APISession.persist` to upsert by email). It is named
+in `pagerduty.go` and in `registry.go`, because a module missing for a
+reason and a module nobody noticed look identical from outside.
+
+A family can also be part-ported for a narrower reason. Eight of Sophos
+UTM's thirteen modules are here; the five that are not — `utm_aaa_group`
+and the four `reverse_proxy` write modules — declare fourteen to
+twenty-five fields each, and the engine is already theirs. What is
+missing is a field-by-field transcription of their defaults, and a
+default transcribed wrong is a silently different request to a firewall.
 
 `ansible.builtin` has 71 modules, and the nine this registry does not hold
 are not remote modules at all: `add_host`, `group_by`, `meta` and the
@@ -66,7 +86,7 @@ type Func func(ctx context.Context, conn remoteexec.Connection, args map[string]
 type Registry struct { /* ... */ }
 
 func NewRegistry() *Registry
-func Default() *Registry // pre-populated with all 579 built-in modules
+func Default() *Registry // pre-populated with all 587 built-in modules
 func (r *Registry) Register(name string, fn Func)
 func (r *Registry) Get(name string) (Func, bool)
 func (r *Registry) Names() []string
