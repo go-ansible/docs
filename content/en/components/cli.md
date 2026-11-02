@@ -166,7 +166,7 @@ sentinels (`ErrNoPassword`, `ErrHMACMismatch`) rather than message text.
 An unresolvable module name exits 4 under `--syntax-check` and
 `--list-tasks` too, which is what real does.
 
-## ansible-playbook --compat-report {#compat-report}
+## `ansible-playbook --compat-report` {#compat-report}
 
 This port's own flag, not one real has. It answers the question that
 makes people keep old Python virtualenvs around — not *"does this
