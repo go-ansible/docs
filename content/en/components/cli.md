@@ -166,6 +166,80 @@ sentinels (`ErrNoPassword`, `ErrHMACMismatch`) rather than message text.
 An unresolvable module name exits 4 under `--syntax-check` and
 `--list-tasks` too, which is what real does.
 
+## ansible-playbook --compat-report {#compat-report}
+
+This port's own flag, not one real has. It answers the question that
+makes people keep old Python virtualenvs around — not *"does this
+playbook run"* but *"what in it stopped running, and what replaces it"*:
+
+```sh
+$ ansible-playbook --compat-report legacy.yml
+
+playbook: legacy.yml
+  2:3: play keyword "sudo": use `become: true`
+  3:3: play keyword "sudo_user": use `become_user:`
+  17:7: task keyword "always_run": use `check_mode: false` — it is the same
+        meaning with the polarity flipped
+  19:7: task keyword "include": use `import_tasks:` for a file to pull in at
+        parse time, or `include_tasks:` for one chosen while the play runs
+
+4 item(s) will not run as written.
+```
+
+The same playbook through ansible-core 2.21.4 gives one line — `[ERROR]:
+'sudo' is not a valid attribute for a Play` — naming the symptom and not
+the cure. On a **task** it is worse: measured, `sudo:` there exits 4 with
+`conflicting action statements: debug, sudo`, which does not even hint
+that `sudo` was ever a keyword.
+
+| exit | |
+|---|---|
+| **4** | found something — the same status both implementations give a playbook that will not run, so a pipeline can gate on it |
+| **0** | nothing retired |
+| **1** | the playbook could not be read at all |
+
+That last status is deliberate and has its own test. *"I could not look"*
+reading as *"there is nothing wrong"* is exactly the mistake this flag
+exists to stop people making.
+
+It runs **before the parse** — a playbook carrying a retired keyword does
+not parse, here or in real, so a report that needed a parsed playbook
+would be silent in the one case it is for — and before the inventory,
+since it reaches no host and resolves no pattern. A vault-encrypted
+playbook is decrypted first.
+
+### What a module name does *not* mean here {#compat-report-modules}
+
+The 2.10 collection split — the change that moved most modules out of
+core and broke every unqualified name in a 2.9 playbook — is invisible to
+this port. `NormalizeName` strips every known collection prefix, so a
+bare `ufw:` and `community.general.ufw` are the same registry entry.
+ansible-core ships a 9 775-line `ansible_builtin_runtime.yml` holding
+**3 751 module redirects** precisely to paper over that split; here there
+is nothing to paper over.
+
+So a module name the report flags is one this port has not ported yet,
+and the advice says so rather than implying a flag could conjure it. The
+single exception is the `*_facts` → `*_info` rename, which names the
+replacement — and a test holds that promise by checking every such
+sentence against the registry, so the advice cannot point at a module
+that is not there.
+
+### What the table claims, and what it refuses to {#compat-report-evidence}
+
+Every keyword in it was **measured** to be refused by the reference, at
+play level and at task level, rather than taken from a changelog. The
+test that measures them carries its own control — `become` and `when`
+must come back *accepted* — and the control is fatal, so a reference that
+is broken, misconfigured or pointed at the wrong binary cannot be printed
+as a table of imaginary removals. Verified by neuter: aimed at a binary
+that always exits 4, the test fails on the control and prints no table.
+
+What it deliberately does **not** claim is the version each keyword went
+away in. The reference does not ship that history and the porting guides
+do not cover every entry, so a version number here would be a claim this
+port cannot back.
+
 ## ansible-inventory {#ansible-inventory}
 
 `--list`, `--host` and `--graph`, with `--export`, `--vars`, `--limit`,
