@@ -8,22 +8,22 @@ weight: 80
 [![CI](https://github.com/go-ansible/modules/actions/workflows/ci.yml/badge.svg)](https://github.com/go-ansible/modules/actions/workflows/ci.yml)
 
 `github.com/go-ansible/modules` implements Ansible's module execution model
-and the core module library: **587 modules registered** — 62 of
-`ansible.builtin`, all 14 of `ansible.posix`, and 511 curated from
-`community.general` (577 real modules in that collection, so 66 remain).
+and the core module library: **592 modules registered** — 62 of
+`ansible.builtin`, all 14 of `ansible.posix`, and 516 curated from
+`community.general` (577 real modules in that collection, so 61 remain).
 
-## What the remaining 66 are made of {#what-remains}
+## What the remaining 61 are made of {#what-remains}
 
-"66 left" says how many, not what kind, and the kind is what decides
+"61 left" says how many, not what kind, and the kind is what decides
 whether any of them could be written this week. Each was classified on
-2026-11-01 by reading its real source **and the collection `module_utils`
+2026-11-02 by reading its real source **and the collection `module_utils`
 helper it inherits from** — the first pass read only the module files and
 put 53 of 74 in an `other` bucket, which is a blind spot wearing a
 label:
 
 | | | |
 |---|---|---|
-| **24** | `fetch_url` | one or more documented HTTP calls — portable under the pattern the ported HTTP modules already use. `slack`, `office_365_connector_card`, the four `bitbucket`, `dnsmadeeasy`, `gandi_livedns`, `statusio_maintenance`, `librato_annotation` and the five remaining `utm` write modules |
+| **19** | `fetch_url` | one or more documented HTTP calls — portable under the pattern the ported HTTP modules already use. `slack`, `office_365_connector_card`, the four `bitbucket`, `dnsmadeeasy`, `gandi_livedns`, `statusio_maintenance`, `librato_annotation`, `imc_rest`, the two `ocapi`, the two `online_*_info`, the two `wdc_redfish`, `ipbase_info` and `ipify_facts` |
 | **38** | SDK | behaviour defined by a Python library rather than an endpoint: `oneview` (14, hpOneView), `manageiq` (10, manageiq_client), `datadog` (3), plus `pagerduty_user`, `lxca`, `matrix`, `pubnub_blocks`, `rhevm`, `taiga_issue`, `pingdom`, `netcup_dns`, `vexata` |
 | **1** | vendor CLI | `logentries`, which drives the `le` command — the easiest of the lot |
 | **3** | protocol | `irc`, `jabber`, `logentries_msg` speak something other than HTTP |
@@ -38,12 +38,18 @@ page the user list, `APISession.persist` to upsert by email). It is named
 in `pagerduty.go` and in `registry.go`, because a module missing for a
 reason and a module nobody noticed look identical from outside.
 
-A family can also be part-ported for a narrower reason. Eight of Sophos
-UTM's thirteen modules are here; the five that are not — `utm_aaa_group`
-and the four `reverse_proxy` write modules — declare fourteen to
-twenty-five fields each, and the engine is already theirs. What is
-missing is a field-by-field transcription of their defaults, and a
+All thirteen of Sophos UTM's modules are now here. The last five —
+`utm_aaa_group` and the four `reverse_proxy` write modules — were held
+back because they declare fourteen to twenty-five fields each, and a
 default transcribed wrong is a silently different request to a firewall.
+They were not transcribed in the end: their field lists were **generated**
+from the real argument specs, under a control that every change-relevant
+key must also be a declared field. The control earned its place twice —
+it caught the generator truncating `utm_aaa_group` at three fields of
+fourteen while exiting 0, and it surfaced a defect in the reference:
+`utm_proxy_exception` lists a `comment` key it never declares, so real
+compares `None` against the device's value and PUTs on every run when the
+object has a comment.
 
 `ansible.builtin` has 71 modules, and the nine this registry does not hold
 are not remote modules at all: `add_host`, `group_by`, `meta` and the
@@ -86,7 +92,7 @@ type Func func(ctx context.Context, conn remoteexec.Connection, args map[string]
 type Registry struct { /* ... */ }
 
 func NewRegistry() *Registry
-func Default() *Registry // pre-populated with all 587 built-in modules
+func Default() *Registry // pre-populated with all 592 built-in modules
 func (r *Registry) Register(name string, fn Func)
 func (r *Registry) Get(name string) (Func, bool)
 func (r *Registry) Names() []string

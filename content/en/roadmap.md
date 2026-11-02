@@ -22,8 +22,8 @@ on every push and pull request:
 - [`facts`]({{< relref "components/facts.md" >}}) — fact gathering, the `setup` module
   equivalent
 - [`modules`]({{< relref "components/modules.md" >}}) — the module execution protocol plus
-  **587 registered modules** (all of `ansible.builtin` and `ansible.posix`,
-  and a curated 511 of `community.general`)
+  **592 registered modules** (all of `ansible.builtin` and `ansible.posix`,
+  and a curated 516 of `community.general`)
 - [`playbook`]({{< relref "components/playbook.md" >}}) — the playbook/role/task/handler
   engine driving all of the above against a real play: loops, conditionals,
   blocks with genuine per-host recovery, `become`, roles (nested variable
@@ -95,12 +95,12 @@ developed further and is not part of the current architecture.
 - **The `ansible.windows` module family.** `ansible_connection: winrm`
   reaches a Windows target over WS-Management, using the real plugin's
   own `ansible_winrm_*` variables, but the modules that would run there
-  are not ported: 325 of the 587 compose POSIX shell (measured
-  2026-11-01; the criterion is a call to `shellQuote`, `run` or
-  `runStatus` in the file named after the module, and **16** modules
+  are not ported: 325 of the 592 compose POSIX shell (measured
+  2026-11-02; the criterion is a call to `shellQuote`, `run` or
+  `runStatus` in the file named after the module, and **21** modules
   share a file with another and are invisible to it — that blind spot
-  doubled when the PagerDuty and UTM families landed as one engine
-  each, which is worth more than the figure it qualifies). The
+  grew again when the last five UTM modules landed in the shared engine,
+  which is worth more than the figure it qualifies). The
   transport half
   is done and the module half is not, which is why a Windows target is
   listed here rather than under Shipped. (A Windows *control node* is
