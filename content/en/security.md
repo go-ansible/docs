@@ -531,6 +531,36 @@ It was found while writing Online.net's `online_server_info`, whose request
 paths come from the API's own answer rather than from a playbook. That is what
 turned a theoretical input into an untrusted one.
 
+### There is no `no_log` scrubbing here, so a message must not need it {#no-no-log-scrubbing}
+
+Real Ansible has a second net under every module: `AnsibleModule` records the
+value of each argument declared `no_log` and removes it from anything the
+module prints, so a module can interpolate a whole URL into a failure message
+and still not leak the API key in it. **This port has no equivalent.** A
+message a module builds is the message the playbook prints.
+
+That is not a defect to fix in passing — reproducing it means knowing, per
+argument, what real declared `no_log` on, and scrubbing at the point a result
+is rendered rather than where it is built. It is a constraint to write modules
+under, and it changes what "port this message verbatim" means.
+
+`ipbase_info` is where it first bit. Real's parse-failure message is:
+
+```python
+self.module.fail_json(msg=f"Failed to parse the ipbase.com response: {url} {content}")
+```
+
+and `url` carries the `apikey` query parameter, which real declares
+`no_log=True`. Translating that line literally would have printed the key.
+This port keeps real's sentence and redacts the key's **value**, leaving
+`apikey=REDACTED` in place — dropping the parameter would tell the operator no
+key was sent, which is a different untruth. The test named for it asserts both
+halves, and with the redaction removed it fails by printing the key in full.
+
+The rule it leaves behind: before copying a message from a real module, check
+whether anything it interpolates is a `no_log` argument. Real's framework was
+holding that rope, and here nobody is.
+
 ## `vault`: the crypto was right, the property was untested {#vault-the-crypto-was-right-the-property-was-untested}
 
 The audit of `vault` found nothing wrong with the cryptography:
