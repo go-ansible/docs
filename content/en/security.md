@@ -466,6 +466,71 @@ flags that take credentials will pass all four.
 secret must appear on **stdin**. Without that half, the check passes just as
 well on a module that never sent the credential at all.
 
+### Stdin is where the value goes, not proof the value is safe {#a-newline-in-a-curl-config-value-was-a-curl-option}
+
+Everything above is about *where* a credential travels. It says nothing about
+what the value can do once it gets there, and for a year it could do rather a
+lot. Fixed in `modules` **v0.95.1**.
+
+curl's config format takes **one option per physical line**
+([curl.se, `-K, --config`](https://curl.se/docs/manpage.html#-K): "Options and
+their parameters must be specified on the same line in the file"), and inside
+double quotes it accepts five escapes: `\\`, `\"`, `\t`, `\n`, `\r` and `\v`.
+The function writing those values escaped the first two. Its own comment said
+why — *"for a plain credential string with no embedded newlines"* — which was
+true of the single call site it was written for, a `user:password` pair, and
+of none of the callers added afterwards. `curlDo` now put the url, every
+header, the body and the basic-auth pair through it, and those are built from
+playbook data.
+
+So a value carrying a newline ended its directive and opened another. Measured
+on curl 8.7.1, for a url of `file:///etc/hosts\nurl = file:///etc/passwd\n#`:
+
+```
+url = "file:///etc/hosts
+url = file:///etc/passwd
+#"
+```
+
+```
+curl: (3) URL rejected: Malformed input to a URL function
+curl: (37) Couldn't open file /etc/passwd
+```
+
+Two errors, from **two transfers**: curl read the second line as its own
+`url` option. `output = <path>` would have written a file on the target,
+`upload-file` would have sent one away, `proxy` would have redirected the
+request. A value that reached that function was, in effect, an arbitrary curl
+command line.
+
+The fix is curl's quoting, all of it, plus a refusal: a control character in a
+url, a header, a query parameter or the basic-auth pair is rejected **before
+anything runs**, since none can appear legitimately in one (RFC 3986 §2,
+RFC 9110 §5.5). The request **body** is deliberately not refused, only escaped
+— a pretty-printed JSON body is full of newlines and they are data.
+
+Three things generalise from it:
+
+- **A doc comment naming an input a function does not handle is a defect
+  waiting for a second caller.** A sentence is not a guard. Either handle the
+  input or refuse it.
+- **Factoring a helper out moves the code and leaves the assumption behind.**
+  The function did not change; its callers did. Re-read a helper's comment
+  against the data the *new* callers pass it.
+- **Prove the attack with the real tool before claiming the fix.** The first
+  version of the test did not reproduce: the closing quote landed on the
+  injected path and the fetch failed for the wrong reason, which would have
+  read as a secure result. The trailing `#` is what makes the injected
+  directive clean. `TestRealCurlDoesNotActOnAnInjectedDirective` now runs real
+  curl against **both** configs and fails if the old escape stops leaking, so
+  the half proving the fix cannot pass on a defect that no longer reproduces.
+  `FuzzCurlConfigEscape` holds the invariant — one line out, no unescaped
+  quote — over 2.2M executions.
+
+It was found while writing Online.net's `online_server_info`, whose request
+paths come from the API's own answer rather than from a playbook. That is what
+turned a theoretical input into an untrusted one.
+
 ## `vault`: the crypto was right, the property was untested {#vault-the-crypto-was-right-the-property-was-untested}
 
 The audit of `vault` found nothing wrong with the cryptography:
