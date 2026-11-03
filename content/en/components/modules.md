@@ -128,6 +128,26 @@ same — the target ends up in the same state — but the difference is
 architectural: a module needs no Go toolchain, no interpreter, nothing
 installed on the target at all.
 
+## How much of this is POSIX shell {#posix-shell-share}
+
+Two other pages quote a figure from here, so the criterion belongs
+here with it: **325 of the 598** modules compose POSIX shell, measured
+2026-11-03. The criterion is a call to `shellQuote`, `run` or
+`runStatus` **in the file named after the module**, which is what makes
+the figure checkable and also what limits it.
+
+That limit is worth more than the number. **27** modules have no file
+of their own — they share one with the rest of their family, the way
+Bitbucket's four sit on one client and Online.net's two on another —
+and the measure cannot see them at all. The blind spot grows every time
+a family lands well, so a rising 325 and a rising 27 are the same event
+seen twice. A further **10** modules reach HTTP through `curl` rather
+than composing a shell command of their own, and **236** do neither.
+
+Why it matters: a module that composes POSIX shell cannot run against a
+Windows target, so this is the figure that says how much of the library
+the WinRM connection could ever reach — not a style statistic.
+
 ## API {#api}
 
 ```go
