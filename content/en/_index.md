@@ -25,7 +25,7 @@ push and pull request:
 | [`vars`]({{< relref "components/vars.md" >}}) | Ansible's variable precedence ladder — the fixed merge order from role defaults up through `-e`/`--extra-vars` |
 | [`template`]({{< relref "components/template.md" >}}) | Jinja2-compatible templating with Ansible's filter and test library layered on top, including Ansible's native-type rendering rule for a bare `{{ expr }}` |
 | [`facts`]({{< relref "components/facts.md" >}}) | Fact gathering — the `setup` module equivalent — in one shell round trip, no Python required |
-| [`modules`]({{< relref "components/modules.md" >}}) | The Ansible module execution protocol plus **598 modules**: all of `ansible.builtin` and `ansible.posix`, and a curated 522 of `community.general` |
+| [`modules`]({{< relref "components/modules.md" >}}) | The Ansible module execution protocol plus **600 modules**: all of `ansible.builtin` and `ansible.posix`, and a curated 524 of `community.general` |
 | [`playbook`]({{< relref "components/playbook.md" >}}) | The playbook/role/task/handler engine tying all of the above together against a real play — loops, conditionals, blocks, `become`, roles, both execution strategies, retries, `run_once`, forks, `vars_prompt`, `async`/`poll`, dynamic inventory, `ansible.cfg` |
 | [`cli`]({{< relref "components/cli.md" >}}) | 9 of real's 10 `ansible-*` binaries — everything but `ansible-test` — each a thin wrapper over `playbook`/`vault`/`inventory` |
 
@@ -80,7 +80,7 @@ exposure that remains, named, with why it cannot be closed without cgo.
 | [`vars`](https://github.com/go-ansible/vars) | Ansible variable precedence engine |
 | [`template`](https://github.com/go-ansible/template) | Jinja2-compatible templating with Ansible's filter and test library |
 | [`facts`](https://github.com/go-ansible/facts) | Fact gathering, pure Go CGO=0 |
-| [`modules`](https://github.com/go-ansible/modules) | Module execution protocol plus the 598-module core library |
+| [`modules`](https://github.com/go-ansible/modules) | Module execution protocol plus the 600-module core library |
 | [`playbook`](https://github.com/go-ansible/playbook) | Playbook/task/handler execution engine |
 | [`cli`](https://github.com/go-ansible/cli) | 9 CLI binaries (all but `ansible-test`) |
 | [`brand`](https://github.com/go-ansible/brand) | Logo, favicon and social banner |

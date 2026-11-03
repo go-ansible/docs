@@ -1,5 +1,5 @@
 ---
-title: "modules — 598-module execution library"
+title: "modules — 600-module execution library"
 weight: 80
 ---
 
@@ -8,13 +8,13 @@ weight: 80
 [![CI](https://github.com/go-ansible/modules/actions/workflows/ci.yml/badge.svg)](https://github.com/go-ansible/modules/actions/workflows/ci.yml)
 
 `github.com/go-ansible/modules` implements Ansible's module execution model
-and the core module library: **598 modules registered** — 62 of
-`ansible.builtin`, all 14 of `ansible.posix`, and 522 curated from
-`community.general` (577 real modules in that collection, so 55 remain).
+and the core module library: **600 modules registered** — 62 of
+`ansible.builtin`, all 14 of `ansible.posix`, and 524 curated from
+`community.general` (577 real modules in that collection, so 53 remain).
 
-## What the remaining 55 are made of {#what-remains}
+## What the remaining 53 are made of {#what-remains}
 
-"55 left" says how many, not what kind, and the kind is what decides
+"53 left" says how many, not what kind, and the kind is what decides
 whether any of them could be written this week. Each was classified on
 2026-11-03 by reading its real source **and the collection `module_utils`
 helper it inherits from** — the first pass read only the module files and
@@ -23,7 +23,7 @@ label:
 
 | | | |
 |---|---|---|
-| **13** | `fetch_url` | one or more documented HTTP calls — portable under the pattern the ported HTTP modules already use. `slack`, `office_365_connector_card`, `dnsmadeeasy`, `gandi_livedns`, `statusio_maintenance`, `librato_annotation`, `imc_rest`, the two `ocapi`, the two `wdc_redfish`, `ipbase_info` and `ipify_facts` |
+| **11** | `fetch_url` | one or more documented HTTP calls — portable under the pattern the ported HTTP modules already use. `slack`, `office_365_connector_card`, `dnsmadeeasy`, `gandi_livedns`, `statusio_maintenance`, `librato_annotation`, `imc_rest`, the two `ocapi` and the two `wdc_redfish` |
 | **38** | SDK | behaviour defined by a Python library rather than an endpoint: `oneview` (14, hpOneView), `manageiq` (10, manageiq_client), `datadog` (3), plus `pagerduty_user`, `lxca`, `matrix`, `pubnub_blocks`, `rhevm`, `taiga_issue`, `pingdom`, `netcup_dns`, `vexata` |
 | **1** | vendor CLI | `logentries`, which drives the `le` command — the easiest of the lot |
 | **3** | protocol | `irc`, `jabber`, `logentries_msg` speak something other than HTTP |
@@ -131,7 +131,7 @@ installed on the target at all.
 ## How much of this is POSIX shell {#posix-shell-share}
 
 Two other pages quote a figure from here, so the criterion belongs
-here with it: **325 of the 598** modules compose POSIX shell, measured
+here with it: **325 of the 600** modules compose POSIX shell, measured
 2026-11-03. The criterion is a call to `shellQuote`, `run` or
 `runStatus` **in the file named after the module**, which is what makes
 the figure checkable and also what limits it.
@@ -141,8 +141,10 @@ of their own — they share one with the rest of their family, the way
 Bitbucket's four sit on one client and Online.net's two on another —
 and the measure cannot see them at all. The blind spot grows every time
 a family lands well, so a rising 325 and a rising 27 are the same event
-seen twice. A further **10** modules reach HTTP through `curl` rather
+seen twice. A further **12** modules reach HTTP through `curl` rather
 than composing a shell command of their own, and **236** do neither.
+`ipbase_info` and `ipify_facts` moved that middle figure rather than
+the blind spot, because each has a file of its own.
 
 Why it matters: a module that composes POSIX shell cannot run against a
 Windows target, so this is the figure that says how much of the library
@@ -169,7 +171,7 @@ type Func func(ctx context.Context, conn remoteexec.Connection, args map[string]
 type Registry struct { /* ... */ }
 
 func NewRegistry() *Registry
-func Default() *Registry // pre-populated with all 598 built-in modules
+func Default() *Registry // pre-populated with all 600 built-in modules
 func (r *Registry) Register(name string, fn Func)
 func (r *Registry) Get(name string) (Func, bool)
 func (r *Registry) Names() []string
