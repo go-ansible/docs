@@ -8,22 +8,22 @@ weight: 80
 [![CI](https://github.com/go-ansible/modules/actions/workflows/ci.yml/badge.svg)](https://github.com/go-ansible/modules/actions/workflows/ci.yml)
 
 `github.com/go-ansible/modules` implements Ansible's module execution model
-and the core module library: **592 modules registered** — 62 of
-`ansible.builtin`, all 14 of `ansible.posix`, and 516 curated from
-`community.general` (577 real modules in that collection, so 61 remain).
+and the core module library: **596 modules registered** — 62 of
+`ansible.builtin`, all 14 of `ansible.posix`, and 520 curated from
+`community.general` (577 real modules in that collection, so 57 remain).
 
-## What the remaining 61 are made of {#what-remains}
+## What the remaining 57 are made of {#what-remains}
 
-"61 left" says how many, not what kind, and the kind is what decides
+"57 left" says how many, not what kind, and the kind is what decides
 whether any of them could be written this week. Each was classified on
-2026-11-02 by reading its real source **and the collection `module_utils`
+2026-11-03 by reading its real source **and the collection `module_utils`
 helper it inherits from** — the first pass read only the module files and
 put 53 of 74 in an `other` bucket, which is a blind spot wearing a
 label:
 
 | | | |
 |---|---|---|
-| **19** | `fetch_url` | one or more documented HTTP calls — portable under the pattern the ported HTTP modules already use. `slack`, `office_365_connector_card`, the four `bitbucket`, `dnsmadeeasy`, `gandi_livedns`, `statusio_maintenance`, `librato_annotation`, `imc_rest`, the two `ocapi`, the two `online_*_info`, the two `wdc_redfish`, `ipbase_info` and `ipify_facts` |
+| **15** | `fetch_url` | one or more documented HTTP calls — portable under the pattern the ported HTTP modules already use. `slack`, `office_365_connector_card`, `dnsmadeeasy`, `gandi_livedns`, `statusio_maintenance`, `librato_annotation`, `imc_rest`, the two `ocapi`, the two `online_*_info`, the two `wdc_redfish`, `ipbase_info` and `ipify_facts` |
 | **38** | SDK | behaviour defined by a Python library rather than an endpoint: `oneview` (14, hpOneView), `manageiq` (10, manageiq_client), `datadog` (3), plus `pagerduty_user`, `lxca`, `matrix`, `pubnub_blocks`, `rhevm`, `taiga_issue`, `pingdom`, `netcup_dns`, `vexata` |
 | **1** | vendor CLI | `logentries`, which drives the `le` command — the easiest of the lot |
 | **3** | protocol | `irc`, `jabber`, `logentries_msg` speak something other than HTTP |
@@ -37,6 +37,32 @@ ported, while that one is built on **pdpyras** (`APISession.iter_all` to
 page the user list, `APISession.persist` to upsert by email). It is named
 in `pagerduty.go` and in `registry.go`, because a module missing for a
 reason and a module nobody noticed look identical from outside.
+
+Bitbucket's four are the other family that landed whole, and they are
+worth reading for three things that look like bugs and are not.
+`bitbucket_access_key` compares a deploy key by **prefix**, not by
+equality, because Bitbucket stores the key without its trailing comment
+— an equality test would rewrite the key on every run for anyone whose
+key carries one. The family does **not** paginate consistently: deploy
+keys and known hosts follow the server's `next` link, while pipeline
+variables count `?page=N` until a page reports `pagelen` 0, and the
+terminator is that zero rather than an empty `values`. And a **secured**
+pipeline variable is always reported changed, because Bitbucket never
+returns its value for the comparison to use. All three are upstream
+behaviour, reproduced rather than corrected: reporting `ok` where real
+reports `changed` would make a playbook's own `changed_when` behave
+differently under this port.
+
+One divergence is stated rather than hidden.
+`bitbucket_pipeline_known_host` needs a host's SSH key when `key` is not
+given; real opens a socket and asks **paramiko** for the negotiated key,
+and this runs `ssh-keyscan` on the target instead — the substitution
+this package makes for a Python library everywhere else. `ssh-keyscan`
+returns every key type the host offers and this takes the first, where
+paramiko returns the single type its own negotiation picked, so the
+stored `key_type` can differ. Either is a valid known-host entry, and
+the module writes only when no entry for the hostname exists at all, so
+it cannot cause a rewrite loop.
 
 All thirteen of Sophos UTM's modules are now here. The last five —
 `utm_aaa_group` and the four `reverse_proxy` write modules — were held
@@ -92,7 +118,7 @@ type Func func(ctx context.Context, conn remoteexec.Connection, args map[string]
 type Registry struct { /* ... */ }
 
 func NewRegistry() *Registry
-func Default() *Registry // pre-populated with all 592 built-in modules
+func Default() *Registry // pre-populated with all 596 built-in modules
 func (r *Registry) Register(name string, fn Func)
 func (r *Registry) Get(name string) (Func, bool)
 func (r *Registry) Names() []string
