@@ -1,5 +1,5 @@
 ---
-title: "modules — 566-module execution library"
+title: "modules — 598-module execution library"
 weight: 80
 ---
 
@@ -8,13 +8,13 @@ weight: 80
 [![CI](https://github.com/go-ansible/modules/actions/workflows/ci.yml/badge.svg)](https://github.com/go-ansible/modules/actions/workflows/ci.yml)
 
 `github.com/go-ansible/modules` implements Ansible's module execution model
-and the core module library: **596 modules registered** — 62 of
-`ansible.builtin`, all 14 of `ansible.posix`, and 520 curated from
-`community.general` (577 real modules in that collection, so 57 remain).
+and the core module library: **598 modules registered** — 62 of
+`ansible.builtin`, all 14 of `ansible.posix`, and 522 curated from
+`community.general` (577 real modules in that collection, so 55 remain).
 
-## What the remaining 57 are made of {#what-remains}
+## What the remaining 55 are made of {#what-remains}
 
-"57 left" says how many, not what kind, and the kind is what decides
+"55 left" says how many, not what kind, and the kind is what decides
 whether any of them could be written this week. Each was classified on
 2026-11-03 by reading its real source **and the collection `module_utils`
 helper it inherits from** — the first pass read only the module files and
@@ -23,7 +23,7 @@ label:
 
 | | | |
 |---|---|---|
-| **15** | `fetch_url` | one or more documented HTTP calls — portable under the pattern the ported HTTP modules already use. `slack`, `office_365_connector_card`, `dnsmadeeasy`, `gandi_livedns`, `statusio_maintenance`, `librato_annotation`, `imc_rest`, the two `ocapi`, the two `online_*_info`, the two `wdc_redfish`, `ipbase_info` and `ipify_facts` |
+| **13** | `fetch_url` | one or more documented HTTP calls — portable under the pattern the ported HTTP modules already use. `slack`, `office_365_connector_card`, `dnsmadeeasy`, `gandi_livedns`, `statusio_maintenance`, `librato_annotation`, `imc_rest`, the two `ocapi`, the two `wdc_redfish`, `ipbase_info` and `ipify_facts` |
 | **38** | SDK | behaviour defined by a Python library rather than an endpoint: `oneview` (14, hpOneView), `manageiq` (10, manageiq_client), `datadog` (3), plus `pagerduty_user`, `lxca`, `matrix`, `pubnub_blocks`, `rhevm`, `taiga_issue`, `pingdom`, `netcup_dns`, `vexata` |
 | **1** | vendor CLI | `logentries`, which drives the `le` command — the easiest of the lot |
 | **3** | protocol | `irc`, `jabber`, `logentries_msg` speak something other than HTTP |
@@ -63,6 +63,37 @@ paramiko returns the single type its own negotiation picked, so the
 stored `key_type` can differ. Either is a valid known-host entry, and
 the module writes only when no entry for the hostname exists at all, so
 it cannot cause a rewrite loop.
+
+Online.net's two info modules landed next, over the same private
+helper their real counterparts share. They read like the same module
+twice and are not: `online_user_info` returns the body of one GET,
+while `online_server_info` gets back a list of **paths** and fetches
+each one. Two upstream behaviours in that second loop are reproduced
+rather than corrected, each pinned by a test. A failed detail fetch
+does **not** fail the module — real wraps it in `except
+OnlineException`, but `get` never raises one, so the API's own error
+object lands in the result list beside the real servers. And a detail
+body that is not JSON is dropped silently, so the server vanishes from
+the inventory with nothing said. A port that tidied either one would
+hand a playbook counting `online_server_info | length` a different
+number than real does.
+
+Writing them turned up a defect in this package, fixed in **v0.95.1**
+before they shipped. Every HTTP module here reaches its service through
+`curl` on the target, with the URL, the headers, the body and the
+credentials written to curl's stdin config so none of them can appear
+on a command line. curl reads **one option per physical line**, and the
+function quoting those values escaped only backslash and double quote
+— so a value carrying a newline ended its directive and opened another.
+Measured on curl 8.7.1, a URL of
+`file:///etc/hosts\nurl = file:///etc/passwd\n#` makes curl perform two
+transfers, the second of a file the caller never named. The escape now
+covers all five sequences curl accepts inside quotes, and a control
+character in a URL, a header, a query parameter or the basic-auth pair
+is refused before anything runs. It mattered here because
+`online_server_info`'s paths come from the API's own answer: a
+compromised endpoint would otherwise have been choosing part of a curl
+config.
 
 All thirteen of Sophos UTM's modules are now here. The last five —
 `utm_aaa_group` and the four `reverse_proxy` write modules — were held
@@ -118,7 +149,7 @@ type Func func(ctx context.Context, conn remoteexec.Connection, args map[string]
 type Registry struct { /* ... */ }
 
 func NewRegistry() *Registry
-func Default() *Registry // pre-populated with all 596 built-in modules
+func Default() *Registry // pre-populated with all 598 built-in modules
 func (r *Registry) Register(name string, fn Func)
 func (r *Registry) Get(name string) (Func, bool)
 func (r *Registry) Names() []string
