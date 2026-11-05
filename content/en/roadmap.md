@@ -46,15 +46,22 @@ developed further and is not part of the current architecture.
 
 ## What's still ahead {#whats-still-ahead}
 
-- **~87 more `community.general` modules.** The remainder is dominated by
-  named flagship platforms confirmed to have no comparable official CLI
-  (UTM, OneView, ManageIQ, PagerDuty, Datadog, Slack, WDC's own Redfish
-  family), confirmed-dead or no-CLI platforms, defunct/EOL products, and pure
-  notification-protocol modules with no CLI concept at all (IRC/Jabber/
-  Matrix/Telegram/Discord/...). A platform excluded today is not excluded
-  forever — several exclusions were later reversed after that platform
-  shipped a genuine official CLI (Huawei Cloud's KooCLI, HPE's `ilorest`,
-  Lenovo's `OneCli`, among others).
+- **53 more `community.general` modules**, counted rather than estimated
+  (2026-11-03) and classified by reading each real source *and* the
+  `module_utils` helper it inherits from: **11** plain `fetch_url` calls,
+  **38** whose behaviour is defined by a Python SDK rather than an endpoint
+  (`oneview` 14, `manageiq` 10, `datadog` 3, `matrix`, `pagerduty_user` and
+  the rest), **1** vendor CLI (`logentries`), **3** speaking something other
+  than HTTP (`irc`, `jabber`, `logentries_msg`). The table is in
+  [`modules`]({{< relref "components/modules.md" >}}#what-remains).
+
+  The SDK group is the real boundary, not a list of platforms we dislike:
+  porting one means reproducing a library's pagination, defaulting and
+  idempotency rules. A platform excluded today is not excluded forever —
+  several exclusions were reversed after the platform shipped a genuine
+  official CLI (Huawei Cloud's KooCLI, HPE's `ilorest`, Lenovo's `OneCli`),
+  and Sophos UTM, once the headline example of this bullet, is now ported
+  whole, all thirteen modules.
 - **The rest of `redfish_command`/`redfish_config`/`redfish_info`.** The
   vendor-neutral trio now ships via DMTF's own `redfishtool` (its `-c
   cfgFile` option reads credentials from a file rather than argv), covering
