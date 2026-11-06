@@ -82,6 +82,21 @@ developed further and is not part of the current architecture.
   exposes only a response's JSON body, never the distinguishing HTTP status
   code real Ansible's own status logic depends on) — disclosed, not
   silently assumed to work.
+
+  **By default nothing changes:** these gaps belong to the default backend,
+  which runs `redfishtool` on the target, so the request to the BMC leaves
+  from the target's network as in real Ansible. An operator who wants the
+  request to leave from the control node instead can set the variable
+  `goansible_redfish_backend: go-redfish` in the inventory, in a play's vars
+  or with `-e`. Real Ansible ignores that variable, so the playbook stays
+  portable. On that opt-in backend, the in-process
+  [go-redfish](https://github.com/go-redfish/redfish) client (modules
+  v0.98.0, engine since go-ansible/playbook#215) covers **every** command of
+  the three modules (only `redfish_info`'s `all` shortcut is unsupported, on
+  both backends), `GetUpdateStatus`, virtual media and storage included,
+  and `auth_token` works. Its results are compared with real ansible-core in
+  CI. Both backends check `username`/`password`/`auth_token` and `baseuri`
+  the way real does (modules v0.99.0).
 - **Cloud-provider collections** — `amazon.aws`, `azure.azcollection`,
   `google.cloud`, and similar. These need real Go SDK bindings per provider's
   REST API, not shell composition over a CLI the way the rest of this port

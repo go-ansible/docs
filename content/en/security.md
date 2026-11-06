@@ -726,7 +726,11 @@ reason.
 - **Modules that shell out to a platform's own CLI** pass credentials through an
   environment variable or a pre-existing authenticated session, never `argv` —
   and where a vendor tool offers only a file (DMTF's `redfishtool` and its `-c
-  cfgFile`), the file is used.
+  cfgFile`), the file is used. The opt-in go-redfish backend of the
+  `redfish_*` modules (`goansible_redfish_backend: go-redfish`) uses no tool
+  at all: the password or `auth_token` stays in the go-ansible process's
+  memory and goes only to the BMC, over TLS verified unless `validate_certs`
+  is false. The default backend is still `redfishtool` on the target.
 - **`ansible.posix.synchronize`** fails loudly instead of approximating: real
   Ansible runs it *from the controller* against the target's own SSH endpoint,
   and this port's `Connection` abstraction deliberately gives a module no way to
