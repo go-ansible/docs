@@ -1300,6 +1300,35 @@ in `{{ }}`, so one already wrapped became `{{ {{ flag }} }}`. Only a
 conditional that is entirely one expression is unwrapped; `{{ a }} and
 {{ b }}` is left as written.
 
+### A host a block's own when: skipped stays in the play {#a-host-a-blocks-own-when-skipped-stays-in-the-play}
+
+`when:` on a `block:` decides, per host, whether the tasks inside it
+run. A host the condition skipped is absent **for that block**, and
+stays in the play: every task after the block still runs for it.
+
+Before v0.154.0 such a host was dropped from the play entirely, so with
+the condition false for every host the play ended at the block:
+
+```yaml
+- block:
+    - command: echo inside
+  when: false
+- command: echo after      # never ran
+```
+
+If you worked around this — hoisting the condition onto each task inside
+the block, or splitting the block into a play of its own — the
+workaround is no longer needed.
+
+Two cases still remove the host, because neither is a skip:
+
+- a `when:` that cannot be **evaluated** fails the host, and a failed
+  host leaves the play. Restoring those too would turn a broken
+  conditional into a silent skip, which is the failure the boolean rule
+  above exists to prevent;
+- a task that **failed inside** the block. This is about hosts the block
+  skipped, not about forgiving failures.
+
 ## Example {#example}
 
 ```go
