@@ -463,6 +463,11 @@ as the second, which also made the recap's own `skipped` count wrong.
 Tag *inheritance* — play tags and block tags reaching the tasks inside —
 was already correct, and is covered by its own measured table.
 
+`tags:` on a **`roles:` entry** was a separate matter: it was parsed and
+dropped, so `--tags` could not select a role by its own tag. Honoured as
+of v0.152.0 — see
+[`when:` and `tags:` on a roles entry](#when-and-tags-on-a-roles-entry).
+
 ## Host selection {#host-selection}
 
 `hosts:` and `--limit` share one pattern language, and its terms are
@@ -1140,6 +1145,41 @@ task, which on a host that is simply down costs a full SSH timeout per
 task. The difference is visible only in timing, and it has a test of its
 own rather than being left to be discovered.
 
+### wait_for_connection is the exception, and waits {#wait_for_connection-is-the-exception-and-waits}
+
+"A connection that cannot be made is UNREACHABLE" holds for every task
+but one. `wait_for_connection:` exists precisely to be run against a
+host that is **not up yet** — after a reboot — so reporting it
+unreachable from the recorded failure would make the task impossible.
+
+Before **v0.153.0** that is what happened: the host was reported
+UNREACHABLE before the module ever ran, so the one task whose whole
+purpose is to wait could never do it.
+
+Real retries on the **controller**, in its action plugin, swallowing the
+connection failure for the whole timeout window rather than letting the
+task fail; this port does the same. The outcomes are three, not two:
+
+- the host comes back — the dial at play start failed, a retry
+  succeeded, and the result is neither unreachable nor failed;
+- the host never returns — the task **fails**, with real's own sentence,
+  `timed out waiting for connection port up: <last error>`, carrying the
+  last dial's error. A failure, not an UNREACHABLE;
+- any other task against the same dead host still reports UNREACHABLE at
+  once. This one is a test rather than a remark: softening the
+  unreachable path for everything would hide a genuinely dead host
+  behind a wait.
+
+`delay`, `sleep` and `timeout` take real's defaults, and the deadline is
+checked **before** each attempt, so `timeout: 0` dials nothing — as
+real's own loop does. `connect_timeout` is accepted and has no
+counterpart, there being no per-dial timeout here to set.
+
+**One knowing difference:** `sleep` is clamped to at least a second.
+Real would `time.sleep(0)` and spin a core for the whole timeout, which
+is a defect to decline rather than reproduce. The clamp has its own
+test.
+
 ## meta {#meta}
 
 `meta:` is not a module. Real Ansible's strategy executes it directly:
@@ -1328,6 +1368,37 @@ Two cases still remove the host, because neither is a skip:
   above exists to prevent;
 - a task that **failed inside** the block. This is about hosts the block
   skipped, not about forgiving failures.
+
+### when: and tags: on a roles entry {#when-and-tags-on-a-roles-entry}
+
+A `roles:` entry takes `when:` and `tags:`, and both are honoured as of
+**v0.152.0**. Before it they were parsed and then dropped — recognised
+well enough to be kept out of the role's variables, and read by nothing
+after that:
+
+```yaml
+roles:
+  - role: myrole
+    when: false      # ran anyway
+    tags: [setup]    # --tags setup did not select it
+```
+
+A role with `when: false` **ran its tasks**, which is the worse half: a
+condition written and silently ignored cannot be told apart, from the
+playbook, from one that passed.
+
+A role entry is carried as a block, so it needs no machinery of its own
+beyond that: the gating described above for a block's own `when:` is
+what runs it, and tag propagation already recurses into blocks, so
+`--tags setup` selects the role's task and not merely its container.
+
+**A named divergence in the reporting.** Real inherits a role's
+conditional down its dependency chain and evaluates it **per task**, so
+a skipped role prints one skipped line per task. This port gates once
+and reports **one** skip for the role. The same difference already
+applies to a literal `block:`'s own `when:` here, so the role case is
+consistent with this engine rather than with real — a choice, and it is
+recorded in the code as well as on this page.
 
 ## Example {#example}
 
