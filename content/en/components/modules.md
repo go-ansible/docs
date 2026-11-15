@@ -1,5 +1,5 @@
 ---
-title: "modules — 600-module execution library"
+title: "modules — 601-module execution library"
 weight: 80
 ---
 
@@ -8,13 +8,13 @@ weight: 80
 [![CI](https://github.com/go-ansible/modules/actions/workflows/ci.yml/badge.svg)](https://github.com/go-ansible/modules/actions/workflows/ci.yml)
 
 `github.com/go-ansible/modules` implements Ansible's module execution model
-and the core module library: **600 modules registered** — 62 of
-`ansible.builtin`, all 14 of `ansible.posix`, and 524 curated from
-`community.general` (577 real modules in that collection, so 53 remain).
+and the core module library: **601 modules registered** — 62 of
+`ansible.builtin`, all 14 of `ansible.posix`, and 525 curated from
+`community.general` (577 real modules in that collection, so 52 remain).
 
-## What the remaining 53 are made of {#what-remains}
+## What the remaining 52 are made of {#what-remains}
 
-"53 left" says how many, not what kind, and the kind is what decides
+"52 left" says how many, not what kind, and the kind is what decides
 whether any of them could be written this week. Each was classified on
 2026-11-03 by reading its real source **and the collection `module_utils`
 helper it inherits from** — the first pass read only the module files and
@@ -23,7 +23,7 @@ label:
 
 | | | |
 |---|---|---|
-| **11** | `fetch_url` | one or more documented HTTP calls — portable under the pattern the ported HTTP modules already use. `slack`, `office_365_connector_card`, `dnsmadeeasy`, `gandi_livedns`, `statusio_maintenance`, `librato_annotation`, `imc_rest`, the two `ocapi` and the two `wdc_redfish` |
+| **10** | `fetch_url` | one or more documented HTTP calls — portable under the pattern the ported HTTP modules already use. `slack`, `office_365_connector_card`, `dnsmadeeasy`, `statusio_maintenance`, `librato_annotation`, `imc_rest`, the two `ocapi` and the two `wdc_redfish` |
 | **38** | SDK | behaviour defined by a Python library rather than an endpoint: `oneview` (14, hpOneView), `manageiq` (10, manageiq_client), `datadog` (3), plus `pagerduty_user`, `lxca`, `matrix`, `pubnub_blocks`, `rhevm`, `taiga_issue`, `pingdom`, `netcup_dns`, `vexata` |
 | **1** | vendor CLI | `logentries`, which drives the `le` command — the easiest of the lot |
 | **3** | protocol | `irc`, `jabber`, `logentries_msg` speak something other than HTTP |
@@ -131,10 +131,17 @@ installed on the target at all.
 ## How much of this is POSIX shell {#posix-shell-share}
 
 Two other pages quote a figure from here, so the criterion belongs
-here with it: **325 of the 600** modules compose POSIX shell, measured
-2026-11-03. The criterion is a call to `shellQuote`, `run` or
-`runStatus` **in the file named after the module**, which is what makes
-the figure checkable and also what limits it.
+here with it: **325 of the 601** modules compose POSIX shell. The
+criterion is a call to `shellQuote`, `run` or `runStatus` **in the file
+named after the module**, which is what makes the figure checkable and
+also what limits it.
+
+The 325 was measured 2026-11-03 and the denominator has moved once
+since, so the two halves are dated separately on purpose: each module
+added after that sweep is checked against the same criterion rather
+than assumed to match it. `gandi_livedns` (v0.102.0) does not — it
+reaches Gandi's API through the shared `curl` helper instead of
+composing a command of its own — so the numerator stands.
 
 That limit is worth more than the number. **27** modules have no file
 of their own — they share one with the rest of their family, the way
@@ -171,7 +178,7 @@ type Func func(ctx context.Context, conn remoteexec.Connection, args map[string]
 type Registry struct { /* ... */ }
 
 func NewRegistry() *Registry
-func Default() *Registry // pre-populated with all 600 built-in modules
+func Default() *Registry // pre-populated with all 601 built-in modules
 func (r *Registry) Register(name string, fn Func)
 func (r *Registry) Get(name string) (Func, bool)
 func (r *Registry) Names() []string

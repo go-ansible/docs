@@ -22,8 +22,8 @@ on every push and pull request:
 - [`facts`]({{< relref "components/facts.md" >}}) — fact gathering, the `setup` module
   equivalent
 - [`modules`]({{< relref "components/modules.md" >}}) — the module execution protocol plus
-  **600 registered modules** (all of `ansible.builtin` and `ansible.posix`,
-  and a curated 524 of `community.general`)
+  **601 registered modules** (all of `ansible.builtin` and `ansible.posix`,
+  and a curated 525 of `community.general`)
 - [`playbook`]({{< relref "components/playbook.md" >}}) — the playbook/role/task/handler
   engine driving all of the above against a real play: loops, conditionals,
   blocks with genuine per-host recovery, `become`, roles (nested variable
@@ -117,8 +117,9 @@ developed further and is not part of the current architecture.
 - **The `ansible.windows` module family.** `ansible_connection: winrm`
   reaches a Windows target over WS-Management, using the real plugin's
   own `ansible_winrm_*` variables, but the modules that would run there
-  are not ported: 325 of the 600 compose POSIX shell (measured
-  2026-11-03; the criterion is a call to `shellQuote`, `run` or
+  are not ported: 325 of the 601 compose POSIX shell (the 325 measured
+  2026-11-03, each module added since checked against the same
+  criterion; the criterion is a call to `shellQuote`, `run` or
   `runStatus` in the file named after the module, and **27** modules
   share a file with another and are invisible to it — that blind spot
   grew again when Bitbucket's four and Online.net's two each landed on
