@@ -875,6 +875,37 @@ error — the delimiters sit inside a larger expression. It used to be
 rendered as an ordinary argument, which turned an undefined name into
 an args-finalization failure.
 
+### assert's that: sees the loop's variables {#assert-that-loop-scope}
+
+Since **v0.155.0**, `that:` is evaluated against the **per-iteration**
+scope, like every other conditional on the task. This used to fail on
+every item:
+
+```yaml
+- assert:
+    that: item > 0
+  loop: [1, 2]
+```
+
+with `'item' is undefined`, while the very same task's `fail_msg`
+printed the item correctly — because `fail_msg` was rendered from the
+iteration's variables and `that:` was evaluated against the **host's**
+scope, one level above them. `when:`, `changed_when:`, `failed_when:`,
+`until:`, `break_when:` and `debug: var:` all used the iteration's
+scope already; `assert` was the one that did not.
+
+The loop variable is visible under its `loop_control.loop_var` name,
+along with `index_var`, `ansible_loop_var`, `ansible_index_var`, and
+`ansible_loop` under `extended: true`.
+
+⚠ **One thing this also changed, stated because it is a behaviour
+change and not only a fix:** a **non-looped** `assert` now sees the
+task's own `vars:` too, which it could not before. Nothing it could
+see previously was taken away — play vars, host and group vars, facts,
+registered results and `set_fact` are all still there, because the
+task scope is a child of the host's and only adds layers. That is why
+v0.155.0 is a minor rather than a patch.
+
 ### Loops {#loops}
 
 A failing **iteration** reads differently from a failing task:
@@ -890,6 +921,11 @@ each failing one. A loop whose **arguments** would not finalize closes
 with real's `One or more items failed` summary and counts the task
 once; a loop whose items merely failed in the module does not — both
 measured.
+
+An `assert` inside a loop evaluates its `that:` against the
+iteration's variables, so `item` and its `loop_control` companions are
+in scope — see [assert's that: sees the loop's
+variables](#assert-that-loop-scope).
 
 ### What is not reproduced {#what-is-not-reproduced}
 
